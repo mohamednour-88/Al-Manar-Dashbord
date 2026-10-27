@@ -209,6 +209,38 @@ body.staff aside{display:none}
 .ft{font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .fb{font-size:.9rem;overflow-wrap:anywhere}
 .fon{display:block;font-size:.8rem;color:var(--muted)}
+.cmb{display:grid;gap:4px}
+.upl{cursor:pointer}
+.cm.file{background:var(--surface);border:1px solid var(--line)}
+.fchip{all:unset;cursor:pointer;display:flex;gap:8px;align-items:center;padding:4px 0;max-width:100%}
+.fchip:focus-visible{outline:2px solid var(--accent)}
+.fic{background:var(--accent);color:var(--on-accent);font-size:.7rem;font-weight:700;border-radius:4px;padding:2px 6px}
+.fnm{color:var(--accent);font-weight:600;text-decoration:underline;overflow-wrap:anywhere}
+.ptab{overflow-x:auto}
+.ptab table{width:100%;border-collapse:collapse;font-size:.88rem}
+.ptab th{text-align:start;font-weight:600;color:var(--muted);font-size:.78rem;border-bottom:1px solid var(--line);padding:6px 8px;white-space:nowrap}
+.ptab td{border-bottom:1px solid var(--line);padding:6px 8px;font-variant-numeric:tabular-nums}
+.prows{display:grid;gap:6px}
+.prow2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,.8fr) minmax(0,.8fr) auto;gap:6px;align-items:center}
+.fgrid.buyer{background:var(--sunk);border-radius:8px;padding:8px}
+.dstats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ksub{font-size:.75rem;color:var(--muted)}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.dcard h3{margin:0;font-family:var(--f-display);font-weight:500;font-size:1rem}
+.legend{display:flex;gap:14px;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:4px;vertical-align:middle}
+.k1,.b1{background:var(--info)} .k2,.b2{background:var(--ok)}
+.bars{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;align-items:end;height:150px;direction:ltr}
+.bc{display:grid;grid-template-rows:1fr auto;height:100%;gap:2px}
+.bb{display:flex;gap:2px;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line)}
+.bb span{width:40%;min-height:1px;border-radius:2px 2px 0 0}
+.bl{font-size:.7rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.dt tr.sub td:first-child{padding-inline-start:20px}
+.lt{color:var(--late);font-weight:600}
+.pbar{display:inline-block;width:70px;height:7px;background:var(--sunk);border-radius:99px;vertical-align:middle;overflow:hidden;margin-inline-end:6px}
+.pbar span{display:block;height:100%;background:var(--ok)}
+.pv{font-size:.8rem}
+@media (max-width:700px){.dstats{grid-template-columns:repeat(2,minmax(0,1fr))}.prow2{grid-template-columns:minmax(0,1fr) 70px 70px auto}}
 .welcome{margin:0;background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem}
 .acct{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:.85rem;color:var(--muted);margin-top:8px}
 .p-done{background:var(--ok-soft);color:var(--ok)}
@@ -283,6 +315,8 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   </div>
   </div>
   <section class="panel" id="reqView" hidden></section>
+  <section class="panel" id="purView" hidden></section>
+  <section class="panel" id="dashView" hidden></section>
   <section class="panel" id="feedView" hidden></section>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -290,7 +324,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
 <script>
 const ST = {new:"جديد", doing:"قيد التنفيذ", wait:"بانتظار طرف آخر", done:"مكتمل"};
 const SIGN = "م. محمد نور عمر";
-const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null};
+const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null};
 let db = null;
 const $ = id => document.getElementById(id);
 
@@ -378,7 +412,7 @@ function render(){
   if(sig!==addFormSig){addFormSig=sig;buildAddForm()}
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
-  renderTabs();renderRequests();renderFeed();
+  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();
 }
 
 /* ---------- groups ---------- */
@@ -464,7 +498,7 @@ function renderNav(){
   if(state.manage&&state.canWrite){
     const sp=document.createElement("div");sp.className="sep";mb.appendChild(sp);
     if(state.editPerson==="new")mb.appendChild(personForm(null));
-    else{const a=document.createElement("button");a.type="button";a.className="btn ghost sm";a.style.margin="4px";a.textContent="+ إضافة شخص";a.onclick=()=>{state.editPerson="new";render()};mb.appendChild(a)}
+    else{const a=document.createElement("button");a.type="button";a.className="btn ghost sm";a.style.margin="4px";a.textContent="+ إضافة موظف ودعوته";a.onclick=()=>{state.editPerson="new";render()};mb.appendChild(a)}
     mb.appendChild(bulkBox());
     mb.appendChild(rolesBox());
     mb.appendChild(reqTypesBox());
@@ -477,7 +511,7 @@ function renderNav(){
 function personForm(p){
   const f=document.createElement("form");f.className="pform";const k=p?p.id:"new";
   const pre=p?(p.groups||[]):(state.sel.startsWith("g:")?[state.sel.slice(2)]:[]);
-  f.innerHTML=`<div class="t">${p?"تعديل بيانات "+esc(p.name):"إضافة شخص جديد"}</div>
+  f.innerHTML=`<div class="t">${p?"تعديل بيانات "+esc(p.name):"إضافة موظف ودعوته"}</div>${p?"":`<div class="hint">اكتب جواله أو إيميله، وبعد الإضافة تطلع لك رسالة الدعوة جاهزة للإرسال على الواتساب أو الإيميل.</div>`}
    <input id="pp-name-${k}" placeholder="الاسم" required value="${esc(p&&p.name)}" aria-label="الاسم">
    <input id="pp-role-${k}" placeholder="المسمى الوظيفي (اختياري إذا اخترت دوراً)" value="${esc(p&&p.role)}" aria-label="المسمى الوظيفي">
    <input id="pp-phone-${k}" type="tel" placeholder="رقم الواتساب 05xxxxxxxx" value="${esc(p&&p.phone)}" aria-label="رقم الواتساب">
@@ -485,16 +519,17 @@ function personForm(p){
    <select id="pp-acc-${k}" aria-label="الصلاحية"><option value="staff" ${!p||!p.access||p.access==="staff"?"selected":""}>صلاحية موظف: مهامه فقط</option><option value="supervisor" ${p&&p.access==="supervisor"?"selected":""}>صلاحية مشرف: مهام فريقه (مجموعاته)</option><option value="admin" ${p&&p.access==="admin"?"selected":""}>صلاحية مدير: كل شيء</option></select>
    <input id="pp-email-${k}" type="email" placeholder="البريد الإلكتروني" value="${esc(p&&p.email)}" aria-label="البريد الإلكتروني">
    <fieldset class="gpick"><legend>المجموعات</legend>${groupChecks(pre)||'<span class="hint">لا توجد مجموعات بعد</span>'}</fieldset>
-   <div class="acts"><button class="btn sm" type="submit">${p?"حفظ":"إضافة"}</button><button class="linkbtn mute" type="button">إلغاء</button></div>`;
+   <div class="acts"><button class="btn sm" type="submit">${p?"حفظ":"إضافة وإرسال الدعوة"}</button><button class="linkbtn mute" type="button">إلغاء</button></div>`;
   f.querySelector(".linkbtn").onclick=()=>{state.editPerson=null;render()};
   f.onsubmit=e=>{e.preventDefault();if(!db)return;
     const v={name:$("pp-name-"+k).value.trim(),roleId:$("pp-rid-"+k).value,access:$("pp-acc-"+k).value,role:$("pp-role-"+k).value.trim(),phone:$("pp-phone-"+k).value.trim(),email:$("pp-email-"+k).value.trim(),groups:[...f.querySelectorAll(".gpick input:checked")].map(x=>x.value)};
     if(!v.name){toast("اكتب الاسم");return}
     if(v.phone&&waNum(v.phone).length<11){toast("رقم الواتساب غير مكتمل. اكتبه مثل 05xxxxxxxx");return}
     if(v.email&&!validEmail(v.email)){toast("البريد الإلكتروني غير صحيح");return}
+    if(!p&&!v.phone&&!v.email){toast("اكتب رقم الجوال أو الإيميل لإرسال الدعوة");return}
     state.editPerson=null;
     if(p)guard(db.doc("people/"+p.id).update({...v,updatedAt:Date.now()}),"حُفظت بيانات "+v.name);
-    else{const order=state.people.reduce((m,x)=>Math.max(m,x.order||0),0)+1;guard(db.collection("people").add({...v,order,createdAt:Date.now()}),"أُضيف "+v.name)}
+    else addAndInvite(v).catch(()=>toast("تعذر إضافة الموظف"));
   };
   return f;
 }
@@ -706,15 +741,16 @@ function roleForm(r){
   const key=r?r.id:"new",same=state.roleDraft&&state.roleDraft.id===key;
   const duties=same?state.roleDraft.duties:((r&&r.duties)||[]).map(x=>({...x}));
   const name=same&&state.roleDraft.name!=null?state.roleDraft.name:(r?r.name:"");
-  state.roleDraft={id:key,duties,name,access:same?state.roleDraft.access:(r&&r.access)};
+  state.roleDraft={id:key,duties,name,access:same?state.roleDraft.access:(r&&r.access),purchasing:same?state.roleDraft.purchasing:!!(r&&r.purchasing)};
   f.innerHTML=`<div class="t">${r?"تعديل الدور":"دور وظيفي جديد"}</div>
     <input class="rname" placeholder="اسم المسمى الوظيفي، مثل: مشرف الحراس" value="${esc(name)}" aria-label="اسم المسمى الوظيفي" required>
+    <label class="duty"><input type="checkbox" class="rbuy" ${(same?state.roleDraft.purchasing:(r&&r.purchasing))?"checked":""}> يستلم طلبات الشراء (مثل مسؤول المشتريات)</label>
     <label class="t" style="font-weight:500;display:grid;gap:4px">الصلاحيات<select class="racc" aria-label="صلاحيات المسمى">${["staff","supervisor","manager"].map(k=>`<option value="${k}" ${(state.roleDraft.access||(r&&r.access)||"staff")===k?"selected":""}>${{staff:"موظف — يستلم الأوامر ويحدّث مهامه ويكتب ملاحظاته",supervisor:"مشرف — يدير فريقه ويراسل مشرفي الأقسام الأخرى",manager:"مدير — يطّلع على تقارير فريقه ويرسل لهم ملاحظات"}[k]}</option>`).join("")}</select></label>
     <div class="t" style="font-weight:500">مهام الدور</div><div class="duties"></div>
     <button class="linkbtn" type="button" data-add>+ إضافة مهمة للدور</button>
     <div class="acts"><button class="btn sm" type="submit">حفظ المسمى</button><button class="linkbtn mute" type="button" data-cancel>إلغاء</button></div>`;
   const box=f.querySelector(".duties");
-  const sync=()=>{state.roleDraft.name=f.querySelector(".rname").value;state.roleDraft.access=f.querySelector(".racc").value;box.querySelectorAll(".drow").forEach((row,i)=>{duties[i].title=row.querySelector("input").value;duties[i].freq=row.querySelector("select").value})};
+  const sync=()=>{state.roleDraft.name=f.querySelector(".rname").value;state.roleDraft.access=f.querySelector(".racc").value;state.roleDraft.purchasing=f.querySelector(".rbuy").checked;box.querySelectorAll(".drow").forEach((row,i)=>{duties[i].title=row.querySelector("input").value;duties[i].freq=row.querySelector("select").value})};
   duties.forEach((x,i)=>{const row=document.createElement("div");row.className="drow";
     row.innerHTML=`<input value="${esc(x.title)}" placeholder="المهمة" aria-label="المهمة"><select aria-label="التكرار">${Object.entries(FREQ).map(([k,[l]])=>`<option value="${k}" ${(x.freq||"weekly")===k?"selected":""}>${l}</option>`).join("")}</select><button type="button" class="del-file" aria-label="حذف المهمة">×</button>`;
     row.querySelector("button").onclick=()=>{sync();duties.splice(i,1);render()};box.appendChild(row)});
@@ -723,10 +759,10 @@ function roleForm(r){
   f.querySelector("[data-cancel]").onclick=()=>{state.editRole=null;state.roleDraft=null;render()};
   f.onsubmit=e=>{e.preventDefault();sync();const nm=state.roleDraft.name.trim();if(!nm){toast("اكتب اسم الدور");return}
     const clean=duties.filter(x=>x.title.trim()).map(x=>({id:x.id||rid(),title:x.title.trim(),freq:x.freq||"weekly"}));
-    const access=state.roleDraft.access||"staff";
+    const access=state.roleDraft.access||"staff",purchasing=!!state.roleDraft.purchasing;
     state.editRole=null;state.roleDraft=null;
-    if(r)guard(db.doc("roles/"+r.id).update({name:nm,duties:clean,access}),"حُفظ المسمى");
-    else{const order=state.roles.reduce((m,x)=>Math.max(m,x.order||0),0)+1;guard(db.collection("roles").add({name:nm,duties:clean,access,order,createdAt:Date.now()}),"أُضيف المسمى")}};
+    if(r)guard(db.doc("roles/"+r.id).update({name:nm,duties:clean,access,purchasing}),"حُفظ المسمى");
+    else{const order=state.roles.reduce((m,x)=>Math.max(m,x.order||0),0)+1;guard(db.collection("roles").add({name:nm,duties:clean,access,purchasing,order,createdAt:Date.now()}),"أُضيف المسمى")}};
   return f;
 }
 
@@ -767,6 +803,7 @@ function accountBox(p){
     h+=`<div class="req"><h3>رابط الدعوة لـ ${esc(p.name)}</h3><div class="addr" style="overflow-wrap:anywhere">${esc(state.invite.link)}</div>
       <textarea id="inv-text" aria-label="رسالة الدعوة">${esc(t)}</textarea>
       <div class="acts">${n?`<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${encodeURIComponent(t)}">إرسال عبر واتساب</a>`:'<span class="hint">لا يوجد رقم واتساب لهذا الموظف.</span>'}
+      ${validEmail(p.email)?`<a class="btn ghost" href="mailto:${encodeURIComponent(p.email)}?subject=${encodeURIComponent("دعوة إلى منصة متابعات المنار اليومية")}&body=${encodeURIComponent(plain(t))}">إرسال بالإيميل</a>`:""}
       <button class="linkbtn" type="button" id="cpInvite">نسخ الرسالة</button><button class="linkbtn mute" type="button" id="hideInvite">إخفاء</button></div>
       <span class="hint">الرابط يُستخدم مرة واحدة، وصالح ٣٠ يوماً.</span></div>`}
   if(state.unlinkConfirm===p.id)h+=`<div class="confirm">إلغاء ربط الحساب يمنع الموظف من الدخول حتى ترسل له رابطاً جديداً. <button class="btn danger sm" type="button" id="unlinkYes">إلغاء الربط</button><button class="linkbtn mute" type="button" id="unlinkNo">تراجع</button></div>`;
@@ -826,35 +863,7 @@ async function addComment(kind,id,text,type){
   const doc={parentKind:kind,parentId:id,authorId:state.me||null,authorName:myName(),text,type:type||"text",createdAt:Date.now()};
   await db.collection("comments").doc().set(doc);
 }
-function threadHTML(kind,id){
-  const list=threadOf(kind,id);const key=kind+":"+id;
-  const rows=list.map(c=>`<div class="cm ${c.type==="status"?"sys":""}"><div class="cmh"><b>${esc(c.authorName||"")}</b><span>${fmtTs(c.createdAt)}</span></div><div class="cmt">${esc(c.text)}</div></div>`).join("");
-  return `<div class="thread">${rows||'<div class="hint">لا توجد ردود بعد.</div>'}
-    <div class="cmin"><textarea data-draft="${esc(key)}" aria-label="اكتب رداً" placeholder="${kind==="item"?"اكتب ملاحظة أو تحديثاً على المهمة…":"اكتب رداً على الطلب…"}">${esc(state.drafts[key]||"")}</textarea><button class="btn sm" type="button" data-send="${esc(key)}">إرسال</button></div></div>`;
-}
-function wireThreads(root){
-  root.querySelectorAll("textarea[data-draft]").forEach(t=>t.oninput=()=>{state.drafts[t.dataset.draft]=t.value});
-  root.querySelectorAll("button[data-send]").forEach(b=>b.onclick=async()=>{
-    const key=b.dataset.send;const [kind,...rest]=key.split(":");const id=rest.join(":");const text=(state.drafts[key]||"").trim();
-    if(!text){toast("اكتب الرد أولاً");return}
-    b.disabled=true;
-    try{await addComment(kind,id,text);state.drafts[key]="";
-      if(kind==="item"&&db){const it=state.items.find(i=>i.id===id);if(it)try{await db.doc("items/"+id).update(state.role==="staff"?{updatedAt:Date.now(),staffUpdatedAt:Date.now()}:{updatedAt:Date.now()})}catch(e){}}
-      toast("أُرسل الرد");db.refreshAll()}
-    catch(e){toast("تعذر إرسال الرد")}finally{b.disabled=false}});
-}
-
 /* ---------- التبويبات ---------- */
-function renderTabs(){
-  const myOpenIn=state.requests.filter(r=>reqOpen(r)&&(state.role==="admin"?true:r.toId===state.me));
-  const lateN=myOpenIn.filter(reqLate).length;
-  const unread=feedEntries().filter(e=>e.t>state.lastSeen&&e.authorId!==(state.me||null)).length;
-  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""]];
-  if(state.role!=="staff")tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""]);
-  $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
-  $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
-  $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
-}
 function markSeen(){state.lastSeen=Date.now();try{localStorage.setItem("manar-seen",String(state.lastSeen))}catch(e){}}
 
 /* ---------- الطلبات ---------- */
@@ -953,18 +962,6 @@ function reqCard(r){
 }
 
 /* ---------- آخر التحديثات ---------- */
-function feedEntries(){
-  const out=[];
-  for(const c of state.comments){
-    let on="",kind=c.parentKind;
-    if(kind==="item"){const it=state.items.find(i=>i.id===c.parentId);if(!it)continue;on=it.title}
-    else{const r=state.requests.find(x=>x.id===c.parentId);if(!r)continue;on=r.title}
-    out.push({t:c.createdAt||0,who:c.authorName||"",authorId:c.authorId||null,what:c.type==="status"?c.text:"كتب: "+c.text,on,kind,pid:c.parentId,sys:c.type==="status"});
-  }
-  for(const r of state.requests)out.push({t:r.createdAt||0,who:r.fromName||"",authorId:r.fromId||null,what:`أرسل طلباً (${r.typeName||""}) إلى ${r.toName||""}`,on:r.title,kind:"request",pid:r.id,req:true});
-  for(const it of state.items)if(it.createdAt)out.push({t:it.createdAt,who:"",authorId:"__",what:`مهمة جديدة لـ ${contact(it).name||""}`,on:it.title,kind:"item",pid:it.id,task:true});
-  return out.sort((a,b)=>b.t-a.t).slice(0,200);
-}
 function renderFeed(){
   const v=$("feedView");if(state.view!=="feed"){v.innerHTML="";return}
   const list=feedEntries();const seen=state.feedSeenAt||0;
@@ -978,6 +975,7 @@ function renderFeed(){
   v.innerHTML=h;
   v.querySelectorAll(".fe").forEach(b=>b.onclick=()=>{const id=b.dataset.id;
     if(b.dataset.k==="item"){const it=state.items.find(i=>i.id===id);if(it&&person(it.personId))state.sel=it.personId;state.filter="any";state.view="tasks";state.openThreads["i:"+id]=true;render();setTimeout(()=>{const x=document.querySelector(`[data-item="${CSS.escape(id)}"]`);if(x)x.scrollIntoView({behavior:"smooth",block:"center"})},100)}
+    else if(b.dataset.k==="purchase"){state.view="purchases";state.purScope="all";state.purStatus="any";state.openThreads["p:"+id]=true;render()}
     else{state.view="requests";state.reqFilter=state.role==="admin"||state.role==="manager"?"all":"in";state.reqStatus="any";state.openThreads["r:"+id]=true;render()}});
 }
 
@@ -1005,6 +1003,217 @@ function safeRender(){const a=document.activeElement;
   render()}
 document.addEventListener("focusout",()=>setTimeout(()=>{if(state.pendingRender){state.pendingRender=false;safeRender()}},150));
 
+/* ================= الإصدار 4: الملفات، المشتريات، لوحة البيانات ================= */
+const PST={new:"جديد",review:"قيد المراجعة",approved:"معتمد",ordered:"تم الطلب من المورد",received:"تم الاستلام",rejected:"مرفوض"};
+const MAX_FILE=20*1024*1024;
+function fmtSize(b){if(!b)return"";if(b<1024)return b+" B";if(b<1048576)return Math.round(b/1024)+" KB";return (b/1048576).toFixed(1)+" MB"}
+function isBuyer(){const m=person(state.me);const r=m&&roleOf(m.roleId);return !!(r&&r.purchasing)}
+function purOpen(x){return !["received","rejected"].includes(x.status)}
+function money(n){return (Number(n)||0).toLocaleString("en-US",{maximumFractionDigits:2})+" ر.س"}
+
+async function uploadFile(kind,id,file){
+  if(!file)return;
+  if(file.size>MAX_FILE){toast("حجم الملف أكبر من 20 ميجابايت");return}
+  const ext=(file.name.match(/\.[A-Za-z0-9]{1,8}$/)||[""])[0];
+  const path=`${kind}/${id}/${Date.now()}-${rid()}${ext}`;
+  toast("جارٍ رفع الملف…");
+  const {error}=await sb.storage.from("files").upload(path,file,{contentType:file.type||undefined,upsert:false});
+  if(error){toast("تعذر رفع الملف. تأكد من الاتصال وأعد المحاولة");return}
+  await db.collection("comments").doc().set({parentKind:kind,parentId:id,authorId:state.me||null,authorName:myName(),type:"file",text:"أرفق ملف: "+file.name,path,fileName:file.name,size:file.size,mime:file.type||"",createdAt:Date.now()});
+  toast("رُفع الملف");db.refreshAll();
+}
+async function openFile(path){
+  const w=window.open("","_blank");
+  const {data,error}=await sb.storage.from("files").createSignedUrl(path,3600);
+  if(error||!data){if(w)w.close();toast("تعذر فتح الملف");return}
+  if(w)w.location.href=data.signedUrl;else location.href=data.signedUrl;
+}
+function threadHTML(kind,id){
+  const list=threadOf(kind,id);const key=kind+":"+id;
+  const rows=list.map(c=>c.type==="file"
+    ?`<div class="cm file"><div class="cmh"><b>${esc(c.authorName||"")}</b><span>${fmtTs(c.createdAt)}</span></div><button type="button" class="fchip" data-open="${esc(c.path)}"><span class="fic">ملف</span><span class="fnm">${esc(c.fileName||"ملف")}</span><span class="hint">${fmtSize(c.size)}</span></button></div>`
+    :`<div class="cm ${c.type==="status"?"sys":""}"><div class="cmh"><b>${esc(c.authorName||"")}</b><span>${fmtTs(c.createdAt)}</span></div><div class="cmt">${esc(c.text)}</div></div>`).join("");
+  const ph=kind==="item"?"اكتب ملاحظة أو تحديثاً على المهمة…":kind==="purchase"?"اكتب رداً على طلب الشراء…":"اكتب رداً على الطلب…";
+  return `<div class="thread">${rows||'<div class="hint">لا توجد ردود أو ملفات بعد.</div>'}
+    <div class="cmin"><textarea data-draft="${esc(key)}" aria-label="اكتب رداً" placeholder="${ph}">${esc(state.drafts[key]||"")}</textarea>
+    <div class="cmb"><button class="btn sm" type="button" data-send="${esc(key)}">إرسال</button>
+    <label class="btn ghost sm upl">إرفاق ملف<input type="file" data-file="${esc(key)}" hidden></label></div></div></div>`;
+}
+function wireThreads(root){
+  root.querySelectorAll("textarea[data-draft]").forEach(t=>t.oninput=()=>{state.drafts[t.dataset.draft]=t.value});
+  root.querySelectorAll("button[data-open]").forEach(b=>b.onclick=()=>openFile(b.dataset.open));
+  root.querySelectorAll("input[data-file]").forEach(inp=>inp.onchange=async()=>{
+    const [kind,...rest]=inp.dataset.file.split(":");const f=inp.files&&inp.files[0];inp.value="";
+    try{await uploadFile(kind,rest.join(":"),f)}catch(e){toast("تعذر رفع الملف")}});
+  root.querySelectorAll("button[data-send]").forEach(b=>b.onclick=async()=>{
+    const key=b.dataset.send;const [kind,...rest]=key.split(":");const id=rest.join(":");const text=(state.drafts[key]||"").trim();
+    if(!text){toast("اكتب الرد أولاً");return}
+    b.disabled=true;
+    try{await addComment(kind,id,text);state.drafts[key]="";
+      if(kind==="item"&&db){try{await db.doc("items/"+id).update(state.role==="staff"?{updatedAt:Date.now(),staffUpdatedAt:Date.now()}:{updatedAt:Date.now()})}catch(e){}}
+      toast("أُرسل الرد");db.refreshAll()}
+    catch(e){toast("تعذر إرسال الرد")}finally{b.disabled=false}});
+}
+
+/* ---------- التبويبات ---------- */
+function renderTabs(){
+  const myOpenIn=state.requests.filter(r=>reqOpen(r)&&(state.role==="admin"?true:r.toId===state.me));
+  const lateN=myOpenIn.filter(reqLate).length;
+  const unread=feedEntries().filter(e=>e.t>state.lastSeen&&e.authorId!==(state.me||null)).length;
+  const purN=state.purchases.filter(x=>x.status==="new"&&(state.role==="admin"||isBuyer())).length;
+  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""]];
+  if(state.role!=="staff")tabs.push(["dash","لوحة البيانات",""]);
+  if(state.role!=="staff")tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""]);
+  $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
+  $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
+  $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
+  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";
+}
+
+/* ---------- المشتريات ---------- */
+function myGroupIds(){const m=person(state.me);return m?(m.groups||[]):[]}
+function renderPurchases(){
+  const v=$("purView");if(state.view!=="purchases"){v.innerHTML="";return}
+  const seeAll=state.role!=="staff"||isBuyer();
+  let list=state.purchases.slice();
+  if(state.purScope==="mine")list=list.filter(x=>(x.requesterId||null)===(state.me||null));
+  if(state.purStatus==="open")list=list.filter(purOpen);else if(state.purStatus==="done")list=list.filter(x=>!purOpen(x));
+  list.sort((a,b)=>(purOpen(b)-purOpen(a))||((a.neededBy||"9999").localeCompare(b.neededBy||"9999"))||(b.createdAt||0)-(a.createdAt||0));
+  const sc=seeAll?[["all",state.role==="admin"||isBuyer()?"كل طلبات الشراء":"طلبات فريقي"],["mine","طلباتي"]]:[];
+  v.innerHTML=`<div class="phead"><div><h2>المشتريات</h2><div class="prole">${isBuyer()?"طلبات الشراء الواردة إليك — حدّث حالتها وأرفق عروض الأسعار والفواتير":"اطلب احتياجات قسمك، وأرفق الملفات، وتابع حالة الطلب حتى الاستلام"}</div></div>
+    <div class="filters">${sc.map(([k,l])=>`<button type="button" class="chip" data-ps="${k}" aria-pressed="${state.purScope===k}">${l}</button>`).join("")}</div></div>
+    <div class="filters">${[["open","المفتوحة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-pt="${k}" aria-pressed="${state.purStatus===k}">${l}</button>`).join("")}</div>
+    ${state.me||state.role==="admin"?newPurHTML():""}
+    <div class="list" id="purList"></div>`;
+  v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{state.purScope=b.dataset.ps;render()});
+  v.querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{state.purStatus=b.dataset.pt;render()});
+  if(state.me||state.role==="admin")wireNewPur(v);
+  const L=v.querySelector("#purList");
+  if(!list.length){L.innerHTML=`<div class="empty"><strong>لا توجد طلبات شراء هنا</strong>اضغط «+ طلب شراء جديد» واكتب الأصناف والكميات، وأرفق عرض السعر إن وُجد.</div>`;return}
+  for(const x of list)L.appendChild(purCard(x));
+}
+function newPurHTML(){
+  const d=state.purDraft||{rows:[{name:"",qty:"",unit:""}]};state.purDraft=d;
+  const gopts=orderedGroups().map(({g,lvl})=>`<option value="${esc(g.id)}" ${(d.groupId||myGroupIds()[0])===g.id?"selected":""}>${lvl?"— ":""}${esc(g.name)}</option>`).join("");
+  return `<details class="newreq" ${state.newPurOpen?"open":""}><summary>+ طلب شراء جديد</summary>
+   <form id="purform" class="fgrid" style="margin-top:10px">
+    <label class="full">عنوان الطلب<input id="pu-title" required value="${esc(d.title||"")}" placeholder="مثال: أدوات نظافة للمبنى أ"></label>
+    <label>القسم<select id="pu-group">${gopts}</select></label>
+    <label>مطلوب قبل<input id="pu-need" type="date" value="${esc(d.neededBy||"")}"></label>
+    <div class="full"><div class="hint" style="margin-bottom:4px">الأصناف</div><div class="prows">${d.rows.map((r,i)=>`<div class="prow2"><input data-r="${i}" data-f="name" value="${esc(r.name)}" placeholder="الصنف" aria-label="الصنف"><input data-r="${i}" data-f="qty" type="number" min="0" value="${esc(r.qty)}" placeholder="الكمية" aria-label="الكمية"><input data-r="${i}" data-f="unit" value="${esc(r.unit)}" placeholder="الوحدة" aria-label="الوحدة"><button type="button" class="del-file" data-rm="${i}" aria-label="حذف الصنف">×</button></div>`).join("")}</div>
+      <button class="linkbtn" type="button" data-addrow>+ إضافة صنف</button></div>
+    <label class="full">المبرر أو ملاحظات<textarea id="pu-reason">${esc(d.reason||"")}</textarea></label>
+    <div class="full hint">بعد الإرسال تقدر ترفق عرض السعر أو أي ملف من «الردود والملفات» في بطاقة الطلب.</div>
+    <div class="full"><button class="btn" type="submit">إرسال طلب الشراء</button></div>
+   </form></details>`;
+}
+function wireNewPur(v){
+  const det=v.querySelector(".newreq");if(!det)return;det.ontoggle=()=>{state.newPurOpen=det.open};
+  const f=v.querySelector("#purform");const d=state.purDraft;
+  const sync=()=>{d.title=f.querySelector("#pu-title").value;d.groupId=f.querySelector("#pu-group").value;d.neededBy=f.querySelector("#pu-need").value;d.reason=f.querySelector("#pu-reason").value;
+    f.querySelectorAll("[data-r]").forEach(inp=>{d.rows[+inp.dataset.r][inp.dataset.f]=inp.value})};
+  f.querySelectorAll("input,select,textarea").forEach(x=>x.addEventListener("input",sync));
+  f.querySelector("[data-addrow]").onclick=()=>{sync();d.rows.push({name:"",qty:"",unit:""});render()};
+  f.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{sync();d.rows.splice(+b.dataset.rm,1);if(!d.rows.length)d.rows.push({name:"",qty:"",unit:""});render()});
+  f.onsubmit=async e=>{e.preventDefault();sync();
+    const rows=d.rows.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),qty:Number(r.qty)||0,unit:r.unit.trim()}));
+    if(!d.title.trim()){toast("اكتب عنوان الطلب");return}if(!rows.length){toast("أضف صنفاً واحداً على الأقل");return}
+    const g=groupOf(d.groupId);const now=Date.now();
+    const doc={requesterId:state.me||null,requesterName:myName(),groupId:d.groupId||"",groupName:g?g.name:"",title:d.title.trim(),items:rows,neededBy:d.neededBy||"",reason:(d.reason||"").trim(),status:"new",createdAt:now,updatedAt:now};
+    const ref=db.collection("purchases").doc();
+    try{await ref.set(doc);state.purDraft=null;state.newPurOpen=false;state.openThreads["p:"+ref.id]=true;state.purStatus="open";toast("أُرسل طلب الشراء — أرفق عرض السعر إن وُجد");render()}
+    catch(err){toast("تعذر إرسال طلب الشراء")}};
+}
+function purCard(x){
+  const el=document.createElement("article");const open=purOpen(x);
+  el.className="item"+(open?"":" s-done")+(x.neededBy&&open&&x.neededBy<todayStr()?" s-late":"");
+  const canStatus=state.role==="admin"||isBuyer();
+  const th=threadOf("purchase",x.id);const k="p:"+x.id;const openT=!!state.openThreads[k];
+  const files=th.filter(c=>c.type==="file").length,replies=th.filter(c=>c.type!=="status"&&c.type!=="file").length;
+  el.innerHTML=`<div class="row1"><div class="ttl">${esc(x.title)}</div>
+    ${canStatus?`<label class="st-wrap">حالة الطلب<select class="st v-${x.status==="received"?"done":x.status==="rejected"?"wait":x.status==="new"?"new":"doing"}">${Object.entries(PST).map(([a,b])=>`<option value="${a}" ${a===x.status?"selected":""}>${b}</option>`).join("")}</select></label>`:`<span class="pill ${open?"p-req":"p-done"}">${PST[x.status]||""}</span>`}</div>
+    <div class="route"><span><span class="hint">مقدّم الطلب</span> <b>${esc(x.requesterName||"")}</b></span>${x.groupName?`<span class="pill p-file">${esc(x.groupName)}</span>`:""}</div>
+    <div class="dates"><div><span>تاريخ الطلب</span><b>${fmtTs(x.createdAt)}</b></div><div><span>مطلوب قبل</span><b>${fmtDate(x.neededBy)}</b></div><div><span>المورد / القيمة</span><b>${esc(x.vendor||"—")}${x.total?" · "+money(x.total):""}</b></div></div>
+    <div class="ptab"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>الوحدة</th></tr></thead><tbody>${(x.items||[]).map(r=>`<tr><td>${esc(r.name)}</td><td>${num(r.qty||0)}</td><td>${esc(r.unit||"")}</td></tr>`).join("")}</tbody></table></div>
+    ${x.reason?`<div class="note">${esc(x.reason)}</div>`:""}
+    ${canStatus&&open?`<div class="fgrid buyer"><label>المورد<input data-bf="vendor" value="${esc(x.vendor||"")}"></label><label>القيمة (ر.س)<input data-bf="total" type="number" min="0" value="${esc(x.total||"")}"></label><label>رقم أمر الشراء<input data-bf="poNumber" value="${esc(x.poNumber||"")}"></label><div><button class="btn ghost sm" type="button" data-bsave>حفظ</button></div></div>`:""}
+    <div class="acts"><button class="linkbtn" type="button" data-t>${openT?"إخفاء الردود والملفات":"الردود والملفات"} (${num(replies)} رد · ${num(files)} ملف)</button>
+    ${state.role==="admin"?`<button class="linkbtn mute" type="button" data-del>حذف</button>`:""}</div>
+    ${state.confirm==="pu:"+x.id?`<div class="confirm">حذف طلب الشراء؟ <button class="btn danger sm" type="button" data-dy>حذف</button><button class="linkbtn mute" type="button" data-dn>إلغاء</button></div>`:""}
+    ${openT?threadHTML("purchase",x.id):""}`;
+  const sel=el.querySelector("select.st");
+  if(sel)sel.onchange=async()=>{const v=sel.value;try{await db.doc("purchases/"+x.id).update({status:v,statusBy:myName(),updatedAt:Date.now(),decidedAt:Date.now()});await addComment("purchase",x.id,`غيّر حالة طلب الشراء إلى «${PST[v]}»`,"status");toast("تم تحديث الحالة");db.refreshAll()}catch(e){toast("ليست لديك صلاحية لهذا التعديل");render()}};
+  const bs=el.querySelector("[data-bsave]");if(bs)bs.onclick=async()=>{const p={updatedAt:Date.now()};el.querySelectorAll("[data-bf]").forEach(i=>{p[i.dataset.bf]=i.dataset.bf==="total"?(Number(i.value)||0):i.value.trim()});try{await db.doc("purchases/"+x.id).update(p);toast("حُفظت بيانات الشراء")}catch(e){toast("تعذر الحفظ")}};
+  el.querySelector("[data-t]").onclick=()=>{state.openThreads[k]=!openT;render()};
+  const del=el.querySelector("[data-del]");if(del)del.onclick=()=>{state.confirm="pu:"+x.id;render()};
+  const dy=el.querySelector("[data-dy]");if(dy)dy.onclick=async()=>{state.confirm=null;try{await db.doc("purchases/"+x.id).delete();toast("حُذف طلب الشراء")}catch(e){toast("تعذر الحذف")}render()};
+  const dn=el.querySelector("[data-dn]");if(dn)dn.onclick=()=>{state.confirm=null;render()};
+  if(openT)wireThreads(el);
+  return el;
+}
+
+/* ---------- لوحة البيانات ---------- */
+function deptStats(ids){
+  const mem=state.people.filter(p=>(p.groups||[]).some(x=>ids.includes(x)));const mid=new Set(mem.map(p=>p.id));
+  const it=state.items.filter(i=>mid.has(i.personId));const wk=Date.now()-7*864e5;
+  const rq=state.requests.filter(r=>mid.has(r.toId));
+  const pu=state.purchases.filter(x=>ids.includes(x.groupId)||mid.has(x.requesterId));
+  return{mem:mem.length,open:it.filter(i=>i.status!=="done").length,late:it.filter(isLate).length,done7:it.filter(i=>i.status==="done"&&(i.doneAt||0)>=wk).length,
+    rate:it.length?Math.round(100*it.filter(i=>i.status==="done").length/it.length):null,rqOpen:rq.filter(reqOpen).length,rqLate:rq.filter(reqLate).length,puOpen:pu.filter(purOpen).length,total:it.length};
+}
+function renderDash(){
+  const v=$("dashView");if(state.view!=="dash"){v.innerHTML="";return}
+  const it=state.items,rq=state.requests,pu=state.purchases;
+  const done=it.filter(i=>i.status==="done").length;
+  const rqDone=rq.filter(r=>r.status==="done"&&r.doneAt&&r.createdAt);
+  const avg=rqDone.length?rqDone.reduce((s,r)=>s+(r.doneAt-r.createdAt),0)/rqDone.length:0;
+  const ontime=rqDone.length?Math.round(100*rqDone.filter(r=>!r.dueAt||r.doneAt<=r.dueAt).length/rqDone.length):null;
+  const puVal=pu.filter(x=>["approved","ordered","received"].includes(x.status)).reduce((s,x)=>s+(Number(x.total)||0),0);
+  const kpi=(l,n,cls,sub)=>`<div class="stat ${cls||""}"><b>${n}</b><span>${l}</span>${sub?`<span class="ksub">${sub}</span>`:""}</div>`;
+  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d.getTime())}
+  const cnt=(arr,f)=>days.map(t=>arr.filter(x=>{const v=f(x);return v>=t&&v<t+864e5}).length);
+  const created=cnt(it,x=>x.createdAt||0),closed=cnt(it.filter(x=>x.status==="done"),x=>x.doneAt||0);
+  const mx=Math.max(1,...created,...closed);
+  const bars=days.map((t,i)=>`<div class="bc" title="${new Date(t).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{day:"numeric",month:"short"})}: ${created[i]} جديدة · ${closed[i]} منجزة"><div class="bb"><span class="b1" style="height:${100*created[i]/mx}%"></span><span class="b2" style="height:${100*closed[i]/mx}%"></span></div><span class="bl">${new Date(t).getDate()}</span></div>`).join("");
+  const rows=orderedGroups().map(({g,lvl})=>{const s=deptStats(lvl?[g.id]:groupIds(g.id));if(!s.mem&&!s.puOpen)return"";
+    return `<tr class="${lvl?"sub":""}"><td><button type="button" class="linkbtn" data-g="${esc(g.id)}">${lvl?"— ":""}${esc(g.name)}</button></td><td>${num(s.mem)}</td><td>${num(s.open)}</td><td class="${s.late?"lt":""}">${num(s.late)}</td><td>${num(s.done7)}</td>
+      <td>${s.rate===null?"—":`<div class="pbar"><span style="width:${s.rate}%"></span></div><span class="pv">${s.rate}%</span>`}</td><td>${num(s.rqOpen)}${s.rqLate?` <span class="lt">(${num(s.rqLate)} متأخر)</span>`:""}</td><td>${num(s.puOpen)}</td></tr>`}).join("");
+  const lateBy=state.people.map(p=>({p,n:it.filter(i=>i.personId===p.id&&isLate(i)).length,r:rq.filter(r=>r.toId===p.id&&reqLate(r)).length})).filter(x=>x.n||x.r).sort((a,b)=>(b.n+b.r)-(a.n+a.r)).slice(0,8);
+  v.innerHTML=`<div class="phead"><div><h2>لوحة البيانات</h2><div class="prole">${state.role==="admin"?"كل الأقسام":"أقسام فريقك"} · تتحدث تلقائياً</div></div></div>
+   <div class="stats dstats">${kpi("مهام مفتوحة",num(it.length-done))}${kpi("مهام متأخرة",num(it.filter(isLate).length),"late")}${kpi("نسبة الإنجاز",it.length?Math.round(100*done/it.length)+"%":"—","ok",`${num(done)} من ${num(it.length)}`)}${kpi("طلبات مفتوحة",num(rq.filter(reqOpen).length),"due",`${num(rq.filter(reqLate).length)} متأخر`)}
+   ${kpi("متوسط تنفيذ الطلب",rqDone.length?dur(avg):"—","",ontime===null?"":`${ontime}% في الموعد`)}${kpi("طلبات شراء مفتوحة",num(pu.filter(purOpen).length))}${kpi("قيمة المشتريات المعتمدة",puVal?money(puVal):"—")}${kpi("حسابات مفعّلة",num(state.people.filter(p=>p._linked).length)+" / "+num(state.people.length))}</div>
+   <section class="dcard"><h3>المهام خلال آخر 14 يوماً</h3><div class="legend"><span><i class="k1"></i>مهام جديدة</span><span><i class="k2"></i>مهام منجزة</span></div><div class="bars">${bars}</div></section>
+   <section class="dcard"><h3>الأقسام</h3><div class="ptab"><table class="dt"><thead><tr><th>القسم</th><th>الموظفون</th><th>مفتوحة</th><th>متأخرة</th><th>منجزة 7 أيام</th><th>نسبة الإنجاز</th><th>طلبات مفتوحة</th><th>مشتريات مفتوحة</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="hint">لا توجد أقسام فيها موظفون بعد.</td></tr>'}</tbody></table></div></section>
+   <section class="dcard"><h3>يحتاج متابعة: الأكثر تأخراً</h3>${lateBy.length?`<div class="ptab"><table class="dt"><thead><tr><th>الموظف</th><th>مهام متأخرة</th><th>طلبات متأخرة</th></tr></thead><tbody>${lateBy.map(x=>`<tr><td><button type="button" class="linkbtn" data-p="${esc(x.p.id)}">${esc(x.p.name)}</button> <span class="hint">${esc(titleOf(x.p))}</span></td><td class="${x.n?"lt":""}">${num(x.n)}</td><td class="${x.r?"lt":""}">${num(x.r)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">لا يوجد تأخير حالياً.</div>'}</section>`;
+  v.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{state.sel="g:"+b.dataset.g;state.view="tasks";setOpen(b.dataset.g,true);render();window.scrollTo({top:0})});
+  v.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.p;state.view="tasks";state.filter="late";render();window.scrollTo({top:0})});
+}
+
+/* ---------- آخر التحديثات (يشمل المشتريات) ---------- */
+function feedEntries(){
+  const out=[];
+  const title=(k,id)=>{if(k==="item"){const x=state.items.find(i=>i.id===id);return x&&x.title}if(k==="request"){const x=state.requests.find(i=>i.id===id);return x&&x.title}const x=state.purchases.find(i=>i.id===id);return x&&x.title};
+  for(const c of state.comments){const on=title(c.parentKind,c.parentId);if(!on)continue;
+    out.push({t:c.createdAt||0,who:c.authorName||"",authorId:c.authorId||null,what:c.type==="status"?c.text:c.type==="file"?c.text:"كتب: "+c.text,on,kind:c.parentKind,pid:c.parentId})}
+  for(const r of state.requests)out.push({t:r.createdAt||0,who:r.fromName||"",authorId:r.fromId||null,what:`أرسل طلباً (${r.typeName||""}) إلى ${r.toName||""}`,on:r.title,kind:"request",pid:r.id});
+  for(const x of state.purchases)out.push({t:x.createdAt||0,who:x.requesterName||"",authorId:x.requesterId||null,what:`قدّم طلب شراء${x.groupName?" لـ "+x.groupName:""}`,on:x.title,kind:"purchase",pid:x.id});
+  for(const it of state.items)if(it.createdAt)out.push({t:it.createdAt,who:"",authorId:"__",what:`مهمة جديدة لـ ${contact(it).name||""}`,on:it.title,kind:"item",pid:it.id});
+  return out.sort((a,b)=>b.t-a.t).slice(0,200);
+}
+
+/* ---------- إضافة موظف ودعوته ---------- */
+async function addAndInvite(v){
+  const order=state.people.reduce((m,x)=>Math.max(m,x.order||0),0)+1;
+  const ref=await db.collection("people").add({...v,order,createdAt:Date.now()});
+  const p={id:ref.id,...v};
+  const token=(crypto.randomUUID?crypto.randomUUID():rid()+rid()).replace(/-/g,"");
+  const {error}=await sb.from("invites").insert({token,person_id:ref.id});
+  state.sel=ref.id;state.manage=false;state.view="tasks";
+  if(!error)state.invite={pid:ref.id,link:here()+"?invite="+token,fresh:true};
+  toast(error?"أُضيف الموظف، لكن تعذر إنشاء رابط الدعوة. اضغط «إنشاء رابط دعوة»":"أُضيف "+v.name+" — أرسل له الدعوة");
+  render();window.scrollTo({top:0});
+}
+
 /* ---------- writes ---------- */
 async function guard(p,ok){try{await p;if(ok)toast(ok)}catch(e){
   if(e&&e.code==="invalid_argument"){render();toast("ليست لديك صلاحية لهذا التعديل")}
@@ -1028,7 +1237,7 @@ $("itemform").onsubmit=e=>{e.preventDefault();if(!db)return;const v=readFields("
   setTimeout(()=>{const t=[...document.querySelectorAll(".req")].pop();if(t)t.scrollIntoView({behavior:"smooth",block:"center"})},500)};
 
 /* ============ الاتصال بقاعدة البيانات (Supabase) ============ */
-const TABLES={people:"people",groups:"groups",files:"topics",items:"items",roles:"roles",requests:"requests",comments:"comments",reqtypes:"req_types"};
+const TABLES={people:"people",groups:"groups",files:"topics",items:"items",roles:"roles",requests:"requests",comments:"comments",reqtypes:"req_types",purchases:"purchases"};
 let sb=null;
 function rid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
 function makeDb(){
@@ -1128,6 +1337,7 @@ async function startApp(user){
   db.collection("items").onSnapshot(s=>{state.items=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("requests").onSnapshot(s=>{state.requests=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("comments").onSnapshot(s=>{state.comments=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
+  db.collection("purchases").onSnapshot(s=>{state.purchases=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("reqtypes").onSnapshot(s=>{state.reqTypes=sortO(s.docs.map(d=>({id:d.id,...d.data()})));safeRender()});
   if(sup){try{const {data}=await sb.rpc("list_contacts");state.contacts=Array.isArray(data)?data:[];safeRender()}catch(e){}}
 }
