@@ -324,7 +324,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
 <script>
 const ST = {new:"جديد", doing:"قيد التنفيذ", wait:"بانتظار طرف آخر", done:"مكتمل"};
 const SIGN = "م. محمد نور عمر";
-const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null};
+const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, buyers:[], purNotify:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null};
 let db = null;
 const $ = id => document.getElementById(id);
 
@@ -1009,6 +1009,18 @@ const MAX_FILE=20*1024*1024;
 function fmtSize(b){if(!b)return"";if(b<1024)return b+" B";if(b<1048576)return Math.round(b/1024)+" KB";return (b/1048576).toFixed(1)+" MB"}
 function isBuyer(){const m=person(state.me);const r=m&&roleOf(m.roleId);return !!(r&&r.purchasing)}
 function purOpen(x){return !["received","rejected"].includes(x.status)}
+const PCAT=["مستلزمات كمبيوتر","النقل والشحن","أدوات نظافة","صيانة كهرباء","صيانة السباكة","صيانة عامة","أخرى","أنشطة ومبادرات"];
+/* موعد الإنجاز: 72 ساعة عمل بتوقيت الرياض. الطلب بعد 2:30 م يبدأ 7:00 ص اليوم التالي، والجمعة لا تُحتسب */
+const RIY=3*36e5,HOUR=36e5,DAY=864e5;
+function riyParts(t){const d=new Date(t+RIY);return{dow:d.getUTCDay(),mins:d.getUTCHours()*60+d.getUTCMinutes(),day0:t-((t+RIY)%DAY)}}
+function purDue(created,hours){hours=hours||72;let t=created;let p=riyParts(t);
+  if(p.mins>14*60+30)t=p.day0+DAY+7*HOUR;
+  for(let i=0;i<7;i++){p=riyParts(t);if(p.dow===5)t=p.day0+DAY+7*HOUR;else break}
+  let left=hours*HOUR;
+  while(left>0){p=riyParts(t);if(p.dow===5){t=p.day0+DAY;continue}const end=p.day0+DAY;const step=Math.min(left,end-t);t+=step;left-=step}
+  return t}
+function purDueOf(x){return x.dueAt||purDue(x.createdAt||Date.now())}
+function purLate(x){return purOpen(x)&&purDueOf(x)<Date.now()}
 function money(n){return (Number(n)||0).toLocaleString("en-US",{maximumFractionDigits:2})+" ر.س"}
 
 async function uploadFile(kind,id,file){
@@ -1077,12 +1089,12 @@ function renderPurchases(){
   const seeAll=state.role!=="staff"||isBuyer();
   let list=state.purchases.slice();
   if(state.purScope==="mine")list=list.filter(x=>(x.requesterId||null)===(state.me||null));
-  if(state.purStatus==="open")list=list.filter(purOpen);else if(state.purStatus==="done")list=list.filter(x=>!purOpen(x));
-  list.sort((a,b)=>(purOpen(b)-purOpen(a))||((a.neededBy||"9999").localeCompare(b.neededBy||"9999"))||(b.createdAt||0)-(a.createdAt||0));
+  if(state.purStatus==="open")list=list.filter(purOpen);else if(state.purStatus==="late")list=list.filter(purLate);else if(state.purStatus==="done")list=list.filter(x=>!purOpen(x));
+  list.sort((a,b)=>(purOpen(b)-purOpen(a))||(purLate(b)-purLate(a))||(purDueOf(a)-purDueOf(b)));
   const sc=seeAll?[["all",state.role==="admin"||isBuyer()?"كل طلبات الشراء":"طلبات فريقي"],["mine","طلباتي"]]:[];
   v.innerHTML=`<div class="phead"><div><h2>المشتريات</h2><div class="prole">${isBuyer()?"طلبات الشراء الواردة إليك — حدّث حالتها وأرفق عروض الأسعار والفواتير":"اطلب احتياجات قسمك، وأرفق الملفات، وتابع حالة الطلب حتى الاستلام"}</div></div>
     <div class="filters">${sc.map(([k,l])=>`<button type="button" class="chip" data-ps="${k}" aria-pressed="${state.purScope===k}">${l}</button>`).join("")}</div></div>
-    <div class="filters">${[["open","المفتوحة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-pt="${k}" aria-pressed="${state.purStatus===k}">${l}</button>`).join("")}</div>
+    <div class="filters">${[["open","المفتوحة"],["late","المتأخرة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-pt="${k}" aria-pressed="${state.purStatus===k}">${l}</button>`).join("")}</div>
     ${state.me||state.role==="admin"?newPurHTML():""}
     <div class="list" id="purList"></div>`;
   v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{state.purScope=b.dataset.ps;render()});
@@ -1099,7 +1111,9 @@ function newPurHTML(){
    <form id="purform" class="fgrid" style="margin-top:10px">
     <label class="full">عنوان الطلب<input id="pu-title" required value="${esc(d.title||"")}" placeholder="مثال: أدوات نظافة للمبنى أ"></label>
     <label>القسم<select id="pu-group">${gopts}</select></label>
-    <label>مطلوب قبل<input id="pu-need" type="date" value="${esc(d.neededBy||"")}"></label>
+    <label>بند المصروف<select id="pu-cat" required><option value="">— اختر البند —</option>${PCAT.map(c=>`<option ${d.category===c?"selected":""}>${esc(c)}</option>`).join("")}</select></label>
+    <label>مطلوب قبل (اختياري)<input id="pu-need" type="date" value="${esc(d.neededBy||"")}"></label>
+    <div class="full hint" id="pu-due-hint">موعد الإنجاز: ${fmtTs(purDue(Date.now()))} — خلال 72 ساعة عمل (الطلب بعد 2:30 م يُحسب من 7:00 ص اليوم التالي، والجمعة لا تُحتسب).</div>
     <div class="full"><div class="hint" style="margin-bottom:4px">الأصناف</div><div class="prows">${d.rows.map((r,i)=>`<div class="prow2"><input data-r="${i}" data-f="name" value="${esc(r.name)}" placeholder="الصنف" aria-label="الصنف"><input data-r="${i}" data-f="qty" type="number" min="0" value="${esc(r.qty)}" placeholder="الكمية" aria-label="الكمية"><input data-r="${i}" data-f="unit" value="${esc(r.unit)}" placeholder="الوحدة" aria-label="الوحدة"><button type="button" class="del-file" data-rm="${i}" aria-label="حذف الصنف">×</button></div>`).join("")}</div>
       <button class="linkbtn" type="button" data-addrow>+ إضافة صنف</button></div>
     <label class="full">المبرر أو ملاحظات<textarea id="pu-reason">${esc(d.reason||"")}</textarea></label>
@@ -1110,7 +1124,7 @@ function newPurHTML(){
 function wireNewPur(v){
   const det=v.querySelector(".newreq");if(!det)return;det.ontoggle=()=>{state.newPurOpen=det.open};
   const f=v.querySelector("#purform");const d=state.purDraft;
-  const sync=()=>{d.title=f.querySelector("#pu-title").value;d.groupId=f.querySelector("#pu-group").value;d.neededBy=f.querySelector("#pu-need").value;d.reason=f.querySelector("#pu-reason").value;
+  const sync=()=>{d.title=f.querySelector("#pu-title").value;d.groupId=f.querySelector("#pu-group").value;d.neededBy=f.querySelector("#pu-need").value;d.category=f.querySelector("#pu-cat").value;d.reason=f.querySelector("#pu-reason").value;
     f.querySelectorAll("[data-r]").forEach(inp=>{d.rows[+inp.dataset.r][inp.dataset.f]=inp.value})};
   f.querySelectorAll("input,select,textarea").forEach(x=>x.addEventListener("input",sync));
   f.querySelector("[data-addrow]").onclick=()=>{sync();d.rows.push({name:"",qty:"",unit:""});render()};
@@ -1118,33 +1132,59 @@ function wireNewPur(v){
   f.onsubmit=async e=>{e.preventDefault();sync();
     const rows=d.rows.filter(r=>r.name.trim()).map(r=>({name:r.name.trim(),qty:Number(r.qty)||0,unit:r.unit.trim()}));
     if(!d.title.trim()){toast("اكتب عنوان الطلب");return}if(!rows.length){toast("أضف صنفاً واحداً على الأقل");return}
+    if(!d.category){toast("اختر بند المصروف — الطلب ما يكتمل بدونه");f.querySelector("#pu-cat").focus();return}
     const g=groupOf(d.groupId);const now=Date.now();
-    const doc={requesterId:state.me||null,requesterName:myName(),groupId:d.groupId||"",groupName:g?g.name:"",title:d.title.trim(),items:rows,neededBy:d.neededBy||"",reason:(d.reason||"").trim(),status:"new",createdAt:now,updatedAt:now};
+    const doc={requesterId:state.me||null,requesterName:myName(),groupId:d.groupId||"",groupName:g?g.name:"",title:d.title.trim(),items:rows,category:d.category,neededBy:d.neededBy||"",dueAt:purDue(now),reason:(d.reason||"").trim(),status:"new",createdAt:now,updatedAt:now};
     const ref=db.collection("purchases").doc();
-    try{await ref.set(doc);state.purDraft=null;state.newPurOpen=false;state.openThreads["p:"+ref.id]=true;state.purStatus="open";toast("أُرسل طلب الشراء — أرفق عرض السعر إن وُجد");render()}
+    try{await ref.set(doc);state.purDraft=null;state.newPurOpen=false;state.openThreads["p:"+ref.id]=true;state.purStatus="open";state.purNotify=ref.id;toast("أُرسل طلب الشراء إلى "+buyerNames()+" — نبّهه على الواتساب");render()}
     catch(err){toast("تعذر إرسال طلب الشراء")}};
+}
+function buyerNames(){return state.buyers.length?state.buyers.map(b=>b.name).join("، "):"مسؤول المشتريات"}
+function purMessage(x,b){
+  const L=["السلام عليكم ورحمة الله وبركاته",`أ. ${b.name}`,"","لديكم طلب شراء جديد على منصة متابعات المنار:",`• الطلب: ${x.title}`];
+  if(x.groupName)L.push(`• القسم: ${x.groupName}`);
+  L.push(`• مقدّم الطلب: ${x.requesterName||""}`);
+  if(x.category)L.push(`• بند المصروف: ${x.category}`);
+  L.push(`• موعد الإنجاز: ${fmtTs(purDueOf(x))}`);
+  if(x.neededBy)L.push(`• مطلوب قبل: ${fmtDate(x.neededBy)}`);
+  (x.items||[]).forEach(r=>L.push(`• ${r.name}${r.qty?` — ${r.qty}${r.unit?" "+r.unit:""}`:""}`));
+  if(x.reason)L.push(`• المبرر: ${x.reason}`);
+  L.push(`• رابط المنصة: ${here()}`,"","*نرجو الاطلاع على الطلب وتحديث حالته في المنصة.*","","شاكرين تعاونكم،",x.requesterName||SIGN);
+  return L.join("\n")}
+function purNotifyHTML(x){
+  const bs=state.buyers.filter(b=>waNum(b.phone));
+  if(!bs.length)return `<div class="hint">لم يُحدَّد مسؤول مشتريات برقم واتساب بعد.</div>`;
+  return bs.map(b=>`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${waNum(b.phone)}?text=${encodeURIComponent(purMessage(x,b))}" data-wa>تنبيه ${esc(b.name)} على الواتساب</a>`).join(" ");
 }
 function purCard(x){
   const el=document.createElement("article");const open=purOpen(x);
-  el.className="item"+(open?"":" s-done")+(x.neededBy&&open&&x.neededBy<todayStr()?" s-late":"");
+  el.className="item"+(open?"":" s-done")+(purLate(x)?" s-late":"");const due=purDueOf(x),late=purLate(x);
   const canStatus=state.role==="admin"||isBuyer();
   const th=threadOf("purchase",x.id);const k="p:"+x.id;const openT=!!state.openThreads[k];
   const files=th.filter(c=>c.type==="file").length,replies=th.filter(c=>c.type!=="status"&&c.type!=="file").length;
   el.innerHTML=`<div class="row1"><div class="ttl">${esc(x.title)}</div>
     ${canStatus?`<label class="st-wrap">حالة الطلب<select class="st v-${x.status==="received"?"done":x.status==="rejected"?"wait":x.status==="new"?"new":"doing"}">${Object.entries(PST).map(([a,b])=>`<option value="${a}" ${a===x.status?"selected":""}>${b}</option>`).join("")}</select></label>`:`<span class="pill ${open?"p-req":"p-done"}">${PST[x.status]||""}</span>`}</div>
-    <div class="route"><span><span class="hint">مقدّم الطلب</span> <b>${esc(x.requesterName||"")}</b></span>${x.groupName?`<span class="pill p-file">${esc(x.groupName)}</span>`:""}</div>
-    <div class="dates"><div><span>تاريخ الطلب</span><b>${fmtTs(x.createdAt)}</b></div><div><span>مطلوب قبل</span><b>${fmtDate(x.neededBy)}</b></div><div><span>المورد / القيمة</span><b>${esc(x.vendor||"—")}${x.total?" · "+money(x.total):""}</b></div></div>
+    <div class="route"><span><span class="hint">من</span> <b>${esc(x.requesterName||"")}</b></span><span class="arr">←</span><span><span class="hint">إلى</span> <b>${esc(buyerNames())}</b></span>${x.groupName?`<span class="pill p-file">${esc(x.groupName)}</span>`:""}</div>
+    ${state.purNotify===x.id?`<div class="req"><h3>نبّه مسؤول المشتريات بالطلب</h3><div class="acts">${purNotifyHTML(x)}<button class="linkbtn mute" type="button" data-pn>لاحقاً</button></div></div>`:""}
+    <div class="dates"><div><span>تاريخ الطلب</span><b>${fmtTs(x.createdAt)}</b></div><div><span>موعد الإنجاز (72 ساعة عمل)</span><b class="${late?"l":""}">${fmtTs(due)}</b></div><div><span>${open?"الوقت":"الحالة"}</span><b class="${late?"l":""}">${open?(late?`متأخر ${dur(Date.now()-due)}`:`باقي ${dur(due-Date.now())}`):esc(PST[x.status]||"")}</b></div></div>
+    <div class="meta">${x.category?`<span class="pill p-who">بند المصروف: ${esc(x.category)}</span>`:`<span class="pill p-late">بند المصروف غير محدد</span>`}${x.neededBy?`<span>مطلوب قبل: ${fmtDate(x.neededBy)}</span>`:""}${x.vendor||x.total?`<span>المورد / القيمة: ${esc(x.vendor||"—")}${x.total?" · "+money(x.total):""}</span>`:""}</div>
+    ${!x.category&&(canStatus||(x.requesterId===state.me&&x.status==="new"))?`<div class="acts"><label class="st-wrap">حدّد بند المصروف<select data-cat><option value="">— اختر البند —</option>${PCAT.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label></div>`:""}
     <div class="ptab"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>الوحدة</th></tr></thead><tbody>${(x.items||[]).map(r=>`<tr><td>${esc(r.name)}</td><td>${num(r.qty||0)}</td><td>${esc(r.unit||"")}</td></tr>`).join("")}</tbody></table></div>
     ${x.reason?`<div class="note">${esc(x.reason)}</div>`:""}
     ${canStatus&&open?`<div class="fgrid buyer"><label>المورد<input data-bf="vendor" value="${esc(x.vendor||"")}"></label><label>القيمة (ر.س)<input data-bf="total" type="number" min="0" value="${esc(x.total||"")}"></label><label>رقم أمر الشراء<input data-bf="poNumber" value="${esc(x.poNumber||"")}"></label><div><button class="btn ghost sm" type="button" data-bsave>حفظ</button></div></div>`:""}
     <div class="acts"><button class="linkbtn" type="button" data-t>${openT?"إخفاء الردود والملفات":"الردود والملفات"} (${num(replies)} رد · ${num(files)} ملف)</button>
+    ${open&&state.purNotify!==x.id&&!isBuyer()&&(x.requesterId===state.me||state.role==="admin")&&state.buyers.length?`<button class="linkbtn" type="button" data-pw>تنبيه مسؤول المشتريات</button>`:""}
     ${state.role==="admin"?`<button class="linkbtn mute" type="button" data-del>حذف</button>`:""}</div>
     ${state.confirm==="pu:"+x.id?`<div class="confirm">حذف طلب الشراء؟ <button class="btn danger sm" type="button" data-dy>حذف</button><button class="linkbtn mute" type="button" data-dn>إلغاء</button></div>`:""}
     ${openT?threadHTML("purchase",x.id):""}`;
   const sel=el.querySelector("select.st");
-  if(sel)sel.onchange=async()=>{const v=sel.value;try{await db.doc("purchases/"+x.id).update({status:v,statusBy:myName(),updatedAt:Date.now(),decidedAt:Date.now()});await addComment("purchase",x.id,`غيّر حالة طلب الشراء إلى «${PST[v]}»`,"status");toast("تم تحديث الحالة");db.refreshAll()}catch(e){toast("ليست لديك صلاحية لهذا التعديل");render()}};
+  const cs=el.querySelector("select[data-cat]");if(cs)cs.onchange=async()=>{if(!cs.value)return;try{await db.doc("purchases/"+x.id).update({category:cs.value,updatedAt:Date.now()});toast("حُدّد بند المصروف")}catch(e){toast("تعذر الحفظ")}};
+  if(sel)sel.onchange=async()=>{const v=sel.value;if(!x.category&&["approved","ordered","received"].includes(v)){toast("حدّد بند المصروف أولاً — الطلب ما يكتمل بدونه");sel.value=x.status;return}try{await db.doc("purchases/"+x.id).update({status:v,statusBy:myName(),updatedAt:Date.now(),decidedAt:Date.now()});await addComment("purchase",x.id,`غيّر حالة طلب الشراء إلى «${PST[v]}»`,"status");toast("تم تحديث الحالة");db.refreshAll()}catch(e){toast("ليست لديك صلاحية لهذا التعديل");render()}};
   const bs=el.querySelector("[data-bsave]");if(bs)bs.onclick=async()=>{const p={updatedAt:Date.now()};el.querySelectorAll("[data-bf]").forEach(i=>{p[i.dataset.bf]=i.dataset.bf==="total"?(Number(i.value)||0):i.value.trim()});try{await db.doc("purchases/"+x.id).update(p);toast("حُفظت بيانات الشراء")}catch(e){toast("تعذر الحفظ")}};
   el.querySelector("[data-t]").onclick=()=>{state.openThreads[k]=!openT;render()};
+  const pn=el.querySelector("[data-pn]");if(pn)pn.onclick=()=>{state.purNotify=null;render()};
+  const pw=el.querySelector("[data-pw]");if(pw)pw.onclick=()=>{state.purNotify=x.id;render()};
+  el.querySelectorAll("a[data-wa]").forEach(a=>a.addEventListener("click",()=>{if(state.purNotify===x.id){addComment("purchase",x.id,"نبّه مسؤول المشتريات على الواتساب","status").catch(()=>{});state.purNotify=null;setTimeout(render,300)}}));
   const del=el.querySelector("[data-del]");if(del)del.onclick=()=>{state.confirm="pu:"+x.id;render()};
   const dy=el.querySelector("[data-dy]");if(dy)dy.onclick=async()=>{state.confirm=null;try{await db.doc("purchases/"+x.id).delete();toast("حُذف طلب الشراء")}catch(e){toast("تعذر الحذف")}render()};
   const dn=el.querySelector("[data-dn]");if(dn)dn.onclick=()=>{state.confirm=null;render()};
@@ -1339,6 +1379,7 @@ async function startApp(user){
   db.collection("comments").onSnapshot(s=>{state.comments=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("purchases").onSnapshot(s=>{state.purchases=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("reqtypes").onSnapshot(s=>{state.reqTypes=sortO(s.docs.map(d=>({id:d.id,...d.data()})));safeRender()});
+  try{const {data}=await sb.rpc("buyer_contacts");state.buyers=Array.isArray(data)?data:[];safeRender()}catch(e){}
   if(sup){try{const {data}=await sb.rpc("list_contacts");state.contacts=Array.isArray(data)?data:[];safeRender()}catch(e){}}
 }
 
