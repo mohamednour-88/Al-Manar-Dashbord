@@ -1076,8 +1076,9 @@ function renderTabs(){
   const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""]];
   if(state.role!=="staff")tabs.push(["dash","لوحة البيانات",""]);
   if(state.role!=="staff")tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""]);
+  if(!tabs.some(x=>x[0]===state.view))state.view="tasks";
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
-  $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
+  $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
   $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
   $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";
 }
@@ -1360,6 +1361,7 @@ async function startApp(user){
   state.canWrite=admin;state.canAssign=admin||sup||mgr;state.canUpdate=true;
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
+  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed"].includes(hv))state.view=hv;}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)$("hsub").textContent="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
