@@ -1009,7 +1009,7 @@ const MAX_FILE=20*1024*1024;
 function fmtSize(b){if(!b)return"";if(b<1024)return b+" B";if(b<1048576)return Math.round(b/1024)+" KB";return (b/1048576).toFixed(1)+" MB"}
 function isBuyer(){const m=person(state.me);const r=m&&roleOf(m.roleId);return !!(r&&r.purchasing)}
 function purOpen(x){return !["received","rejected"].includes(x.status)}
-const PCAT=["مستلزمات كمبيوتر","النقل والشحن","أدوات نظافة","صيانة كهرباء","صيانة السباكة","صيانة عامة","أخرى","أنشطة ومبادرات"];
+const PCAT=["الضيافة","أدوات مكتبية وقرطاسية","مطبوعات","مستلزمات كمبيوتر","النقل والشحن","أدوات النظافة","صيانة كهرباء","صيانة السباكة","صيانة عامة","أخرى","أنشطة ومبادرات"];
 /* موعد الإنجاز: 72 ساعة عمل بتوقيت الرياض. الطلب بعد 2:30 م يبدأ 7:00 ص اليوم التالي، والجمعة لا تُحتسب */
 const RIY=3*36e5,HOUR=36e5,DAY=864e5;
 function riyParts(t){const d=new Date(t+RIY);return{dow:d.getUTCDay(),mins:d.getUTCHours()*60+d.getUTCMinutes(),day0:t-((t+RIY)%DAY)}}
