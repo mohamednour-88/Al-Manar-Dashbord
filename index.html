@@ -1097,7 +1097,7 @@ function renderTabs(){
   const trN=canTrans()?state.transReqs.filter(x=>x.status==="new").length:state.trips.filter(t=>t.startAt&&!t.endAt&&state.myVehicles.includes(t.vehicleId)).length;
   const whN=state.loans.filter(l=>l.status==="requested"&&isKeeper(l.warehouseId)).length;
   const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""]];
-  if(state.role!=="staff")tabs.push(["dash","لوحة البيانات",""]);
+  if(state.role==="admin")tabs.push(["dash","لوحة البيانات",""]);
   if(state.role!=="staff")tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""]);
   if(!tabs.some(x=>x[0]===state.view))state.view="tasks";
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
@@ -1827,7 +1827,7 @@ function deptStats(ids){
     rate:it.length?Math.round(100*it.filter(i=>i.status==="done").length/it.length):null,rqOpen:rq.filter(reqOpen).length,rqLate:rq.filter(reqLate).length,puOpen:pu.filter(purOpen).length,total:it.length};
 }
 function renderDash(){
-  const v=$("dashView");if(state.view!=="dash"){v.innerHTML="";return}
+  const v=$("dashView");if(state.view!=="dash"||state.role!=="admin"){v.innerHTML="";return}
   const it=state.items,rq=state.requests,pu=state.purchases;
   const done=it.filter(i=>i.status==="done").length;
   const rqDone=rq.filter(r=>r.status==="done"&&r.doneAt&&r.createdAt);
