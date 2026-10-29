@@ -255,6 +255,12 @@ body.staff aside{display:none}
 .nowrap{white-space:nowrap}
 .del-file{all:unset;cursor:pointer;color:var(--late);font-size:1.1rem;padding:0 6px}
 @media (max-width:620px){.rrow{grid-template-columns:minmax(0,1fr) 104px}.rrow .hint:last-child{display:none}.prow3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.stats .stat{cursor:pointer;font:inherit;text-align:start;color:inherit}.stats .stat[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:-2px}
+table.acc th{white-space:nowrap;font-size:.75rem}table.acc td.ck{text-align:center}table.acc input[type=checkbox]{width:18px;height:18px}table.acc select{width:auto;font-size:.82rem;padding:3px 6px}
+.ordlist{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-width:640px}
+.ordlist li{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:grab;user-select:none}
+.ordlist li.dragging{opacity:.5;border-style:dashed}.ordlist .grip{color:var(--muted);letter-spacing:-2px}.ordlist .on{min-width:22px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ordlist .who{display:grid;flex:1;line-height:1.35}.ordlist .arrows{display:flex;gap:10px}.ordlist button[disabled]{opacity:.3;pointer-events:none}
 .welcome{margin:0;background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem}
 .acct{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:.85rem;color:var(--muted);margin-top:8px}
 .p-done{background:var(--ok-soft);color:var(--ok)}
@@ -300,10 +306,10 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   <div class="banner" id="banner" hidden></div>
 
   <div class="stats" aria-label="ملخص">
-    <div class="stat"><b id="s-open">–</b><span>مهام مفتوحة</span></div>
-    <div class="stat late"><b id="s-late">–</b><span>متأخرة</span></div>
-    <div class="stat due"><b id="s-due">–</b><span>ينتهي موعدها اليوم</span></div>
-    <div class="stat ok"><b id="s-done">–</b><span>أُنجزت آخر ٧ أيام</span></div>
+    <button type="button" class="stat" data-f="open"><b id="s-open">–</b><span>مهام مفتوحة</span></button>
+    <button type="button" class="stat late" data-f="late"><b id="s-late">–</b><span>متأخرة</span></button>
+    <button type="button" class="stat due" data-f="today"><b id="s-due">–</b><span>ينتهي موعدها اليوم</span></button>
+    <button type="button" class="stat ok" data-f="done7"><b id="s-done">–</b><span>أُنجزت آخر ٧ أيام</span></button>
   </div>
 
   <div class="tabs" id="tabs" role="tablist" aria-label="أقسام المنصة"></div>
@@ -334,6 +340,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   <section class="panel" id="feedView" hidden></section>
   <section class="panel" id="trView" hidden></section>
   <section class="panel" id="whView" hidden></section>
+  <section class="panel" id="setView" hidden></section>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -343,7 +350,7 @@ const SIGN = "م. محمد نور عمر";
 const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, buyers:[], purNotify:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null,
   vehicles:[], riders:[], transReqs:[], trips:[], warehouses:[], stockItems:[], loans:[], transContacts:[], isTransport:false, myVehicles:[], myStores:[], srvVehicles:[], srvStores:[],
   trTab:"requests", trScope:"all", trStatus:"open", trDraft:null, newTrOpen:false, trNotify:null, tripDraft:null, newTripOpen:false, tripRange:"week", tripVeh:"", editVeh:null, newVehOpen:false, rVeh:"", newRiderOpen:false, anRange:30,
-  whSel:"", whTab:"items", whQ:"", whPick:{}, ldDraft:null, ldNotify:null, ldStatus:"open", editItem:null, newItemOpen:false, whEdit:null, newWhOpen:false, inOpen:false, inDraft:null, retOpen:null};
+  whSel:"", whTab:"items", whQ:"", whPick:{}, ldDraft:null, ldNotify:null, ldStatus:"open", editItem:null, newItemOpen:false, whEdit:null, newWhOpen:false, inOpen:false, inDraft:null, retOpen:null, setTab:"access", setQ:"", setGroup:"", ordGroup:""};
 let db = null;
 const $ = id => document.getElementById(id);
 
@@ -431,7 +438,9 @@ function render(){
   if(sig!==addFormSig){addFormSig=sig;buildAddForm()}
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
-  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();
+  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();
+  document.querySelector(".stats").hidden=!canTab("tasks");
+  document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
 
 /* ---------- groups ---------- */
@@ -634,7 +643,7 @@ function renderHead(){
     h.innerHTML=`<h2>${esc(g?g.name:"")}</h2><div class="prole">${par?"ضمن "+esc(par.name)+" · ":""}${num(n)} شخص</div>`}
   else h.innerHTML=`<h2>${state.sel==="none"?"مهام بدون مسؤول":"كل المسؤولين"}</h2>`;
   const fl=$("filters");fl.innerHTML="";
-  [["open","المفتوحة"],["late","المتأخرة"],["done","المكتملة"],["any","الكل"]].forEach(([k,l])=>{
+  [["open","المفتوحة"],["new","الجديدة"],["doing","قيد التنفيذ"],["today","ينتهي اليوم"],["late","المتأخرة"],["done","المكتملة"],["any","الكل"]].forEach(([k,l])=>{
     const c=document.createElement("button");c.type="button";c.className="chip";c.textContent=l;c.setAttribute("aria-pressed",String(state.filter===k));
     c.onclick=()=>{state.filter=k;render()};fl.appendChild(c)});
 }
@@ -644,11 +653,17 @@ function renderList(){
   if(state.filter==="open")list=list.filter(i=>i.status!=="done");
   if(state.filter==="late")list=list.filter(isLate);
   if(state.filter==="done")list=list.filter(i=>i.status==="done");
+  if(state.filter==="today")list=list.filter(isToday);
+  if(state.filter==="doing")list=list.filter(i=>i.status==="doing");
+  if(state.filter==="new")list=list.filter(i=>i.status==="new");
+  if(state.filter==="done7"){const wk=Date.now()-7*864e5;list=list.filter(i=>i.status==="done"&&(i.doneAt||0)>=wk)}
   list.sort((a,b)=>(isLate(b)-isLate(a))||((a.status==="done")-(b.status==="done"))||((b.priority==="high")-(a.priority==="high"))||String(a.due||"9999").localeCompare(String(b.due||"9999"))||(b.createdAt||0)-(a.createdAt||0));
   const L=$("list");L.innerHTML="";
   if(!list.length){
     const msg=!state.people.length?["لا يوجد مسؤولون","افتح «إدارة القائمة» لإضافة أول شخص."]
       :state.filter==="late"?["لا توجد مهام متأخرة","كل المهام ضمن مواعيدها."]
+      :state.filter==="today"?["لا توجد مهام ينتهي موعدها اليوم","المهام المستحقة اليوم تظهر هنا."]
+      :state.filter==="done"||state.filter==="done7"?["لا توجد مهام مكتملة هنا","تظهر هنا المهام بعد تحديث حالتها إلى «مكتمل»."]
       :["لا توجد مهام هنا","أضف مهمة من النموذج بالأعلى: اختر المسؤول فتظهر بياناته تلقائياً، ثم اكتب المهمة وتواريخها."];
     L.innerHTML=`<div class="empty"><strong>${msg[0]}</strong>${msg[1]}</div>`;return}
   for(const it of list)L.appendChild(renderItem(it));
@@ -862,7 +877,7 @@ const ACC={admin:"مدير المنصة",manager:"مدير",supervisor:"مشرف
 const PHONE_DOMAIN="@phone.almanar.app";
 function loginEmail(v){v=String(v||"").trim();if(/^[\d\s+()\-]{9,}$/.test(v)){const n=waNum(v);return n?n+PHONE_DOMAIN:v}return v}
 function showId(e){e=String(e||"");return e.endsWith(PHONE_DOMAIN)?"0"+e.slice(3,e.indexOf("@")):e}
-function accessOf(p){if(!p)return"staff";const r=roleOf(p.roleId);return (r&&r.access)||p.access||"staff"}
+function accessOf(p){if(!p)return"staff";if(["staff","supervisor","manager"].includes(p.accessOverride))return p.accessOverride;const r=roleOf(p.roleId);return (r&&r.access)||p.access||"staff"}
 function myName(){const m=person(state.me);return m?m.name:SIGN}
 function dur(ms){const m=Math.round(ms/6e4);if(m<60)return `${Math.max(1,m)} دقيقة`;const h=Math.round(ms/36e5);if(h<48)return `${h} ساعة`;return `${Math.round(h/24)} يوم`}
 function reqLate(r){return r.status!=="done"&&r.status!=="rejected"&&r.dueAt&&r.dueAt<Date.now()}
@@ -1097,13 +1112,14 @@ function renderTabs(){
   const trN=canTrans()?state.transReqs.filter(x=>x.status==="new").length:state.trips.filter(t=>t.startAt&&!t.endAt&&state.myVehicles.includes(t.vehicleId)).length;
   const whN=state.loans.filter(l=>l.status==="requested"&&isKeeper(l.warehouseId)).length;
   const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""]];
-  if(state.role==="admin")tabs.push(["dash","لوحة البيانات",""]);
-  if(state.role!=="staff")tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""]);
-  if(!tabs.some(x=>x[0]===state.view))state.view="tasks";
+  tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""],["dash","لوحة البيانات",""]);
+  if(state.role==="admin")tabs.push(["settings","الإعدادات",""]);
+  const allow=myTabs();for(let i=tabs.length-1;i>=0;i--)if(!allow.includes(tabs[i][0]))tabs.splice(i,1);
+  if((state.people.length||state.role==="admin")&&!tabs.some(x=>x[0]===state.view))state.view=tabs.length?tabs[0][0]:"tasks";
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
   $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
-  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";
+  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("setView").hidden=state.view!=="settings";
 }
 
 /* ---------- المشتريات ---------- */
@@ -1217,6 +1233,81 @@ function purCard(x){
 }
 
 const LOGO="";
+/* ================= الإصدار 6: صلاحيات الأقسام، الإعدادات، ترتيب الأسماء ================= */
+const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
+const ACC_TXT={"":"حسب المسمى",staff:"موظف",supervisor:"مشرف",manager:"مدير"};
+function defaultTabs(p){
+  if(!p)return["tasks"];
+  const r=roleOf(p.roleId);const acc=accessOf(p);
+  const buyer=!!(r&&r.purchasing),tr=!!(r&&r.transport),keeper=state.warehouses.some(w=>w.keeperId===p.id),vs=state.vehicles.some(v=>(v.supervisorIds||[]).includes(p.id));
+  if(buyer||tr||keeper){const t=["tasks"];if(buyer)t.push("purchases");if(tr||vs)t.push("transport");if(keeper)t.push("stores");return t}
+  const t=["tasks","requests"];if(vs)t.push("transport");if(acc!=="staff")t.push("feed");return t}
+function tabsFor(p){if(!p)return["tasks"];if(Array.isArray(p.tabs))return p.tabs;const r=roleOf(p.roleId);if(r&&Array.isArray(r.tabs))return r.tabs;return defaultTabs(p)}
+function myTabs(){if(state.role==="admin")return TAB_DEFS.map(x=>x[0]).concat("settings");const t=tabsFor(person(state.me));return t.length?t:["tasks"]}
+function canTab(k){return myTabs().includes(k)}
+
+/* ---------- الإعدادات (للمدير فقط) ---------- */
+function renderSettings(){
+  const v=$("setView");if(state.view!=="settings"||state.role!=="admin"){v.innerHTML="";return}
+  const sub=[["access","صلاحيات الوصول"],["order","ترتيب الأسماء"]];
+  if(!sub.some(s=>s[0]===state.setTab))state.setTab="access";
+  v.innerHTML=`<div class="phead"><div><h2>الإعدادات</h2><div class="prole">حدّد لكل شخص الأقسام اللي تظهر له ومستوى صلاحيته، ورتّب الأسماء داخل كل فريق</div></div></div>
+   <div class="filters">${sub.map(([k,l])=>`<button type="button" class="chip" data-st="${k}" aria-pressed="${state.setTab===k}">${l}</button>`).join("")}</div><div id="setBody" class="panel"></div>`;
+  v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{state.setTab=b.dataset.st;render()});
+  const B=v.querySelector("#setBody");
+  if(state.setTab==="access")accessView(B);else orderView(B);
+}
+function groupFilterOpts(sel){return `<option value="">كل الفرق</option>`+orderedGroups().map(({g,lvl})=>`<option value="${esc(g.id)}" ${sel===g.id?"selected":""}>${lvl?"— ":""}${esc(g.name)}</option>`).join("")}
+function accessView(B){
+  const q=(state.setQ||"").trim();const gsel=state.setGroup||"";
+  let list=state.people.slice();
+  if(gsel)list=list.filter(p=>inGroup(p,gsel));
+  if(q)list=list.filter(p=>(p.name+" "+titleOf(p)).includes(q));
+  B.innerHTML=`<div class="hint">الأقسام اللي ما تتأشر لشخص ما تظهر له في المنصة. وكل شخص يشوف داخل القسم بيانات فريقه فقط حسب صلاحيته: المدير يشوف كل الفرق المسجّل فيها (مثلاً مدير مجمع البنين يُسجَّل في «مجمع قسم البنين» ويُعطى صلاحية «مدير» وقسم «لوحة البيانات»، فيشوف أرقام مجمعه فقط).</div>
+   <div class="filters"><select id="setGroup" style="width:auto" aria-label="الفريق">${groupFilterOpts(gsel)}</select><input type="search" id="setQ" placeholder="ابحث بالاسم أو المسمى" aria-label="بحث" value="${esc(q)}" style="max-width:260px"></div>
+   <div class="ptab"><table class="acc"><thead><tr><th>الاسم</th><th>الصلاحية</th>${TAB_DEFS.map(([k,l])=>`<th>${l}</th>`).join("")}<th></th></tr></thead><tbody>
+   ${list.map(p=>{const t=tabsFor(p);const custom=Array.isArray(p.tabs);
+     return `<tr data-pid="${esc(p.id)}"><td><b>${esc(p.name)}</b><span class="hint" style="display:block">${esc(titleOf(p))}${p._linked?"":" · لم يفعّل حسابه"}</span></td>
+       <td><select data-acc aria-label="صلاحية ${esc(p.name)}">${Object.entries(ACC_TXT).map(([k,l])=>`<option value="${k}" ${(p.accessOverride||"")===k?"selected":""}>${l}${k===""?" ("+(ACC_TXT[accessOf(p)]||accessOf(p))+")":""}</option>`).join("")}</select></td>
+       ${TAB_DEFS.map(([k,l])=>`<td class="ck"><input type="checkbox" data-tab="${k}" ${t.includes(k)?"checked":""} aria-label="${l} — ${esc(p.name)}"></td>`).join("")}
+       <td>${custom?`<button class="linkbtn mute" type="button" data-reset>افتراضي</button>`:`<span class="hint">افتراضي</span>`}</td></tr>`}).join("")||`<tr><td colspan="10" class="hint">لا توجد نتائج.</td></tr>`}</tbody></table></div>
+   <div class="hint">«افتراضي» يعني الأقسام تُحسب تلقائياً من المسمى: مسؤول المشتريات يشوف المشتريات ومهامه، مسؤول النقل يشوف الحركة والنقل ومهامه، أمين المستودع يشوف مستودعه ومهامه، والباقين المهام والطلبات.</div>`;
+  const gs=B.querySelector("#setGroup");gs.onchange=()=>{state.setGroup=gs.value;render()};
+  const qs=B.querySelector("#setQ");qs.oninput=()=>{state.setQ=qs.value;clearTimeout(accessView._t);accessView._t=setTimeout(()=>{render();const n=$("setQ");if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}},350)};
+  B.querySelectorAll("tr[data-pid]").forEach(tr=>{const id=tr.dataset.pid;const p=person(id);
+    tr.querySelector("[data-acc]").onchange=async e=>{try{await db.doc("people/"+id).update({accessOverride:e.target.value,updatedAt:Date.now()});toast("حُفظت صلاحية "+p.name)}catch(err){toast("تعذر الحفظ")}};
+    tr.querySelectorAll("[data-tab]").forEach(c=>c.onchange=async()=>{const t=[...tr.querySelectorAll("[data-tab]")].filter(x=>x.checked).map(x=>x.dataset.tab);
+      try{await db.doc("people/"+id).update({tabs:t,updatedAt:Date.now()});toast("حُفظت أقسام "+p.name)}catch(err){toast("تعذر الحفظ")}});
+    const rs=tr.querySelector("[data-reset]");if(rs)rs.onclick=async()=>{try{await db.doc("people/"+id).update({tabs:null,updatedAt:Date.now()});toast("رجعت أقسام "+p.name+" للافتراضي")}catch(err){toast("تعذر الحفظ")}}});
+}
+/* ترتيب الأسماء بالسحب والإفلات أو بالأسهم */
+function orderView(B){
+  const groups=orderedGroups();
+  if(!state.ordGroup||!groupOf(state.ordGroup))state.ordGroup=groups[0]?groups[0].g.id:"";
+  const gid=state.ordGroup;
+  const members=state.people.filter(p=>(p.groups||[]).includes(gid));
+  B.innerHTML=`<div class="filters"><select id="ordGroup" style="width:auto" aria-label="الفريق">${groups.map(({g,lvl})=>`<option value="${esc(g.id)}" ${gid===g.id?"selected":""}>${lvl?"— ":""}${esc(g.name)}</option>`).join("")}</select></div>
+   <div class="hint">اسحب الاسم لفوق أو لتحت، أو استخدم الأسهم. الترتيب يُحفظ تلقائياً ويظهر في قائمة المسؤولين.</div>
+   <ol class="ordlist" id="ordList">${members.map((p,i)=>`<li draggable="true" data-pid="${esc(p.id)}"><span class="grip" aria-hidden="true">⋮⋮</span><span class="on">${num(i+1)}</span><span class="who"><b>${esc(p.name)}</b><span class="hint">${esc(titleOf(p))}</span></span><span class="arrows"><button type="button" class="linkbtn" data-up ${i===0?"disabled":""} aria-label="لفوق">▲</button><button type="button" class="linkbtn" data-down ${i===members.length-1?"disabled":""} aria-label="لتحت">▼</button></span></li>`).join("")||'<li class="hint">لا يوجد أشخاص في هذا الفريق.</li>'}</ol>`;
+  B.querySelector("#ordGroup").onchange=e=>{state.ordGroup=e.target.value;render()};
+  const ol=B.querySelector("#ordList");let drag=null;
+  const save=async ids=>{
+    const all=state.people.slice();const pos=all.map((p,i)=>ids.includes(p.id)?i:-1).filter(i=>i>=0);
+    const seq=ids.map(id=>all.find(p=>p.id===id));pos.forEach((ix,k)=>{all[ix]=seq[k]});
+    const ups=[];all.forEach((p,i)=>{if((p.order||0)!==i+1)ups.push([p.id,i+1])});
+    ups.forEach(([id,o])=>{const p=person(id);if(p)p.order=o});state.people.sort((a,b)=>(a.order||0)-(b.order||0));render();
+    try{for(const [id,o] of ups)await db.doc("people/"+id).update({order:o});toast("حُفظ الترتيب")}catch(err){toast("تعذر حفظ الترتيب");db.refreshAll()}};
+  const ids=()=>[...ol.querySelectorAll("li[data-pid]")].map(li=>li.dataset.pid);
+  ol.querySelectorAll("li[data-pid]").forEach(li=>{
+    li.addEventListener("dragstart",e=>{drag=li;li.classList.add("dragging");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",li.dataset.pid)}catch(x){}});
+    li.addEventListener("dragend",()=>{li.classList.remove("dragging");if(drag){drag=null;save(ids())}});
+    li.addEventListener("dragover",e=>{e.preventDefault();if(!drag||drag===li)return;const r=li.getBoundingClientRect();const after=e.clientY>r.top+r.height/2;li.parentNode.insertBefore(drag,after?li.nextSibling:li)});
+    const up=li.querySelector("[data-up]"),dn=li.querySelector("[data-down]");
+    if(up)up.onclick=()=>{const a=ids();const i=a.indexOf(li.dataset.pid);if(i>0){[a[i-1],a[i]]=[a[i],a[i-1]];save(a)}};
+    if(dn)dn.onclick=()=>{const a=ids();const i=a.indexOf(li.dataset.pid);if(i<a.length-1){[a[i+1],a[i]]=[a[i],a[i+1]];save(a)}};
+  });
+}
+
 /* ================= الإصدار 5: الحركة والنقل + المستودعات ================= */
 const TRT=["رحلة طلابية","نقل موظفين","نقل أغراض أو شحن","مشوار إداري","أخرى"];
 const TRS={new:"جديد",approved:"معتمد",assigned:"حُددت المركبة",done:"منفّذ",rejected:"مرفوض",cancelled:"ملغي"};
@@ -1827,7 +1918,7 @@ function deptStats(ids){
     rate:it.length?Math.round(100*it.filter(i=>i.status==="done").length/it.length):null,rqOpen:rq.filter(reqOpen).length,rqLate:rq.filter(reqLate).length,puOpen:pu.filter(purOpen).length,total:it.length};
 }
 function renderDash(){
-  const v=$("dashView");if(state.view!=="dash"||state.role!=="admin"){v.innerHTML="";return}
+  const v=$("dashView");if(state.view!=="dash"||!canTab("dash")){v.innerHTML="";return}
   const it=state.items,rq=state.requests,pu=state.purchases;
   const done=it.filter(i=>i.status==="done").length;
   const rqDone=rq.filter(r=>r.status==="done"&&r.doneAt&&r.createdAt);
@@ -1898,6 +1989,7 @@ function saveNote(it,v){state.editNote=null;if(!db)return;guard(db.doc("items/"+
 function deleteItem(it){state.confirm=null;if(!db)return;guard(db.doc("items/"+it.id).delete(),"حُذفت المهمة")}
 function deletePerson(id){state.confirm=null;if(!db)return;if(state.sel===id)state.sel="all";guard(db.doc("people/"+id).delete(),"حُذف من القائمة")}
 
+document.querySelectorAll(".stats .stat").forEach(b=>b.onclick=()=>{state.filter=b.dataset.f;state.view="tasks";try{history.replaceState(null,"",location.pathname+"#tasks")}catch(e){}render();const l=$("list");if(l)l.scrollIntoView({behavior:"smooth",block:"start"})});
 $("pq").addEventListener("input",e=>{state.q=e.target.value;renderNav()});
 $("manage").onclick=()=>{state.manage=!state.manage;state.confirm=null;state.editPerson=null;render()};
 $("itemform").onsubmit=e=>{e.preventDefault();if(!db)return;const v=readFields("f-");if(!checkTask(v))return;
@@ -1993,7 +2085,7 @@ async function startApp(user){
   state.isTransport=!!me.transport;state.srvVehicles=Array.isArray(me.vehicles)?me.vehicles:[];state.srvStores=Array.isArray(me.stores)?me.stores:[];state.myVehicles=state.srvVehicles.slice();state.myStores=state.srvStores.slice();
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
-  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores"].includes(hv))state.view=hv;}
+  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","settings"].includes(hv))state.view=hv;}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)$("hsub").textContent="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
