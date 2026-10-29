@@ -268,6 +268,10 @@ table.acc th{white-space:nowrap;font-size:.75rem}table.acc td.ck{text-align:cent
 .rmrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:10px;align-items:center;background:var(--surface);border-radius:8px;padding:6px 10px;font-size:.88rem}
 .rmrow.l{border-inline-start:3px solid var(--late)}.rmsoon{color:var(--warn);font-weight:600;white-space:nowrap}.rmgo{text-align:start;white-space:normal}
 @media (max-width:620px){.rmrow{grid-template-columns:minmax(0,1fr) auto}.rmrow .hint{display:none}}
+.rtrow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;background:var(--sunk);border-radius:8px;padding:7px 10px;font-size:.9rem;border-inline-start:3px solid transparent}
+.rtrow.ok{border-inline-start-color:var(--ok);background:var(--ok-soft)}.rtrow.no{border-inline-start-color:var(--late);background:var(--late-soft)}
+.rtbtns{display:flex;gap:6px;align-items:center}
+.sitepick{display:flex;flex-wrap:wrap;gap:8px}.sitepick fieldset{border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin:0;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem}.sitepick legend{font-size:.76rem;color:var(--muted)}.sitepick label{display:flex;gap:4px;align-items:center;color:var(--fg)}.sitepick input{width:auto}
 .welcome{margin:0;background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem}
 .acct{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:.85rem;color:var(--muted);margin-top:8px}
 .p-done{background:var(--ok-soft);color:var(--ok)}
@@ -349,6 +353,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   <section class="panel" id="trView" hidden></section>
   <section class="panel" id="whView" hidden></section>
   <section class="panel" id="setView" hidden></section>
+  <section class="panel" id="rtView" hidden></section>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -358,7 +363,7 @@ const SIGN = "م. محمد نور عمر";
 const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, buyers:[], purNotify:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null,
   vehicles:[], riders:[], transReqs:[], trips:[], warehouses:[], stockItems:[], loans:[], transContacts:[], isTransport:false, myVehicles:[], myStores:[], srvVehicles:[], srvStores:[],
   trTab:"requests", trScope:"all", trStatus:"open", trDraft:null, newTrOpen:false, trNotify:null, tripDraft:null, newTripOpen:false, tripRange:"week", tripVeh:"", editVeh:null, newVehOpen:false, rVeh:"", newRiderOpen:false, anRange:30,
-  whSel:"", whTab:"items", whQ:"", whPick:{}, ldDraft:null, ldNotify:null, ldStatus:"open", editItem:null, newItemOpen:false, whEdit:null, newWhOpen:false, inOpen:false, inDraft:null, retOpen:null, setTab:"access", setQ:"", setGroup:"", ordGroup:""};
+  whSel:"", whTab:"items", whQ:"", whPick:{}, ldDraft:null, ldNotify:null, ldStatus:"open", editItem:null, newItemOpen:false, whEdit:null, newWhOpen:false, inOpen:false, inDraft:null, retOpen:null, setTab:"access", setQ:"", setGroup:"", ordGroup:"", routine:[], rTab:"today", rOwner:"", rDate:"", editDuty:null, newDutyOpen:false, rAllOwners:false};
 let db = null;
 const $ = id => document.getElementById(id);
 
@@ -446,7 +451,7 @@ function render(){
   if(sig!==addFormSig){addFormSig=sig;buildAddForm()}
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
-  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();renderRemind();
+  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();renderRemind();renderRoutine();
   document.querySelector(".stats").hidden=!canTab("tasks");
   document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
@@ -1119,7 +1124,7 @@ function renderTabs(){
   const purN=state.purchases.filter(x=>x.status==="new"&&(state.role==="admin"||isBuyer())).length;
   const trN=canTrans()?state.transReqs.filter(x=>x.status==="new").length:state.trips.filter(t=>t.startAt&&!t.endAt&&state.myVehicles.includes(t.vehicleId)).length;
   const whN=state.loans.filter(l=>l.status==="requested"&&isKeeper(l.warehouseId)).length;
-  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""]];
+  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""],["routine","الأعمال الدورية",""]];
   tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""],["dash","لوحة البيانات",""]);
   if(state.role==="admin")tabs.push(["settings","الإعدادات",""]);
   const allow=myTabs();for(let i=tabs.length-1;i>=0;i--)if(!allow.includes(tabs[i][0]))tabs.splice(i,1);
@@ -1127,7 +1132,7 @@ function renderTabs(){
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
   $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
-  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("setView").hidden=state.view!=="settings";
+  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("setView").hidden=state.view!=="settings";$("rtView").hidden=state.view!=="routine";
 }
 
 /* ---------- المشتريات ---------- */
@@ -1241,11 +1246,153 @@ function purCard(x){
 }
 
 const LOGO="";
+/* ================= الإصدار 8: الأعمال الدورية للمشرفين ================= */
+const RFREQ={daily:"يومي",weekly:"أسبوعي",monthly:"شهري"};
+const RDAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const RCAT=["ترشيد الكهرباء والإنارة","النظافة","الأمن والبوابات","السلامة","الصيانة","الضيافة","أخرى"];
+const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",other:"أخرى"};
+const ADMIN_PHONE="0545967881";
+function rDocs(kind,owner){return state.routine.filter(x=>x.kind===kind&&(owner===undefined||x.ownerId===owner))}
+function rSites(){return rDocs("site").sort((a,b)=>(a.order||0)-(b.order||0))}
+function rSite(id){return state.routine.find(x=>x.id===id)}
+function rSiteName(s){return s?(s.building?s.building+" — ":"")+s.name:""}
+function rOwners(){if(state.role!=="admin")return state.me?[state.me]:[];
+  const ids=new Set(state.routine.filter(x=>x.ownerId).map(x=>x.ownerId));
+  state.people.forEach(p=>{if(accessOf(p)==="supervisor"&&(p.groups||[]).includes("g-facilities"))ids.add(p.id)});
+  return state.people.filter(p=>ids.has(p.id)).map(p=>p.id)}
+function rDueOn(d,dateStr){const dt=new Date(dateStr+"T12:00:00");const dow=dt.getDay();
+  if(d.paused)return false;
+  if(d.freq==="weekly")return Number(d.weekday)===dow;
+  if(d.freq==="monthly")return Number(d.monthday||1)===dt.getDate();
+  return dow!==5&&dow!==6}
+function rWorkerFor(owner,siteId){const a=rDocs("assign",owner).find(x=>x.siteId===siteId);const w=a&&state.routine.find(x=>x.id===a.workerId);return w?w.name:""}
+function rRows(owner,dateStr){const out=[];
+  for(const d of rDocs("duty",owner).sort((a,b)=>(a.order||0)-(b.order||0))){if(!rDueOn(d,dateStr))continue;if(d.createdAt&&dateOf(d.createdAt)>dateStr)continue;
+    const sites=(d.siteIds&&d.siteIds.length)?d.siteIds:[""];
+    for(const sid of sites){const lid=`l_${dateStr}_${d.id}_${sid||"x"}`;out.push({duty:d,siteId:sid,site:rSite(sid),lid,log:state.routine.find(x=>x.id===lid),worker:sid?rWorkerFor(owner,sid):""})}}
+  return out}
+function routineDefaultOwner(){const o=rOwners();if(!state.rOwner||!o.includes(state.rOwner))state.rOwner=o[0]||"";return state.rOwner}
+
+function renderRoutine(){
+  const v=$("rtView");if(state.view!=="routine"){v.innerHTML="";return}
+  const admin=state.role==="admin";const owners=rOwners();const owner=routineDefaultOwner();
+  const subs=[["today","أعمال اليوم"],["duties","الأعمال الدورية"],["assign","توزيع المسؤولين"],["team","الفريق"],["reports","التقارير"]];
+  if(admin)subs.push(["sites","المواقع"]);
+  if(!subs.some(s=>s[0]===state.rTab))state.rTab="today";
+  v.innerHTML=`<div class="phead"><div><h2>الأعمال الدورية</h2><div class="prole">${admin?"أعمال المشرفين الدورية: توزيع المسؤولين على الأدوار والبوابات، والسجل اليومي، والتقارير":"سجّل إنجاز أعمالك الدورية اليوم، ووزّع فريقك على الأدوار والبوابات"}</div></div></div>
+   ${admin?`<div class="filters">${owners.map(id=>{const p=person(id);return `<button type="button" class="chip" data-ro="${esc(id)}" aria-pressed="${owner===id}">${esc(p?p.name:id)}</button>`}).join("")||'<span class="hint">لا يوجد مشرفون بعد.</span>'}</div>`:""}
+   <div class="filters">${subs.map(([k,l])=>`<button type="button" class="chip" data-rtab="${k}" aria-pressed="${state.rTab===k}">${l}</button>`).join("")}</div>
+   <div id="rtBody" class="panel"></div>`;
+  v.querySelectorAll("[data-ro]").forEach(b=>b.onclick=()=>{state.rOwner=b.dataset.ro;render()});
+  v.querySelectorAll("[data-rtab]").forEach(b=>b.onclick=()=>{state.rTab=b.dataset.rtab;state.confirm=null;render()});
+  const B=v.querySelector("#rtBody");
+  if(!owner&&state.rTab!=="sites"){B.innerHTML=`<div class="empty"><strong>لا يوجد مشرف محدد</strong>${admin?"أعطِ المشرف صلاحية «مشرف» من الإعدادات، أو أضف له عملاً دورياً.":"حسابك غير مربوط بموظف."}</div>`;return}
+  ({today:rToday,duties:rDuties,assign:rAssign,team:rTeam,reports:rReports,sites:rSitesView})[state.rTab](B,owner);
+}
+/* أعمال اليوم */
+function rToday(B,owner){
+  const date=state.rDate||todayStr();const rows=rRows(owner,date);
+  const done=rows.filter(r=>r.log&&r.log.status==="done").length,miss=rows.filter(r=>r.log&&r.log.status==="miss").length;
+  const pct=rows.length?Math.round(100*done/rows.length):null;const p=person(owner);
+  const byDuty={};rows.forEach(r=>{(byDuty[r.duty.id]=byDuty[r.duty.id]||{d:r.duty,rows:[]}).rows.push(r)});
+  B.innerHTML=`<div class="filters" style="align-items:center"><label class="st-wrap">التاريخ<input type="date" id="rDate" value="${esc(date)}" style="width:auto"></label>
+     <span class="pill ${pct===100?"p-done":"p-req"}">${rows.length?`المنجز ${num(done)} من ${num(rows.length)}${miss?` · لم يتم ${num(miss)}`:""}`:"لا توجد أعمال مجدولة لهذا اليوم"}</span>
+     ${rows.length?`<span class="pbar" style="width:120px"><span style="width:${pct||0}%"></span></span>`:""}</div>
+   ${Object.values(byDuty).map(({d,rows})=>`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(d.title)}</h3><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.time?" · "+esc(d.time):""}</span></div>
+     ${d.note?`<div class="hint">${esc(d.note)}</div>`:""}
+     <div class="rlist">${rows.map(r=>{const st=r.log&&r.log.status;return `<div class="rtrow ${st==="done"?"ok":st==="miss"?"no":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.site?rSiteName(r.site):"عام")}</b>${r.worker?` <span class="hint">· المسؤول: ${esc(r.worker)}</span>`:""}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
+       <span class="rtbtns"><button type="button" class="btn sm ${st==="done"?"":"ghost"}" data-st="done">تم</button><button type="button" class="btn sm ${st==="miss"?"danger":"ghost"}" data-st="miss">لم يتم</button><button type="button" class="linkbtn" data-note>ملاحظة</button></span></div>`}).join("")}</div></section>`).join("")||`<div class="empty"><strong>لا توجد أعمال مجدولة لهذا اليوم</strong>أضف الأعمال من «الأعمال الدورية» وحدد تكرارها والأماكن.</div>`}
+   ${rows.length?`<div class="acts"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(state.role==="admin"?(p&&p.phone):ADMIN_PHONE)}?text=${encodeURIComponent(rReportMsg(owner,date,rows))}">${state.role==="admin"?"إرسال ملخص اليوم للمشرف":"إرسال تقرير اليوم لـ م. محمد نور عمر"}</a></div>`:""}`;
+  B.querySelector("#rDate").onchange=e=>{state.rDate=e.target.value;render()};
+  B.querySelectorAll(".rtrow").forEach(el=>{const r=rows.find(x=>x.lid===el.dataset.lid);
+    const save=async patch=>{const base=r.log||{kind:"log",ownerId:owner,date,dutyId:r.duty.id,dutyTitle:r.duty.title,siteId:r.siteId,siteName:r.site?rSiteName(r.site):"",worker:r.worker,createdAt:Date.now()};
+      try{await db.doc("routine/"+r.lid).set({...base,...patch,by:myName(),at:Date.now()});toast("حُفظ")}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
+    el.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>save({status:b.dataset.st}));
+    el.querySelector("[data-note]").onclick=()=>{const n=prompt("ملاحظة على "+(r.site?rSiteName(r.site):r.duty.title),(r.log&&r.log.note)||"");if(n!==null)save({note:n.trim(),status:(r.log&&r.log.status)||"miss"})}});
+}
+function rReportMsg(owner,date,rows){const p=person(owner);const done=rows.filter(r=>r.log&&r.log.status==="done").length;
+  const L=["السلام عليكم ورحمة الله وبركاته",state.role==="admin"?`أ. ${p?p.name:""}`:"م. محمد نور عمر","",`تقرير الأعمال الدورية — ${fmtDate(date)}`];
+  const by={};rows.forEach(r=>{(by[r.duty.title]=by[r.duty.title]||[]).push(r)});
+  for(const t in by){L.push("",`• ${t}`);by[t].forEach(r=>{const st=r.log?r.log.status:"";L.push(`  ${st==="done"?"✅":st==="miss"?"❌":"⏳"} ${r.site?rSiteName(r.site):"عام"}${r.worker?" ("+r.worker+")":""}${r.log&&r.log.note?" — "+r.log.note:""}`)})}
+  L.push("",`نسبة الإنجاز: ${rows.length?Math.round(100*done/rows.length):0}% (${done} من ${rows.length})`,"",state.role==="admin"?"*نرجو استكمال ما لم يتم وتحديثه في المنصة.*":"*نرجو الاطلاع على التقرير.*","",state.role==="admin"?SIGN:myName());
+  return L.join("\n")}
+/* الأعمال الدورية */
+function rDuties(B,owner){
+  const list=rDocs("duty",owner).sort((a,b)=>(a.order||0)-(b.order||0));const sites=rSites();
+  const form=d=>{d=d||{freq:"daily",category:RCAT[0],siteIds:[]};const id=d.id||"new";const bld=[...new Set(sites.map(s=>s.building))];
+    return `<form class="fgrid rdform" data-rd="${esc(id)}" style="margin-top:8px">
+     <label class="wide">العمل<input data-k="title" required value="${esc(d.title||"")}" placeholder="مثال: التأكد من إطفاء الإنارة والمكيفات"></label>
+     <label>التصنيف<select data-k="category">${RCAT.map(c=>`<option ${d.category===c?"selected":""}>${c}</option>`).join("")}</select></label>
+     <label>التكرار<select data-k="freq">${optsOf(RFREQ,d.freq||"daily")}</select></label>
+     <label>يوم الأسبوع (للأسبوعي)<select data-k="weekday">${RDAYS.map((x,i)=>`<option value="${i}" ${Number(d.weekday)===i?"selected":""}>${x}</option>`).join("")}</select></label>
+     <label>يوم الشهر (للشهري)<input data-k="monthday" type="number" min="1" max="28" value="${esc(d.monthday||1)}"></label>
+     <label>الوقت (اختياري)<input data-k="time" value="${esc(d.time||"")}" placeholder="مثال: قبل نهاية الدوام"></label>
+     <div class="full"><div class="hint" style="margin-bottom:4px">الأماكن (يتكرر العمل لكل مكان مع مسؤوله)</div><div class="sitepick">${bld.map(b=>`<fieldset><legend>${esc(b)}</legend>${sites.filter(s=>s.building===b).map(s=>`<label><input type="checkbox" value="${esc(s.id)}" ${(d.siteIds||[]).includes(s.id)?"checked":""}>${esc(s.name)}</label>`).join("")}</fieldset>`).join("")}</div></div>
+     <label class="full">تعليمات (اختياري)<input data-k="note" value="${esc(d.note||"")}"></label>
+     <div class="full acts"><button class="btn ${d.id?"":"sm"}" type="submit">${d.id?"حفظ":"إضافة العمل"}</button>${d.id?`<button class="linkbtn mute" type="button" data-rcancel>إلغاء</button>`:""}</div></form>`};
+  B.innerHTML=`<details class="newreq" ${state.newDutyOpen?"open":""}><summary>+ عمل دوري جديد</summary>${form(null)}</details>
+   <div class="list">${list.map(d=>state.editDuty===d.id?`<article class="item">${form(d)}</article>`:`<article class="item ${d.paused?"s-done":""}" data-did="${esc(d.id)}"><div class="row1"><div class="ttl">${esc(d.title)}</div><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.freq==="weekly"?" — "+RDAYS[Number(d.weekday)||0]:d.freq==="monthly"?" — يوم "+num(Number(d.monthday)||1):""}</span></div>
+     <div class="meta"><span>الأماكن: ${(d.siteIds||[]).length?esc((d.siteIds||[]).map(id=>rSiteName(rSite(id))).filter(Boolean).join("، ")):"عام"}</span>${d.time?`<span>الوقت: ${esc(d.time)}</span>`:""}${d.paused?'<span class="pill p-late">متوقف</span>':""}</div>
+     <div class="acts"><button class="linkbtn" type="button" data-ed>تعديل</button><button class="linkbtn" type="button" data-pause>${d.paused?"تشغيل":"إيقاف مؤقت"}</button><button class="linkbtn mute" type="button" data-del>حذف</button></div>${delBtns("rd:"+d.id,"حذف العمل الدوري؟ يبقى سجله السابق.")}</article>`).join("")||'<div class="empty"><strong>لا توجد أعمال دورية بعد</strong>أضف أول عمل، مثل: متابعة ترشيد الكهرباء والإنارة في كل دور.</div>'}</div>`;
+  const det=B.querySelector("details.newreq");if(det)det.ontoggle=()=>{state.newDutyOpen=det.open};
+  B.querySelectorAll("form.rdform").forEach(f=>{const id=f.dataset.rd;
+    f.onsubmit=async e=>{e.preventDefault();const d={};f.querySelectorAll("[data-k]").forEach(i=>d[i.dataset.k]=i.value.trim());if(!d.title){toast("اكتب العمل");return}
+      d.siteIds=[...f.querySelectorAll(".sitepick input:checked")].map(i=>i.value);d.updatedAt=Date.now();
+      try{if(id==="new"){await db.collection("routine").doc().set({...d,kind:"duty",ownerId:owner,order:list.length+1,createdAt:Date.now()});state.newDutyOpen=false;toast("أُضيف العمل")}else{await db.doc("routine/"+id).update(d);state.editDuty=null;toast("حُفظ")}render()}catch(err){toast("تعذر الحفظ")}};
+    const c=f.querySelector("[data-rcancel]");if(c)c.onclick=()=>{state.editDuty=null;render()}});
+  B.querySelectorAll("article[data-did]").forEach(el=>{const id=el.dataset.did;const d=state.routine.find(x=>x.id===id);
+    el.querySelector("[data-ed]").onclick=()=>{state.editDuty=id;render()};
+    el.querySelector("[data-pause]").onclick=async()=>{try{await db.doc("routine/"+id).update({paused:!d.paused});toast(d.paused?"شُغّل العمل":"أُوقف العمل مؤقتاً")}catch(e){toast("تعذر الحفظ")}};
+    wireDel(el,"rd:"+id,()=>db.doc("routine/"+id).delete())});
+}
+/* توزيع المسؤولين على الأماكن */
+function rAssign(B,owner){
+  const sites=rSites();const workers=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const as=rDocs("assign",owner);
+  const bld=[...new Set(sites.map(s=>s.building))];
+  B.innerHTML=`<div class="hint">اختر المسؤول عن كل دور أو بوابة. يظهر اسمه في أعمال اليوم وفي التقرير. ${workers.length?"":"أضف أسماء فريقك أولاً من «الفريق»."}</div>
+   ${bld.map(b=>`<section class="dcard"><h3>${esc(b)}</h3><div class="rlist">${sites.filter(s=>s.building===b).map(s=>{const a=as.find(x=>x.siteId===s.id);return `<div class="rtrow"><span><b>${esc(s.name)}</b></span><select data-site="${esc(s.id)}" style="width:auto;min-width:180px" aria-label="مسؤول ${esc(s.name)}"><option value="">— بدون —</option>${workers.map(w=>`<option value="${esc(w.id)}" ${a&&a.workerId===w.id?"selected":""}>${esc(w.name)}${w.type?" ("+RWTYPE[w.type]+")":""}</option>`).join("")}</select></div>`}).join("")}</div></section>`).join("")}`;
+  B.querySelectorAll("[data-site]").forEach(sel=>sel.onchange=async()=>{const sid=sel.dataset.site;const id=`a_${owner}_${sid}`;
+    try{if(sel.value)await db.doc("routine/"+id).set({kind:"assign",ownerId:owner,siteId:sid,workerId:sel.value,updatedAt:Date.now()});else await db.doc("routine/"+id).delete();toast("حُفظ التوزيع")}catch(e){toast("تعذر الحفظ")}});
+}
+/* الفريق */
+function rTeam(B,owner){
+  const list=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const p=person(owner);
+  const defType=/حراس/.test(titleOf(p||{}))?"guard":/عاملات/.test(titleOf(p||{}))?"fworker":"worker";
+  B.innerHTML=`<form id="rwform" class="fgrid"><label class="full">أضف أسماء الفريق، كل اسم في سطر (ويمكن إضافة الجوال بعد فاصلة)<textarea id="rw-bulk" placeholder="فاطمة علي، 0551234567"></textarea></label>
+     <label>النوع<select id="rw-type">${optsOf(RWTYPE,defType)}</select></label><div><button class="btn" type="submit">إضافة</button></div></form>
+   <div class="ptab"><table><thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>الجوال</th><th>المسؤول عن</th><th></th></tr></thead><tbody>
+   ${list.map((w,i)=>{const where=rDocs("assign",owner).filter(a=>a.workerId===w.id).map(a=>rSiteName(rSite(a.siteId))).filter(Boolean);return `<tr data-wid="${esc(w.id)}"><td>${num(i+1)}</td><td>${esc(w.name)}</td><td>${RWTYPE[w.type]||""}</td><td class="ltr">${esc(w.phone||"")}</td><td>${esc(where.join("، "))}</td><td>${state.confirm==="rw:"+w.id?`<button class="btn danger sm" type="button" data-dy>حذف</button> <button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del>حذف</button>`}</td></tr>`}).join("")||`<tr><td colspan="6" class="hint">لا توجد أسماء بعد.</td></tr>`}</tbody></table></div>`;
+  B.querySelector("#rwform").onsubmit=async e=>{e.preventDefault();const lines=B.querySelector("#rw-bulk").value.split(/\n+/).map(s=>s.trim()).filter(Boolean);if(!lines.length){toast("اكتب اسماً واحداً على الأقل");return}
+    const type=B.querySelector("#rw-type").value;let o=list.length;
+    try{for(const ln of lines){const [name,phone]=ln.split(/[،,\t]/).map(s=>(s||"").trim());if(!name)continue;await db.collection("routine").doc().set({kind:"worker",ownerId:owner,name,phone:phone||"",type,order:++o,createdAt:Date.now()})}toast("أُضيفت الأسماء");render()}catch(err){toast("تعذر الإضافة")}};
+  B.querySelectorAll("tr[data-wid]").forEach(tr=>{const id=tr.dataset.wid;wireDel(tr,"rw:"+id,()=>db.doc("routine/"+id).delete())});
+}
+/* التقارير */
+function rReports(B,owner){
+  const days=[];for(let i=0;days.length<14&&i<30;i++){const d=dateOf(Date.now()-i*864e5);const dow=new Date(d+"T12:00:00").getDay();if(dow===5||dow===6)continue;days.push(d)}
+  const owners=state.role==="admin"&&state.rAllOwners?rOwners():[owner];
+  const rows=[];for(const o of owners)for(const d of days){const R=rRows(o,d);if(!R.length)continue;const done=R.filter(r=>r.log&&r.log.status==="done").length;rows.push({o,d,R,done,miss:R.filter(r=>!r.log||r.log.status!=="done")})}
+  const tot=rows.reduce((a,r)=>a+r.R.length,0),dn=rows.reduce((a,r)=>a+r.done,0);
+  B.innerHTML=`<div class="filters">${state.role==="admin"?`<button type="button" class="chip" data-all aria-pressed="${!!state.rAllOwners}">كل المشرفين</button>`:""}<span class="pill ${tot&&dn===tot?"p-done":"p-req"}">آخر 14 يوم عمل: ${tot?num(Math.round(100*dn/tot))+"%":"—"} (${num(dn)} من ${num(tot)})</span></div>
+   <div class="ptab"><table class="dt"><thead><tr><th>اليوم</th>${owners.length>1?"<th>المشرف</th>":""}<th>المنجز</th><th>النسبة</th><th>ما لم يتم</th></tr></thead><tbody>
+   ${rows.map(r=>{const pct=Math.round(100*r.done/r.R.length);return `<tr><td>${fmtDate(r.d)}</td>${owners.length>1?`<td>${esc((person(r.o)||{}).name||"")}</td>`:""}<td>${num(r.done)} / ${num(r.R.length)}</td><td><div class="pbar"><span style="width:${pct}%"></span></div><span class="pv">${num(pct)}%</span></td><td class="hint">${esc(r.miss.slice(0,4).map(m=>m.duty.title+(m.site?" — "+m.site.name:"")+(m.log&&m.log.note?" ("+m.log.note+")":"")).join("، "))}${r.miss.length>4?"…":""}</td></tr>`}).join("")||`<tr><td colspan="5" class="hint">لا توجد أعمال مسجلة في آخر 14 يوم عمل.</td></tr>`}</tbody></table></div>`;
+  const al=B.querySelector("[data-all]");if(al)al.onclick=()=>{state.rAllOwners=!state.rAllOwners;render()};
+}
+/* المواقع (للمدير) */
+function rSitesView(B){
+  const sites=rSites();
+  B.innerHTML=`<form id="rsform" class="fgrid"><label>المبنى<input id="rs-b" list="rs-bl" required placeholder="مثال: المنار 1 بنات"><datalist id="rs-bl">${[...new Set(sites.map(s=>s.building))].map(b=>`<option value="${esc(b)}">`).join("")}</datalist></label><label>المكان<input id="rs-n" required placeholder="مثال: الدور الثالث"></label><div><button class="btn" type="submit">إضافة مكان</button></div></form>
+   <div class="ptab"><table><thead><tr><th>المبنى</th><th>المكان</th><th></th></tr></thead><tbody>${sites.map(s=>`<tr data-sid="${esc(s.id)}"><td>${esc(s.building||"")}</td><td><input data-sn value="${esc(s.name)}" style="max-width:220px"></td><td>${state.confirm==="rs:"+s.id?`<button class="btn danger sm" type="button" data-dy>حذف</button> <button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del>حذف</button>`}</td></tr>`).join("")}</tbody></table></div>`;
+  B.querySelector("#rsform").onsubmit=async e=>{e.preventDefault();const b=B.querySelector("#rs-b").value.trim(),n=B.querySelector("#rs-n").value.trim();if(!b||!n)return;
+    try{await db.collection("routine").doc().set({kind:"site",building:b,name:n,order:sites.length+1});toast("أُضيف المكان");render()}catch(err){toast("تعذر الإضافة")}};
+  B.querySelectorAll("tr[data-sid]").forEach(tr=>{const id=tr.dataset.sid;const inp=tr.querySelector("[data-sn]");inp.onchange=async()=>{try{await db.doc("routine/"+id).update({name:inp.value.trim()});toast("حُفظ")}catch(e){toast("تعذر الحفظ")}};wireDel(tr,"rs:"+id,()=>db.doc("routine/"+id).delete())});
+}
+
 /* ================= الإصدار 7: التذكيرات قبل الموعد بـ 24 ساعة ================= */
 function dayEnd(d){return d?new Date(d+"T23:59:00").getTime():null}
 function remindList(){
   const now=Date.now(),H24=864e5,me=state.me,admin=state.role==="admin";const out=[];
-  const push=(kind,id,title,due,who,phone,view,extra)=>{if(!due)return;const left=due-now;if(left>H24)return;out.push({kind,id,title,due,late:left<0,who,phone,view,...(extra||{})})};
+  const push=(kind,id,title,due,who,phone,view,extra)=>{if(!due)return;const left=due-now;if(left>0)return;out.push({kind,id,title,due,late:left<0,who,phone,view,...(extra||{})})};
   if(canTab("tasks"))for(const it of state.items){if(it.status==="done")continue;if(!admin&&it.personId!==me)continue;const c=contact(it);push("item",it.id,it.title,dayEnd(it.due),c.name,c.phone,"tasks")}
   if(canTab("requests"))for(const r of state.requests){if(!reqOpen(r)||!r.dueAt)continue;if(!admin&&r.toId!==me)continue;const p=person(r.toId);push("request",r.id,r.title,r.dueAt,r.toName||(p&&p.name)||"",(p&&p.phone)||"","requests")}
   if(canTab("purchases")&&(admin||isBuyer()))for(const x of state.purchases){if(!purOpen(x))continue;const b=state.buyers[0]||{};push("purchase",x.id,x.title,purDueOf(x),b.name||"مسؤول المشتريات",b.phone||"","purchases")}
@@ -1294,9 +1441,10 @@ function checkNotify(force){
 setInterval(()=>checkNotify(false),30*60*1000);
 
 /* ================= الإصدار 6: صلاحيات الأقسام، الإعدادات، ترتيب الأسماء ================= */
-const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
+const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["routine","الأعمال الدورية"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
 const ACC_TXT={"":"حسب المسمى",staff:"موظف",supervisor:"مشرف",manager:"مدير"};
-function defaultTabs(p){
+function defaultTabs(p){const t=defaultTabs0(p);if(p&&state.routine.some(x=>x.ownerId===p.id&&x.kind!=="site")&&!t.includes("routine"))t.push("routine");return t}
+function defaultTabs0(p){
   if(!p)return["tasks"];
   const r=roleOf(p.roleId);const acc=accessOf(p);
   const buyer=!!(r&&r.purchasing),tr=!!(r&&r.transport),keeper=state.warehouses.some(w=>w.keeperId===p.id),vs=state.vehicles.some(v=>(v.supervisorIds||[]).includes(p.id));
@@ -2061,7 +2209,7 @@ $("itemform").onsubmit=e=>{e.preventDefault();if(!db)return;const v=readFields("
   setTimeout(()=>{const t=[...document.querySelectorAll(".req")].pop();if(t)t.scrollIntoView({behavior:"smooth",block:"center"})},500)};
 
 /* ============ الاتصال بقاعدة البيانات (Supabase) ============ */
-const TABLES={people:"people",groups:"groups",files:"topics",items:"items",roles:"roles",requests:"requests",comments:"comments",reqtypes:"req_types",purchases:"purchases",vehicles:"vehicles",riders:"riders",transreqs:"trans_requests",trips:"trips",warehouses:"warehouses",stock:"stock_items",loans:"loans"};
+const TABLES={people:"people",groups:"groups",files:"topics",items:"items",roles:"roles",requests:"requests",comments:"comments",reqtypes:"req_types",purchases:"purchases",vehicles:"vehicles",riders:"riders",transreqs:"trans_requests",trips:"trips",warehouses:"warehouses",stock:"stock_items",loans:"loans",routine:"routine"};
 let sb=null;
 function rid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
 function makeDb(){
@@ -2145,7 +2293,7 @@ async function startApp(user){
   state.isTransport=!!me.transport;state.srvVehicles=Array.isArray(me.vehicles)?me.vehicles:[];state.srvStores=Array.isArray(me.stores)?me.stores:[];state.myVehicles=state.srvVehicles.slice();state.myStores=state.srvStores.slice();
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
-  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","settings"].includes(hv))state.view=hv;}
+  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","settings","routine"].includes(hv))state.view=hv;}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)$("hsub").textContent="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
@@ -2172,6 +2320,7 @@ async function startApp(user){
   db.collection("transreqs").onSnapshot(s=>{state.transReqs=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("stock").onSnapshot(s=>{state.stockItems=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
+  db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("loans").onSnapshot(s=>{state.loans=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   setTimeout(()=>checkNotify(false),8000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(()=>checkNotify(false),3000)});
   try{const {data}=await sb.rpc("transport_contacts");state.transContacts=Array.isArray(data)?data:[];safeRender()}catch(e){}
