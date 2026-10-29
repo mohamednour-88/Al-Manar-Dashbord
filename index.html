@@ -261,6 +261,13 @@ table.acc th{white-space:nowrap;font-size:.75rem}table.acc td.ck{text-align:cent
 .ordlist li{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:grab;user-select:none}
 .ordlist li.dragging{opacity:.5;border-style:dashed}.ordlist .grip{color:var(--muted);letter-spacing:-2px}.ordlist .on{min-width:22px;color:var(--muted);font-variant-numeric:tabular-nums}
 .ordlist .who{display:grid;flex:1;line-height:1.35}.ordlist .arrows{display:flex;gap:10px}.ordlist button[disabled]{opacity:.3;pointer-events:none}
+.remind{background:var(--warn-soft);border:1px solid var(--line);border-radius:var(--r);padding:4px 12px}
+.rmhead{all:unset;cursor:pointer;display:flex;gap:10px;align-items:center;width:100%;padding:6px 0;font-size:.92rem}.rmhead:focus-visible{outline:2px solid var(--accent)}
+.rmtg{margin-inline-start:auto;color:var(--accent);font-weight:600;font-size:.82rem}
+.rmlist{display:grid;gap:4px;padding:4px 0 8px}
+.rmrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:10px;align-items:center;background:var(--surface);border-radius:8px;padding:6px 10px;font-size:.88rem}
+.rmrow.l{border-inline-start:3px solid var(--late)}.rmsoon{color:var(--warn);font-weight:600;white-space:nowrap}.rmgo{text-align:start;white-space:normal}
+@media (max-width:620px){.rmrow{grid-template-columns:minmax(0,1fr) auto}.rmrow .hint{display:none}}
 .welcome{margin:0;background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem}
 .acct{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:.85rem;color:var(--muted);margin-top:8px}
 .p-done{background:var(--ok-soft);color:var(--ok)}
@@ -312,6 +319,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
     <button type="button" class="stat ok" data-f="done7"><b id="s-done">–</b><span>أُنجزت آخر ٧ أيام</span></button>
   </div>
 
+  <div class="remind" id="remind" hidden></div>
   <div class="tabs" id="tabs" role="tablist" aria-label="أقسام المنصة"></div>
   <div id="tasksView">
   <div class="main">
@@ -438,7 +446,7 @@ function render(){
   if(sig!==addFormSig){addFormSig=sig;buildAddForm()}
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
-  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();
+  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();renderRemind();
   document.querySelector(".stats").hidden=!canTab("tasks");
   document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
@@ -1233,6 +1241,58 @@ function purCard(x){
 }
 
 const LOGO="";
+/* ================= الإصدار 7: التذكيرات قبل الموعد بـ 24 ساعة ================= */
+function dayEnd(d){return d?new Date(d+"T23:59:00").getTime():null}
+function remindList(){
+  const now=Date.now(),H24=864e5,me=state.me,admin=state.role==="admin";const out=[];
+  const push=(kind,id,title,due,who,phone,view,extra)=>{if(!due)return;const left=due-now;if(left>H24)return;out.push({kind,id,title,due,late:left<0,who,phone,view,...(extra||{})})};
+  if(canTab("tasks"))for(const it of state.items){if(it.status==="done")continue;if(!admin&&it.personId!==me)continue;const c=contact(it);push("item",it.id,it.title,dayEnd(it.due),c.name,c.phone,"tasks")}
+  if(canTab("requests"))for(const r of state.requests){if(!reqOpen(r)||!r.dueAt)continue;if(!admin&&r.toId!==me)continue;const p=person(r.toId);push("request",r.id,r.title,r.dueAt,r.toName||(p&&p.name)||"",(p&&p.phone)||"","requests")}
+  if(canTab("purchases")&&(admin||isBuyer()))for(const x of state.purchases){if(!purOpen(x))continue;const b=state.buyers[0]||{};push("purchase",x.id,x.title,purDueOf(x),b.name||"مسؤول المشتريات",b.phone||"","purchases")}
+  if(canTab("transport")&&canTrans())for(const x of state.transReqs){if(!["new","approved"].includes(x.status))continue;const t=atTime(x.date,x.timeOut||"07:00");const b=state.transContacts[0]||{};push("trans",x.id,"نقل: "+x.title,t,b.name||"مسؤول الحركة والنقل",b.phone||"","transport")}
+  if(canTab("stores"))for(const l of state.loans){if(l.type!=="loan"||l.status!=="issued"||!l.returnBy)continue;if(!admin&&!isKeeper(l.warehouseId)&&l.requesterId!==me)continue;const p=person(l.requesterId);push("loan",l.id,"إرجاع: "+(l.rows||[]).map(r=>r.name).slice(0,2).join("، "),dayEnd(l.returnBy),l.requesterName||"",(p&&p.phone)||"","stores")}
+  return out.sort((a,b)=>a.due-b.due)}
+function whenTxt(r){const now=Date.now();if(r.late)return "متأخر "+dur(now-r.due);const d=new Date(r.due);const today=todayStr()===dateOf(r.due);const tm=d.getHours()===23&&d.getMinutes()===59?"":" الساعة "+d.toLocaleTimeString("ar-SA-u-nu-latn",{hour:"numeric",minute:"2-digit"});return (today?"ينتهي اليوم":"ينتهي غداً")+tm}
+function remindMsg(r){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${r.who}`,"",`تذكير: «${r.title}» ${r.late?"تجاوز موعده":"موعده "+(todayStr()===dateOf(r.due)?"اليوم":"غداً")+" "+fmtDate(dateOf(r.due))}.`,"","*نرجو الإنجاز وتحديث الحالة في المنصة.*",`${here()}#${r.view}`,"",SIGN].join("\n")}
+function renderRemind(){
+  const box=$("remind");if(!box)return;const L=remindList();
+  if(!L.length){box.hidden=true;box.innerHTML="";return}
+  const late=L.filter(r=>r.late).length,soon=L.length-late;
+  const admin=state.role==="admin";const open=!!state.remindOpen;
+  box.hidden=false;
+  box.innerHTML=`<button type="button" class="rmhead" data-rt aria-expanded="${open}"><span class="rmic" aria-hidden="true">⏰</span><span><b>تذكيرات</b> — ${soon?`${num(soon)} ينتهي خلال 24 ساعة`:""}${soon&&late?" · ":""}${late?`<span class="lt">${num(late)} متأخر</span>`:""}</span><span class="rmtg">${open?"إخفاء":"عرض"}</span></button>
+   ${open?`<div class="rmlist">${L.map((r,i)=>`<div class="rmrow ${r.late?"l":""}"><button type="button" class="linkbtn rmgo" data-go="${i}">${esc(r.title)}</button><span class="hint">${esc(r.who)}</span><span class="${r.late?"lt":"rmsoon"}">${esc(whenTxt(r))}</span>${admin&&waNum(r.phone)?`<a class="btn wa sm" target="_blank" rel="noopener" data-rw="${i}" href="https://wa.me/${waNum(r.phone)}?text=${encodeURIComponent(remindMsg(r))}">تذكير واتساب</a>`:"<span></span>"}</div>`).join("")}</div>
+   ${"Notification" in window&&Notification.permission!=="granted"&&Notification.permission!=="denied"?`<div class="acts"><button class="btn ghost sm" type="button" data-notif>فعّل تنبيهات الجوال</button><span class="hint">يوصلك تنبيه بالمواعيد القريبة وأنت فاتح المنصة أو مثبّتها على الشاشة الرئيسية</span></div>`:""}`:""}`;
+  box.querySelector("[data-rt]").onclick=()=>{state.remindOpen=!open;renderRemind()};
+  box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const r=L[+b.dataset.go];goRemind(r)});
+  box.querySelectorAll("[data-rw]").forEach(a=>a.addEventListener("click",()=>{const r=L[+a.dataset.rw];addComment(r.kind,r.id,"أُرسل تذكير بالموعد على الواتساب","status").catch(()=>{})}));
+  const nb=box.querySelector("[data-notif]");if(nb)nb.onclick=async()=>{try{const p=await Notification.requestPermission();if(p==="granted"){toast("فُعّلت التنبيهات");checkNotify(true)}else toast("لم تُفعّل التنبيهات")}catch(e){toast("المتصفح لا يدعم التنبيهات")}renderRemind()};
+}
+function goRemind(r){state.view=r.view;state.remindOpen=false;
+  if(r.kind==="item"){const it=state.items.find(i=>i.id===r.id);if(it&&person(it.personId))state.sel=it.personId;state.filter="any";state.openThreads["i:"+r.id]=true;render();setTimeout(()=>{const x=document.querySelector(`[data-item="${CSS.escape(r.id)}"]`);if(x)x.scrollIntoView({behavior:"smooth",block:"center"})},150);return}
+  if(r.kind==="request"){state.reqStatus="any";state.openThreads["r:"+r.id]=true}
+  if(r.kind==="purchase"){state.purStatus="any";state.openThreads["p:"+r.id]=true}
+  if(r.kind==="trans"){state.trTab="requests";state.trStatus="any";state.openThreads["tr:"+r.id]=true}
+  if(r.kind==="loan"){const l=state.loans.find(x=>x.id===r.id);if(l)state.whSel=l.warehouseId;state.whTab="loans";state.ldStatus="any"}
+  render();window.scrollTo({top:0})}
+/* تنبيهات الجوال/المتصفح — مرة لكل موعد في اليوم */
+let swReg=null;
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(r=>{swReg=r}).catch(()=>{})}
+function checkNotify(force){
+  if(!("Notification" in window)||Notification.permission!=="granted"||!state.people.length)return;
+  let seen={};try{seen=JSON.parse(localStorage.getItem("manar-notified")||"{}")}catch(e){}
+  const day=todayStr();for(const k in seen)if(seen[k]!==day)delete seen[k];
+  const fresh=remindList().filter(r=>!seen[r.kind+":"+r.id+":"+(r.late?"l":"s")]);
+  if(!fresh.length&&!force)return;
+  fresh.forEach(r=>{seen[r.kind+":"+r.id+":"+(r.late?"l":"s")]=day});try{localStorage.setItem("manar-notified",JSON.stringify(seen))}catch(e){}
+  if(!fresh.length)return;
+  const title=fresh.length===1?"تذكير بموعد":"تذكير: "+num(fresh.length)+" مواعيد قريبة";
+  const body=fresh.slice(0,4).map(r=>"• "+r.title+" — "+whenTxt(r)).join("\n")+(fresh.length>4?"\n…":"");
+  const opt={body,dir:"rtl",lang:"ar",tag:"manar-remind",data:location.origin+location.pathname+"#"+fresh[0].view};
+  try{if(swReg&&swReg.showNotification)swReg.showNotification(title,opt);else new Notification(title,opt)}catch(e){}
+}
+setInterval(()=>checkNotify(false),30*60*1000);
+
 /* ================= الإصدار 6: صلاحيات الأقسام، الإعدادات، ترتيب الأسماء ================= */
 const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
 const ACC_TXT={"":"حسب المسمى",staff:"موظف",supervisor:"مشرف",manager:"مدير"};
@@ -2113,6 +2173,7 @@ async function startApp(user){
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("stock").onSnapshot(s=>{state.stockItems=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("loans").onSnapshot(s=>{state.loans=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
+  setTimeout(()=>checkNotify(false),8000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(()=>checkNotify(false),3000)});
   try{const {data}=await sb.rpc("transport_contacts");state.transContacts=Array.isArray(data)?data:[];safeRender()}catch(e){}
   try{const {data}=await sb.rpc("buyer_contacts");state.buyers=Array.isArray(data)?data:[];safeRender()}catch(e){}
   if(sup){try{const {data}=await sb.rpc("list_contacts");state.contacts=Array.isArray(data)?data:[];safeRender()}catch(e){}}
