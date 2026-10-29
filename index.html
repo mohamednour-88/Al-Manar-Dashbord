@@ -1527,6 +1527,23 @@ const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",other:"أ�
 const ADMIN_PHONE="0545967881";
 function rDocs(kind,owner){return state.routine.filter(x=>x.kind===kind&&(owner===undefined||x.ownerId===owner))}
 function rSites(){return rDocs("site").sort((a,b)=>(a.order||0)-(b.order||0))}
+/* الإصدار 11: نطاق كل مشرف (المباني) ونوع عمله (عمال/حراس) */
+const RKIND={workers:"مشرف عمال",guards:"مشرف حراس"};
+const RCAT_K={workers:["ترشيد الكهرباء والإنارة","النظافة","الضيافة","السلامة","الصيانة","أخرى"],guards:["الأمن والبوابات","السلامة","ترشيد الكهرباء والإنارة","أخرى"]};
+const RWT_K={workers:{fworker:"عاملة",worker:"عامل",other:"أخرى"},guards:{guard:"حارس",other:"أخرى"}};
+function rBuildings(){return [...new Set(rSites().map(s=>s.building))]}
+function rScope(owner){const p=person(owner)||{};const kind=RKIND[p.rtKind]?p.rtKind:(/حراس/.test(titleOf(p))?"guards":"workers");const all=rBuildings();
+  const b=Array.isArray(p.rtBuildings)&&p.rtBuildings.length?p.rtBuildings:(kind==="guards"?all.filter(x=>/بواب/.test(x)):all);return {kind,buildings:b,set:Array.isArray(p.rtBuildings)&&p.rtBuildings.length>0}}
+function rSitesFor(owner){const b=rScope(owner).buildings;return rSites().filter(s=>b.includes(s.building))}
+function rCats(owner){return RCAT_K[rScope(owner).kind]}
+function rScopeView(B){if(state.role!=="admin")return;const owners=rOwners();const all=rBuildings();
+  B.insertAdjacentHTML("afterbegin",`<section class="dcard" id="rscope"><h3>نطاق كل مشرف</h3><div class="hint">كل مشرف يشوف ويوزّع فقط على مباني نطاقه، وتطلع له تصنيفات وأنواع فريق حسب عمله (عمال أو حراس).</div>
+   <div class="rlist">${owners.map(id=>{const p=person(id);const sc=rScope(id);return `<div class="rtrow" data-scp="${esc(id)}" style="flex-wrap:wrap"><span><b>${esc(p?p.name:id)}</b> <span class="hint">${esc(p?titleOf(p):"")}</span></span>
+     <span style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center"><select data-sk2 style="width:auto">${Object.entries(RKIND).map(([k,l])=>`<option value="${k}" ${sc.kind===k?"selected":""}>${l}</option>`).join("")}</select>
+     ${all.map(b=>`<label style="display:flex;gap:4px;align-items:center"><input type="checkbox" style="width:auto" value="${esc(b)}" ${sc.buildings.includes(b)?"checked":""}>${esc(b)}</label>`).join("")}</span></div>`}).join("")}</div></section>`);
+  B.querySelectorAll("[data-scp]").forEach(row=>{const id=row.dataset.scp;const save=async()=>{const rtBuildings=[...row.querySelectorAll("input:checked")].map(x=>x.value);
+      try{await db.doc("people/"+id).update({rtKind:row.querySelector("[data-sk2]").value,rtBuildings});toast("حُفظ نطاق "+((person(id)||{}).name||""))}catch(e){toast("تعذر الحفظ")}};
+    row.querySelectorAll("input,select").forEach(x=>x.onchange=save)})}
 function rSite(id){return state.routine.find(x=>x.id===id)}
 function rSiteName(s){return s?(s.building?s.building+" — ":"")+s.name:""}
 function rOwners(){if(state.role!=="admin")return state.me?[state.me]:[];
@@ -1550,7 +1567,7 @@ function renderRoutine(){
   const v=$("rtView");if(state.view!=="routine"){v.innerHTML="";return}
   const admin=state.role==="admin";const owners=rOwners();const owner=routineDefaultOwner();
   const subs=[["today","أعمال اليوم"],["duties","الأعمال الدورية"],["assign","توزيع المسؤولين"],["team","الفريق"],["reports","التقارير"]];
-  if(owner&&(/حراس/.test(titleOf(person(owner)||{}))||rDocs("worker",owner).some(w=>w.type==="guard")||rDocs("shiftsec",owner).length))subs.splice(3,0,["shift","جدول المناوبة"]);
+  if(owner&&rScope(owner).kind==="guards")subs.splice(3,0,["shift","جدول المناوبة"]);
   if(admin)subs.push(["sites","المواقع"]);
   if(!subs.some(s=>s[0]===state.rTab))state.rTab="today";
   v.innerHTML=`<div class="phead"><div><h2>الأعمال الدورية</h2><div class="prole">${admin?"أعمال المشرفين الدورية: توزيع المسؤولين على الأدوار والبوابات، والسجل اليومي، والتقارير":"سجّل إنجاز أعمالك الدورية اليوم، ووزّع فريقك على الأدوار والبوابات"}</div></div></div>
@@ -1561,7 +1578,7 @@ function renderRoutine(){
   v.querySelectorAll("[data-rtab]").forEach(b=>b.onclick=()=>{state.rTab=b.dataset.rtab;state.confirm=null;render()});
   const B=v.querySelector("#rtBody");
   if(!owner&&state.rTab!=="sites"){B.innerHTML=`<div class="empty"><strong>لا يوجد مشرف محدد</strong>${admin?"أعطِ المشرف صلاحية «مشرف» من الإعدادات، أو أضف له عملاً دورياً.":"حسابك غير مربوط بموظف."}</div>`;return}
-  ({today:rToday,duties:rDuties,assign:rAssign,shift:rShift,team:rTeam,reports:rReports,sites:rSitesView})[state.rTab](B,owner);
+  ({today:rToday,duties:rDuties,assign:rAssign,shift:rShift,team:rTeam,reports:rReports,sites:(b)=>{rSitesView(b);rScopeView(b)}})[state.rTab](B,owner);
 }
 /* أعمال اليوم */
 function rToday(B,owner){
@@ -1592,11 +1609,11 @@ function rReportMsg(owner,date,rows){const p=person(owner);const done=rows.filte
   return L.join("\n")}
 /* الأعمال الدورية */
 function rDuties(B,owner){
-  const list=rDocs("duty",owner).sort((a,b)=>(a.order||0)-(b.order||0));const sites=rSites();
-  const form=d=>{d=d||{freq:"daily",category:RCAT[0],siteIds:[]};const id=d.id||"new";const bld=[...new Set(sites.map(s=>s.building))];
+  const list=rDocs("duty",owner).sort((a,b)=>(a.order||0)-(b.order||0));const sites=rSitesFor(owner);
+  const form=d=>{d=d||{freq:"daily",category:rCats(owner)[0],siteIds:[]};const id=d.id||"new";const bld=[...new Set(sites.map(s=>s.building))];
     return `<form class="fgrid rdform" data-rd="${esc(id)}" style="margin-top:8px">
      <label class="wide">العمل<input data-k="title" required value="${esc(d.title||"")}" placeholder="مثال: التأكد من إطفاء الإنارة والمكيفات"></label>
-     <label>التصنيف<select data-k="category">${RCAT.map(c=>`<option ${d.category===c?"selected":""}>${c}</option>`).join("")}</select></label>
+     <label>التصنيف<select data-k="category">${[...new Set(rCats(owner).concat(d.category?[d.category]:[]))].map(c=>`<option ${d.category===c?"selected":""}>${c}</option>`).join("")}</select></label>
      <label>التكرار<select data-k="freq">${optsOf(RFREQ,d.freq||"daily")}</select></label>
      <label>يوم الأسبوع (للأسبوعي)<select data-k="weekday">${RDAYS.map((x,i)=>`<option value="${i}" ${Number(d.weekday)===i?"selected":""}>${x}</option>`).join("")}</select></label>
      <label>يوم الشهر (للشهري)<input data-k="monthday" type="number" min="1" max="28" value="${esc(d.monthday||1)}"></label>
@@ -1621,7 +1638,7 @@ function rDuties(B,owner){
 }
 /* توزيع المسؤولين على الأماكن */
 function rAssign(B,owner){
-  const sites=rSites();const workers=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const as=rDocs("assign",owner);
+  const sites=rSitesFor(owner);const workers=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const as=rDocs("assign",owner);
   const bld=[...new Set(sites.map(s=>s.building))];
   B.innerHTML=`<div class="hint">اختر المسؤول عن كل دور أو بوابة. يظهر اسمه في أعمال اليوم وفي التقرير. ${workers.length?"":"أضف أسماء فريقك أولاً من «الفريق»."}</div>
    ${bld.map(b=>`<section class="dcard"><h3>${esc(b)}</h3><div class="rlist">${sites.filter(s=>s.building===b).map(s=>{const a=as.find(x=>x.siteId===s.id);return `<div class="rtrow"><span><b>${esc(s.name)}</b></span><select data-site="${esc(s.id)}" style="width:auto;min-width:180px" aria-label="مسؤول ${esc(s.name)}"><option value="">— بدون —</option>${workers.map(w=>`<option value="${esc(w.id)}" ${a&&a.workerId===w.id?"selected":""}>${esc(w.name)}${w.type?" ("+RWTYPE[w.type]+")":""}</option>`).join("")}</select></div>`}).join("")}</div></section>`).join("")}`;
@@ -1631,9 +1648,9 @@ function rAssign(B,owner){
 /* الفريق */
 function rTeam(B,owner){
   const list=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const p=person(owner);
-  const defType=/حراس/.test(titleOf(p||{}))?"guard":/عاملات/.test(titleOf(p||{}))?"fworker":"worker";
+  const defType=rScope(owner).kind==="guards"?"guard":/عاملات/.test(titleOf(p||{}))?"fworker":"worker";
   B.innerHTML=`<form id="rwform" class="fgrid"><label class="full">أضف أسماء الفريق، كل اسم في سطر (ويمكن إضافة الجوال بعد فاصلة)<textarea id="rw-bulk" placeholder="فاطمة علي، 0551234567"></textarea></label>
-     <label>النوع<select id="rw-type">${optsOf(RWTYPE,defType)}</select></label><div><button class="btn" type="submit">إضافة</button></div></form>
+     <label>النوع<select id="rw-type">${optsOf(RWT_K[rScope(owner).kind],defType)}</select></label><div><button class="btn" type="submit">إضافة</button></div></form>
    <div class="ptab"><table><thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>الجوال</th><th>المسؤول عن</th><th></th></tr></thead><tbody>
    ${list.map((w,i)=>{const where=rDocs("assign",owner).filter(a=>a.workerId===w.id).map(a=>rSiteName(rSite(a.siteId))).filter(Boolean);return `<tr data-wid="${esc(w.id)}"><td>${num(i+1)}</td><td>${esc(w.name)}</td><td>${RWTYPE[w.type]||""}</td><td class="ltr">${esc(w.phone||"")}</td><td>${esc(where.join("، "))}</td><td>${state.confirm==="rw:"+w.id?`<button class="btn danger sm" type="button" data-dy>حذف</button> <button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del>حذف</button>`}</td></tr>`}).join("")||`<tr><td colspan="6" class="hint">لا توجد أسماء بعد.</td></tr>`}</tbody></table></div>`;
   B.querySelector("#rwform").onsubmit=async e=>{e.preventDefault();const lines=B.querySelector("#rw-bulk").value.split(/\n+/).map(s=>s.trim()).filter(Boolean);if(!lines.length){toast("اكتب اسماً واحداً على الأقل");return}
