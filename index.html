@@ -161,6 +161,7 @@ details.topics summary{cursor:pointer;color:var(--muted);padding:4px 0}
 @media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)} aside{position:static}}
 @media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))} .dates{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .fgrid .wide{grid-column:1/-1}}
 .shg th,.shg td{text-align:center;vertical-align:middle;border:1px solid var(--line)}.shg td.ph{text-align:start;font-weight:600;min-width:150px}.shg td.ph .hint{font-weight:400}.shg td.tm{white-space:nowrap;font-size:.8rem;color:var(--muted)}.shg tr.shall td{background:var(--sunk)}.shg td{min-width:80px}
+.evrow{display:grid;grid-template-columns:minmax(0,1.4fr) 80px minmax(0,1.4fr) auto;gap:6px;align-items:center}@media (max-width:520px){.evrow{grid-template-columns:minmax(0,1fr) 70px auto}.evrow input[data-f="note"]{grid-column:1/-1;grid-row:2}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 <style>
@@ -355,13 +356,14 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   <section class="panel" id="whView" hidden></section>
   <section class="panel" id="setView" hidden></section>
   <section class="panel" id="rtView" hidden></section>
+  <section class="panel" id="evView" hidden></section>
 </div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 const ST = {new:"جديد", doing:"قيد التنفيذ", wait:"بانتظار طرف آخر", done:"مكتمل"};
 const SIGN = "م. محمد نور عمر";
-const state = {people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, buyers:[], purNotify:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null,
+const state = {events:[], evDraft:null, evOpen:false, evStatus:"open", evScope:"all", evDist:{}, evNotify:null, people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, buyers:[], purNotify:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null,
   vehicles:[], riders:[], transReqs:[], trips:[], warehouses:[], stockItems:[], loans:[], transContacts:[], isTransport:false, myVehicles:[], myStores:[], srvVehicles:[], srvStores:[],
   trTab:"requests", trScope:"all", trStatus:"open", trDraft:null, newTrOpen:false, trNotify:null, tripDraft:null, newTripOpen:false, tripRange:"week", tripVeh:"", editVeh:null, newVehOpen:false, rVeh:"", newRiderOpen:false, anRange:30,
   whSel:"", whTab:"items", whQ:"", whPick:{}, ldDraft:null, ldNotify:null, ldStatus:"open", editItem:null, newItemOpen:false, whEdit:null, newWhOpen:false, inOpen:false, inDraft:null, retOpen:null, setTab:"access", setQ:"", setGroup:"", ordGroup:"", routine:[], rTab:"today", rOwner:"", rDate:"", editDuty:null, newDutyOpen:false, rAllOwners:false};
@@ -452,7 +454,7 @@ function render(){
   if(sig!==addFormSig){addFormSig=sig;buildAddForm()}
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
-  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();renderRemind();renderRoutine();
+  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();renderRemind();renderRoutine();renderEvents();
   document.querySelector(".stats").hidden=!canTab("tasks");
   document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
@@ -934,6 +936,7 @@ function renderRequests(){
   v.querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>{state.reqFilter=b.dataset.rf;render()});
   v.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{state.reqStatus=b.dataset.rs;render()});
   if(canReq())wireNewReq(v);
+  if(canTab("events")&&evCanRoute()){const n=state.events.filter(e=>e.status==="new").length;if(n){v.querySelector(".phead").insertAdjacentHTML("afterend",`<div class="acts"><button class="btn ghost sm" type="button" data-goev>طلبات مناسبات جديدة: ${num(n)} — فتح</button></div>`);v.querySelector("[data-goev]").onclick=()=>{state.view="events";state.evStatus="new";try{history.replaceState(null,"",location.pathname+"#events")}catch(e){}render();window.scrollTo({top:0})}}}
   const L=v.querySelector("#reqList");
   if(!list.length){L.innerHTML=`<div class="empty"><strong>لا توجد طلبات هنا</strong>${canReq()?"أرسل طلباً جديداً من «طلب جديد» بالأعلى، وحدد نوعه فيتحدد موعد التنفيذ تلقائياً.":"تظهر هنا الطلبات اللي يرسلها لك مديرك أو مشرفك."}</div>`;return}
   for(const r of list)L.appendChild(reqCard(r));
@@ -1124,8 +1127,8 @@ function renderTabs(){
   const unread=feedEntries().filter(e=>e.t>state.lastSeen&&e.authorId!==(state.me||null)).length;
   const purN=state.purchases.filter(x=>x.status==="new"&&(state.role==="admin"||isBuyer())).length;
   const trN=canTrans()?state.transReqs.filter(x=>x.status==="new").length:state.trips.filter(t=>t.startAt&&!t.endAt&&state.myVehicles.includes(t.vehicleId)).length;
-  const whN=state.loans.filter(l=>l.status==="requested"&&isKeeper(l.warehouseId)).length;
-  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""],["routine","الأعمال الدورية",""]];
+  const evN=evCanRoute()?state.events.filter(e=>e.status==="new").length:state.events.filter(e=>e.requesterId===state.me&&evOpen(e)).length;const whN=state.loans.filter(l=>l.status==="requested"&&isKeeper(l.warehouseId)).length;
+  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["events","طلبات المناسبات",evN?`<span class="tb">${num(evN)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""],["routine","الأعمال الدورية",""]];
   tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""],["dash","لوحة البيانات",""]);
   if(state.role==="admin")tabs.push(["settings","الإعدادات",""]);
   const allow=myTabs();for(let i=tabs.length-1;i>=0;i--)if(!allow.includes(tabs[i][0]))tabs.splice(i,1);
@@ -1133,7 +1136,7 @@ function renderTabs(){
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
   $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
-  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("setView").hidden=state.view!=="settings";$("rtView").hidden=state.view!=="routine";
+  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("setView").hidden=state.view!=="settings";$("rtView").hidden=state.view!=="routine";$("evView").hidden=state.view!=="events";
 }
 
 /* ---------- المشتريات ---------- */
@@ -1247,6 +1250,171 @@ function purCard(x){
 }
 
 const LOGO="";
+/* ================= الإصدار 10: طلبات المناسبات والتسجيل الذاتي ================= */
+const EV_SECS=["قسم البنين","المنار 1 — قسم البنات","المنار 2 — قسم البنات","العالمي","الإدارة"];
+const EV_ST={new:"جديد",routed:"أُرسل للمستودعات",ready:"تم التجهيز",done:"انتهت المناسبة",cancelled:"ملغي",rejected:"معتذر عنه"};
+const EV_QUICK=["طاولات","كراسي","مفارش طاولات","استيج","شاشة عرض","بروجكتر","مايك وسماعات","فازات","سجاد","منبر","رول أب","تمديدات كهرباء"];
+const EV_GUESS=[["wh-tech",/شاش|بروجكتر|عرض|مايك|ميكروفون|سماع|صوت|لابتوب|كاميرا/],["wh-maint",/تمديد|كهرب|سلم|عدة|إضاءة|اضاءة|كشاف/],["wh-furn",/طاول|كرسي|كراسي|استيج|ستيج|منبر|بوديوم|سجاد|موكيت|كنب/],["wh-activity",/مفرش|مفارش|فاز|زين|بالون|ستاند|علم|أعلام|ورد/],["wh-comms",/رول|بنر|لوحة|درع|شهاد/],["wh-clean",/ماء|موية|مناديل|أكواب|اكواب|ضياف|قهوة/]];
+const EV_LEAD="رائد نشاط",EV_ADM="إداري";
+function evOpen(e){return !["done","cancelled","rejected"].includes(e.status)}
+function evCanRoute(){return state.role==="admin"||state.role==="supervisor"||state.role==="manager"}
+function evCoords(){return state.people.filter(p=>!p.selfReg&&((p.groups||[]).includes("g-facilities")||["supervisor","manager"].includes(accessOf(p))))}
+function evGuess(name){const n=String(name||"").trim();if(!n)return{wh:"",item:""};
+  const it=state.stockItems.find(i=>i.name===n)||state.stockItems.find(i=>i.name&&(i.name.includes(n)||n.includes(i.name)));
+  if(it)return{wh:it.warehouseId,item:it.id};
+  for(const [w,re] of EV_GUESS)if(re.test(n)&&whOf(w))return{wh:w,item:""};return{wh:"",item:""}}
+function evLoans(e){return state.loans.filter(l=>l.eventId===e.id)}
+function evWhen(e){return `${fmtDate(e.date)}${e.from?" · "+e.from:""}${e.to?" – "+e.to:""}`}
+function evLines(e){return (e.lines||[]).map(r=>`• ${r.name} × ${r.qty}${r.note?" ("+r.note+")":""}`)}
+function nextDay(d){const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+1);return dateOf(x.getTime())}
+function evMsgAdmin(e){return ["السلام عليكم ورحمة الله وبركاته","م. محمد نور عمر","",`رفعت طلب مناسبة على المنصة: «${e.title}»`,`• القسم: ${e.section||""}${e.place?"، "+e.place:""}`,`• الموعد: ${evWhen(e)}${e.readyBy?" — التجهيز قبل "+e.readyBy:""}`,...evLines(e),"",`*نرجو اعتماد الطلب وتوزيعه على المستودعات: ${here()}#events*`,"",e.requesterName||myName()].join("\n")}
+function evMsgKeeper(e,w,rows){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${w.keeperName||"أمين "+w.name}`,"",`لديكم طلب إعارة لمناسبة «${e.title}» من ${w.name}:`,`• القسم: ${e.section||""}${e.place?"، "+e.place:""}`,`• الموعد: ${evWhen(e)}`,...rows.map(r=>`• ${r.name} × ${r.qty}`),`• المستلم والمنسق: ${e.coordName||""}`,"",`*نرجو تجهيز الأصناف وتسليمها قبل الموعد وتحديث الطلب في المنصة: ${here()}#stores*`,"",state.role==="admin"?SIGN:myName()].join("\n")}
+function evMsgCoord(e){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${e.coordName||""}`,"",`أُسند إليكم تنسيق وتجهيز مناسبة «${e.title}»:`,`• القسم: ${e.section||""}${e.place?"، "+e.place:""}`,`• الموعد: ${evWhen(e)}${e.readyBy?" — التجهيز قبل "+e.readyBy:""}`,`• صاحب الطلب: ${e.requesterName||""}${e.requesterPhone?" "+e.requesterPhone:""}`,...evLines(e),"","أُرسلت طلبات الإعارة للمستودعات باسمكم للاستلام.","",`*نرجو استلام الأصناف وتجهيز المكان قبل الموعد، وتحديث الحالة في المنصة: ${here()}#events*`,"",SIGN].join("\n")}
+function evMsgReq(e){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${e.requesterName||""}`,"",`طلبكم لمناسبة «${e.title}» ${e.status==="ready"?"تم تجهيزه":e.status==="rejected"?"نعتذر عن تنفيذه":"تم اعتماده وإرساله للمستودعات"}.`,`• الموعد: ${evWhen(e)}`,e.coordName?`• المنسق: ${e.coordName}${(person(e.coordId)||{}).phone?" "+person(e.coordId).phone:""}`:"",e.adminNote?`• ملاحظة: ${e.adminNote}`:"","",`*للمتابعة: ${here()}#events*`,"",state.role==="admin"?SIGN:myName()].filter(x=>x!=="").join("\n")}
+function joinLink(){return here()+"?join=1"}
+function joinMsg(){return ["السلام عليكم ورحمة الله وبركاته","الزملاء رواد النشاط والإداريين","","لرفع طلبات المناسبات (طاولات، كراسي، مفارش، استيج، شاشات…) سجّلوا حساباً في منصة الدعم اللوجستي - فرع المنار من هذا الرابط:",joinLink(),"","سجّل بجوالك وكلمة مرور، ثم اختر صفتك (رائد نشاط أو إداري) وقسمك.","","*نرجو رفع الطلب قبل المناسبة بثلاثة أيام عمل على الأقل.*","",SIGN].join("\n")}
+
+function renderEvents(){
+  if(state.role!=="admin"&&!canTab("tasks"))$("hsub").textContent="ارفع طلبات مناسباتك وتابع تجهيزها";
+  const v=$("evView");if(state.view!=="events"){v.innerHTML="";return}
+  const me=state.me||null,admin=state.role==="admin",route=evCanRoute();
+  let list=state.events.slice();
+  if(state.evScope==="mine")list=list.filter(e=>e.requesterId===me);else if(state.evScope==="coord")list=list.filter(e=>e.coordId===me);
+  const st=state.evStatus;
+  if(st==="open")list=list.filter(evOpen);else if(st==="new")list=list.filter(e=>e.status==="new");else if(st==="done")list=list.filter(e=>!evOpen(e));
+  list.sort((a,b)=>(evOpen(b)-evOpen(a))||(String(a.date).localeCompare(String(b.date))));
+  const scopes=route?[["all","كل الطلبات"],["coord","المسندة إليّ"],["mine","طلباتي"]]:[["mine","طلباتي"]];
+  if(!scopes.some(s=>s[0]===state.evScope))state.evScope=scopes[0][0];
+  v.innerHTML=`<div class="phead"><div><h2>طلبات المناسبات</h2><div class="prole">${route?"طلبات الطاولات والكراسي والمفارش والاستيج والشاشات: اعتمدها، وحدد المنسق، ووزعها على المستودعات":"اطلب تجهيز مناسبتك (طاولات، كراسي، مفارش، استيج، شاشات…) وتابع حالة الطلب"}</div></div></div>
+   <div class="filters">${scopes.map(([k,l])=>`<button type="button" class="chip" data-es="${k}" aria-pressed="${state.evScope===k}">${l}</button>`).join("")}</div>
+   <div class="filters">${[["open","المفتوحة"],["new","الجديدة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-est="${k}" aria-pressed="${st===k}">${l}</button>`).join("")}</div>
+   ${admin?`<details class="newreq"><summary>رابط تسجيل رواد النشاط والإداريين</summary><div class="acts" style="margin-top:8px"><span class="addr ltr" style="overflow-wrap:anywhere">${esc(joinLink())}</span><a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(joinMsg())}">مشاركة عبر واتساب</a><button class="linkbtn" type="button" data-jcopy>نسخ الرابط</button></div><div class="hint">من يسجّل من الرابط يدخل على «طلبات المناسبات» فقط، ويظهر اسمه في الإعدادات وتقدر تعدّل صلاحيته.</div></details>`:""}
+   ${me?evFormHTML():""}
+   <div class="list" id="evList"></div>`;
+  v.querySelectorAll("[data-es]").forEach(b=>b.onclick=()=>{state.evScope=b.dataset.es;render()});
+  v.querySelectorAll("[data-est]").forEach(b=>b.onclick=()=>{state.evStatus=b.dataset.est;render()});
+  const jc=v.querySelector("[data-jcopy]");if(jc)jc.onclick=()=>{try{navigator.clipboard.writeText(joinLink());toast("نُسخ الرابط")}catch(e){}};
+  if(me)wireEvForm(v);
+  const L=v.querySelector("#evList");
+  if(!list.length){L.innerHTML=`<div class="empty"><strong>لا توجد طلبات مناسبات هنا</strong>${me?"ارفع طلباً جديداً من «طلب مناسبة جديد» بالأعلى.":""}</div>`;return}
+  for(const e of list)L.appendChild(evCard(e));
+}
+function evFormHTML(){const m=person(state.me)||{};const d=state.evDraft=state.evDraft||{section:m.section||"",lines:[{name:"",qty:"",note:""}]};if(!d.section&&m.section)d.section=m.section;
+  const names=[...new Set(EV_QUICK.concat(state.stockItems.map(i=>i.name).filter(Boolean)))];
+  return `<details class="newreq" ${state.evOpen?"open":""}><summary>+ طلب مناسبة جديد</summary>
+   <form id="evform" class="fgrid" style="margin-top:10px">
+    <label class="wide">اسم المناسبة<input data-e="title" required value="${esc(d.title||"")}" placeholder="مثال: حفل اليوم الوطني"></label>
+    <label>القسم<select data-e="section" required><option value="">— اختر —</option>${EV_SECS.map(s=>`<option ${d.section===s?"selected":""}>${s}</option>`).join("")}</select></label>
+    <label>المكان<input data-e="place" value="${esc(d.place||"")}" placeholder="مثال: المسرح، الساحة الخارجية"></label>
+    <label>تاريخ المناسبة<input data-e="date" type="date" required value="${esc(d.date||"")}" min="${todayStr()}"></label>
+    <label>من الساعة<input data-e="from" type="time" value="${esc(d.from||"")}"></label>
+    <label>إلى الساعة<input data-e="to" type="time" value="${esc(d.to||"")}"></label>
+    <label>يكون جاهز قبل<input data-e="readyBy" value="${esc(d.readyBy||"")}" placeholder="مثال: 7:00 ص يوم المناسبة"></label>
+    <label>عدد الحضور (تقريباً)<input data-e="guests" type="number" min="0" value="${esc(d.guests||"")}"></label>
+    <div class="full"><div class="hint" style="margin-bottom:4px">المطلوب: اضغط على الصنف لإضافته، أو اكتبه بنفسك</div>
+     <div class="filters" style="margin:0 0 6px">${EV_QUICK.map(q=>`<button type="button" class="chip" data-eq="${esc(q)}">+ ${esc(q)}</button>`).join("")}</div>
+     <datalist id="ev-names">${names.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+     <div class="prows">${d.lines.map((r,i)=>`<div class="evrow"><input data-el="${i}" data-f="name" list="ev-names" value="${esc(r.name)}" placeholder="الصنف" aria-label="الصنف"><input data-el="${i}" data-f="qty" type="number" min="1" value="${esc(r.qty)}" placeholder="العدد" aria-label="العدد"><input data-el="${i}" data-f="note" value="${esc(r.note||"")}" placeholder="ملاحظة (اللون، المقاس…)" aria-label="ملاحظة"><button type="button" class="linkbtn mute" data-erm="${i}" aria-label="حذف السطر">×</button></div>`).join("")}</div>
+     <button type="button" class="linkbtn" data-eadd>+ سطر</button></div>
+    <label class="full">ملاحظات<textarea data-e="note" placeholder="أي تفاصيل للتجهيز: توزيع الطاولات، الخلفية، الصوت…">${esc(d.note||"")}</textarea></label>
+    <div class="full"><button class="btn" type="submit">إرسال الطلب</button></div>
+   </form></details>`}
+function wireEvForm(v){const f=v.querySelector("#evform");if(!f)return;const d=state.evDraft;
+  const det=f.closest("details");det.ontoggle=()=>{state.evOpen=det.open};
+  const sync=()=>{f.querySelectorAll("[data-e]").forEach(i=>d[i.dataset.e]=i.value);f.querySelectorAll("[data-el]").forEach(i=>{d.lines[+i.dataset.el][i.dataset.f]=i.value})};
+  f.querySelectorAll("input,select,textarea").forEach(x=>x.addEventListener("input",sync));
+  f.querySelectorAll("[data-eq]").forEach(b=>b.onclick=()=>{sync();const q=b.dataset.eq;if(d.lines.some(r=>r.name===q)){toast("موجود في الطلب");return}const emp=d.lines.find(r=>!r.name.trim());if(emp)emp.name=q;else d.lines.push({name:q,qty:"",note:""});render();setTimeout(()=>{const i=d.lines.findIndex(r=>r.name===q);const x=document.querySelector(`#evform [data-el="${i}"][data-f="qty"]`);if(x)x.focus()},50)});
+  f.querySelector("[data-eadd]").onclick=()=>{sync();d.lines.push({name:"",qty:"",note:""});render()};
+  f.querySelectorAll("[data-erm]").forEach(b=>b.onclick=()=>{sync();d.lines.splice(+b.dataset.erm,1);if(!d.lines.length)d.lines.push({name:"",qty:"",note:""});render()});
+  f.onsubmit=async e=>{e.preventDefault();sync();
+    const lines=d.lines.map(r=>({name:r.name.trim(),qty:Number(r.qty)||0,note:(r.note||"").trim()})).filter(r=>r.name);
+    if(!d.title||!d.title.trim()){toast("اكتب اسم المناسبة");return}if(!d.section){toast("اختر القسم");return}if(!d.date){toast("حدد تاريخ المناسبة");return}
+    if(!lines.length){toast("أضف صنفاً واحداً على الأقل");return}if(lines.some(r=>r.qty<1)){toast("اكتب العدد لكل صنف");return}
+    const m=person(state.me)||{};const now=Date.now();
+    const doc={title:d.title.trim(),section:d.section,place:(d.place||"").trim(),date:d.date,from:d.from||"",to:d.to||"",readyBy:(d.readyBy||"").trim(),guests:Number(d.guests)||null,note:(d.note||"").trim(),lines,
+      requesterId:state.me,requesterName:myName(),requesterRole:titleOf(m),requesterPhone:m.phone||"",status:"new",createdAt:now,updatedAt:now};
+    const ref=db.collection("events").doc();
+    try{await ref.set(doc);state.evDraft=null;state.evOpen=false;state.evNotify=ref.id;state.evStatus="open";if(!evCanRoute())state.evScope="mine";toast("أُرسل الطلب");render()}catch(err){toast("تعذر إرسال الطلب")}};
+}
+function evCard(e){
+  const el=document.createElement("article");const open=evOpen(e);const me=state.me||null,admin=state.role==="admin",route=evCanRoute();
+  const isReq=e.requesterId===me,isCoord=e.coordId===me;const loans=evLoans(e);
+  const late=open&&e.date&&e.date<todayStr();
+  el.className="item "+(late?"s-late":"")+(!open?" s-done":"");
+  const lst={requested:"بانتظار أمين المستودع",issued:"سُلّمت",returned:"أُرجعت",cancelled:"ملغي",rejected:"معتذر عنه"};
+  const byWh={};(e.lines||[]).forEach((r,i)=>{const k=r.warehouseId||"";(byWh[k]=byWh[k]||[]).push({...r,i})});
+  const dist=state.evDist[e.id];
+  const linesTbl=`<div class="ptab"><table><thead><tr><th>الصنف</th><th>العدد</th><th>ملاحظة</th>${e.status!=="new"||dist?"<th>المستودع</th><th>الحالة</th>":""}</tr></thead><tbody>${(e.lines||[]).map((r,i)=>{
+    if(dist){const g=dist.lines[i];const items=state.stockItems.filter(x=>x.warehouseId===g.wh);
+      return `<tr><td>${esc(r.name)}</td><td>${num(r.qty)}</td><td class="hint">${esc(r.note||"")}</td><td><select data-dw="${i}" aria-label="مستودع ${esc(r.name)}"><option value="">— بدون مستودع —</option>${state.warehouses.map(w=>`<option value="${esc(w.id)}" ${g.wh===w.id?"selected":""}>${esc(w.name)}</option>`).join("")}</select></td><td>${items.length?`<select data-di="${i}" aria-label="الصنف في المستودع"><option value="">— صنف غير مسجل —</option>${items.map(x=>`<option value="${esc(x.id)}" ${g.item===x.id?"selected":""}>${esc(x.name)} (${num(Math.max(0,(+x.qty||0)-(+x.out||0)))} متاح)</option>`).join("")}</select>`:'<span class="hint">—</span>'}</td></tr>`}
+    const l=loans.find(x=>x.warehouseId===r.warehouseId);const w=whOf(r.warehouseId);
+    return `<tr><td>${esc(r.name)}</td><td>${num(r.qty)}</td><td class="hint">${esc(r.note||"")}</td>${e.status!=="new"?`<td>${esc(w?w.name:r.warehouseId?"":"يُوفَّر من خارج المستودعات")}</td><td>${l?`<span class="pill ${l.status==="requested"?"p-req":"p-done"}">${lst[l.status]||l.status}</span>`:""}</td>`:""}</tr>`}).join("")}</tbody></table></div>`;
+  const whBtns=e.status!=="new"?Object.entries(byWh).filter(([k])=>k).map(([k,rows])=>{const w=whOf(k);if(!w)return"";const ph=waNum(w.keeperPhone);
+    return ph&&(admin||isCoord)?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(evMsgKeeper(e,w,rows))}">تنبيه أمين ${esc(w.name)}</a>`:(!w.keeperId&&admin?`<span class="hint">${esc(w.name)} بدون أمين — عيّنه من «المستودعات»</span>`:"")}).join(""):"";
+  const cp=person(e.coordId);
+  el.innerHTML=`<div class="row1"><div class="ttl">${esc(e.title)}</div><span class="pill ${e.status==="new"?"p-req":open?"p-who":"p-done"}">${EV_ST[e.status]||""}</span></div>
+   <div class="dates"><div><span>الموعد</span><b class="${late?"l":""}">${esc(evWhen(e))}</b></div><div><span>القسم والمكان</span><b>${esc(e.section||"")}${e.place?" — "+esc(e.place):""}</b></div><div><span>صاحب الطلب</span><b>${esc(e.requesterName||"")}</b>${e.requesterRole?` <span class="hint">${esc(e.requesterRole)}</span>`:""}</div></div>
+   <div class="meta">${e.readyBy?`<span>التجهيز قبل: ${esc(e.readyBy)}</span>`:""}${e.guests?`<span>الحضور: ${num(e.guests)}</span>`:""}${e.coordName?`<span>المنسق: <b>${esc(e.coordName)}</b></span>`:""}</div>
+   ${e.note?`<div class="note">${esc(e.note)}</div>`:""}
+   ${linesTbl}
+   ${e.adminNote?`<div class="note">ملاحظة الاعتماد: ${esc(e.adminNote)}</div>`:""}
+   ${dist?`<div class="fgrid"><label>المنسق (يستلم من المستودعات ويجهّز)<select data-dc ${admin?"":"disabled"}><option value="">— اختر —</option>${evCoords().map(p=>`<option value="${esc(p.id)}" ${dist.coord===p.id?"selected":""}>${esc(p.name)} — ${esc(titleOf(p))}</option>`).join("")}</select></label>
+      <label class="wide">ملاحظة لصاحب الطلب (اختياري)<input data-dn value="${esc(dist.note||"")}"></label>
+      <div class="full acts"><button class="btn" type="button" data-dgo>اعتماد وإرسال للمستودعات</button><button class="linkbtn mute" type="button" data-dx>إلغاء</button></div></div>`:""}
+   <div class="acts">
+    ${route&&e.status==="new"&&!dist?`<button class="btn sm" type="button" data-dist>اعتماد وتوزيع على المستودعات</button><button class="linkbtn mute" type="button" data-rej>اعتذار</button>`:""}
+    ${(admin||isCoord)&&e.status==="routed"?`<button class="btn sm" type="button" data-ready>تم التجهيز</button>`:""}
+    ${(admin||isCoord)&&["routed","ready"].includes(e.status)?`<button class="linkbtn" type="button" data-done>انتهت المناسبة</button>`:""}
+    ${isReq&&e.status==="new"?`<button class="linkbtn mute" type="button" data-cancel>إلغاء الطلب</button>`:""}
+    ${isReq&&e.status==="new"&&!admin?`<a class="linkbtn" target="_blank" rel="noopener" href="https://wa.me/${waNum(ADMIN_PHONE)}?text=${encodeURIComponent(evMsgAdmin(e))}">تنبيه م. محمد نور عمر على الواتساب</a>`:""}
+    ${admin&&e.status!=="new"&&e.coordName&&cp&&waNum(cp.phone)?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${waNum(cp.phone)}?text=${encodeURIComponent(evMsgCoord(e))}">تنبيه المنسق</a>`:""}
+    ${(admin||isCoord)&&e.status!=="new"&&waNum(e.requesterPhone)?`<a class="linkbtn" target="_blank" rel="noopener" href="https://wa.me/${waNum(e.requesterPhone)}?text=${encodeURIComponent(evMsgReq(e))}">إبلاغ صاحب الطلب</a>`:""}
+    ${whBtns}
+    ${admin?`<button class="linkbtn mute" type="button" data-del>حذف</button>`:""}</div>
+   ${state.evNotify===e.id&&isReq&&!admin?`<div class="req"><h3>نبّه م. محمد نور عمر بطلبك</h3><div class="acts"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(ADMIN_PHONE)}?text=${encodeURIComponent(evMsgAdmin(e))}">إرسال عبر واتساب</a><button class="linkbtn mute" type="button" data-hn>لاحقاً</button></div></div>`:""}
+   ${state.confirm==="ev:"+e.id?`<div class="confirm">حذف طلب المناسبة؟ تبقى طلبات الإعارة في المستودعات. <button class="btn danger sm" type="button" data-dy>حذف</button><button class="linkbtn mute" type="button" data-dn2>إلغاء</button></div>`:""}`;
+  const q=s=>el.querySelector(s);
+  const upd=async(p,msg)=>{try{await db.doc("events/"+e.id).update({...p,updatedAt:Date.now(),statusBy:myName()});toast(msg||"حُفظ")}catch(err){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
+  if(q("[data-dist]"))q("[data-dist]").onclick=()=>{state.evDist[e.id]={coord:admin?(e.coordId||""):me,note:"",lines:(e.lines||[]).map(r=>{const g=evGuess(r.name);return{wh:r.warehouseId||g.wh,item:r.itemId||g.item}})};render()};
+  if(dist){
+    el.querySelectorAll("[data-dw]").forEach(s=>s.onchange=()=>{const g=dist.lines[+s.dataset.dw];g.wh=s.value;const it=state.stockItems.find(x=>x.warehouseId===g.wh&&x.name===e.lines[+s.dataset.dw].name);g.item=it?it.id:"";render()});
+    el.querySelectorAll("[data-di]").forEach(s=>s.onchange=()=>{dist.lines[+s.dataset.di].item=s.value});
+    const dc=q("[data-dc]");if(dc)dc.onchange=()=>{dist.coord=dc.value};
+    q("[data-dn]").oninput=x=>{dist.note=x.target.value};
+    q("[data-dx]").onclick=()=>{delete state.evDist[e.id];render()};
+    q("[data-dgo]").onclick=async()=>{const cp=person(dist.coord);if(!cp){toast("اختر المنسق");return}
+      if(!dist.lines.some(g=>g.wh))if(!confirm("ما اخترت أي مستودع. يُعتمد الطلب بدون طلبات إعارة؟"))return;
+      const lines=(e.lines||[]).map((r,i)=>({...r,warehouseId:dist.lines[i].wh||"",itemId:dist.lines[i].item||""}));
+      const groups={};lines.forEach(r=>{if(r.warehouseId)(groups[r.warehouseId]=groups[r.warehouseId]||[]).push(r)});
+      const now=Date.now();const loanIds=[];
+      try{for(const [wid,rows] of Object.entries(groups)){const w=whOf(wid)||{name:""};const ref=db.collection("loans").doc();
+          await ref.set({type:"loan",warehouseId:wid,warehouseName:w.name,requesterId:cp.id,requesterName:cp.name,groupName:e.section||"",eventId:e.id,
+            rows:rows.map(r=>{const it=r.itemId&&state.stockItems.find(x=>x.id===r.itemId);return{itemId:r.itemId||"",name:it?it.name:r.name,unit:(it&&it.unit)||"",qty:r.qty}}),
+            purpose:`مناسبة: ${e.title} — ${e.section||""}${e.place?"، "+e.place:""} (طلب ${e.requesterName||""})`,neededBy:e.date,returnBy:nextDay(e.date),status:"requested",createdAt:now,updatedAt:now});loanIds.push(ref.id)}
+        await db.doc("events/"+e.id).update({status:"routed",lines,coordId:cp.id,coordName:cp.name,adminNote:(dist.note||"").trim(),loanIds,routedAt:now,routedBy:myName(),updatedAt:now});
+        delete state.evDist[e.id];if(state.evStatus==="new")state.evStatus="open";toast(loanIds.length?`اعتُمد الطلب وأُرسل ${num(loanIds.length)} طلب إعارة للمستودعات`:"اعتُمد الطلب");render()}catch(err){toast("تعذر الإرسال — تأكد من الصلاحيات")}};
+  }
+  if(q("[data-rej]"))q("[data-rej]").onclick=()=>{const n=prompt("سبب الاعتذار (يظهر لصاحب الطلب)","");if(n===null)return;upd({status:"rejected",adminNote:n.trim()},"سُجّل الاعتذار")};
+  if(q("[data-ready]"))q("[data-ready]").onclick=()=>upd({status:"ready",readyAt:Date.now()},"سُجّل التجهيز");
+  if(q("[data-done]"))q("[data-done]").onclick=()=>{const open=loans.filter(l=>l.status==="issued");if(open.length&&!confirm("فيه أصناف ما رجعت للمستودع بعد ("+open.map(l=>l.warehouseName).join("، ")+"). تسجيل انتهاء المناسبة؟"))return;upd({status:"done",doneAt:Date.now()},"سُجّلت المناسبة منتهية")};
+  if(q("[data-cancel]"))q("[data-cancel]").onclick=()=>{if(confirm("إلغاء طلب المناسبة؟"))upd({status:"cancelled"},"أُلغي الطلب")};
+  if(q("[data-hn]"))q("[data-hn]").onclick=()=>{state.evNotify=null;render()};
+  if(q("[data-del]"))q("[data-del]").onclick=()=>{state.confirm="ev:"+e.id;render()};
+  if(q("[data-dy]"))q("[data-dy]").onclick=async()=>{try{await db.doc("events/"+e.id).delete();toast("حُذف")}catch(err){toast("تعذر الحذف")}state.confirm=null;render()};
+  if(q("[data-dn2]"))q("[data-dn2]").onclick=()=>{state.confirm=null;render()};
+  return el}
+/* التسجيل الذاتي: رائد نشاط أو إداري */
+function selfRegHTML(email){return `<div class="req" style="max-width:560px"><h3>أكمل تسجيلك</h3><div class="hint">حسابك (${esc(showId(email||""))}) غير مربوط بموظف. إذا كنت رائد نشاط أو إدارياً سجّل بياناتك هنا لترفع طلبات المناسبات، أو اطلب من م. محمد نور عمر رابط دعوة إذا كنت من فريق الدعم اللوجستي.</div>
+  <form id="srform" class="fgrid" style="margin-top:8px"><label class="wide">الاسم الكامل<input id="sr-name" required></label><label>الجوال<input id="sr-phone" inputmode="tel" required placeholder="05xxxxxxxx" value="${esc(String(email||"").endsWith(PHONE_DOMAIN)?showId(email):"")}"></label>
+   <label>الصفة<select id="sr-kind"><option value="activity">${EV_LEAD}</option><option value="admin">${EV_ADM}</option></select></label>
+   <label>القسم<select id="sr-sec">${EV_SECS.map(s=>`<option>${s}</option>`).join("")}</select></label>
+   <div class="full"><button class="btn" type="submit">تسجيل</button></div></form></div>`}
+function wireSelfReg(email){const b=$("banner");b.hidden=false;b.classList.remove("banner");b.style.marginBottom="12px";b.innerHTML=selfRegHTML(email);
+  b.querySelector("#srform").onsubmit=async e=>{e.preventDefault();const name=$("sr-name").value.trim(),phone=$("sr-phone").value.trim();if(!name||!waNum(phone)){toast("اكتب الاسم والجوال");return}
+    const {error}=await sb.rpc("self_register",{p_name:name,p_phone:phone,p_kind:$("sr-kind").value,p_section:$("sr-sec").value});
+    if(error){toast("تعذر التسجيل: "+(error.message||""));return}
+    try{history.replaceState(null,"",location.pathname+"#events")}catch(x){}location.reload()}}
+
 /* ================= الإصدار 9: جدول مناوبة الحراس ================= */
 const SH_SECS=[["boys","قسم البنين"],["m1","المنار 1 — قسم البنات"],["m2","المنار 2 — قسم البنات"],["intl","العالمي"]];
 const SH_WD=[0,1,2,3,4];
@@ -1547,7 +1715,7 @@ function checkNotify(force){
 setInterval(()=>checkNotify(false),30*60*1000);
 
 /* ================= الإصدار 6: صلاحيات الأقسام، الإعدادات، ترتيب الأسماء ================= */
-const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["routine","الأعمال الدورية"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
+const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["events","طلبات المناسبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["routine","الأعمال الدورية"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
 const ACC_TXT={"":"حسب المسمى",staff:"موظف",supervisor:"مشرف",manager:"مدير"};
 function defaultTabs(p){const t=defaultTabs0(p);if(p&&state.routine.some(x=>x.ownerId===p.id&&x.kind!=="site")&&!t.includes("routine"))t.push("routine");return t}
 function defaultTabs0(p){
@@ -1555,7 +1723,7 @@ function defaultTabs0(p){
   const r=roleOf(p.roleId);const acc=accessOf(p);
   const buyer=!!(r&&r.purchasing),tr=!!(r&&r.transport),keeper=state.warehouses.some(w=>w.keeperId===p.id),vs=state.vehicles.some(v=>(v.supervisorIds||[]).includes(p.id));
   if(buyer||tr||keeper){const t=["tasks"];if(buyer)t.push("purchases");if(tr||vs)t.push("transport");if(keeper)t.push("stores");return t}
-  const t=["tasks","requests"];if(vs)t.push("transport");if(acc!=="staff")t.push("feed");return t}
+  const t=["tasks","requests","events"];if(vs)t.push("transport");if(acc!=="staff")t.push("feed");return t}
 function tabsFor(p){if(!p)return["tasks"];if(Array.isArray(p.tabs))return p.tabs;const r=roleOf(p.roleId);if(r&&Array.isArray(r.tabs))return r.tabs;return defaultTabs(p)}
 function myTabs(){if(state.role==="admin")return TAB_DEFS.map(x=>x[0]).concat("settings");const t=tabsFor(person(state.me));return t.length?t:["tasks"]}
 function canTab(k){return myTabs().includes(k)}
@@ -2315,7 +2483,7 @@ $("itemform").onsubmit=e=>{e.preventDefault();if(!db)return;const v=readFields("
   setTimeout(()=>{const t=[...document.querySelectorAll(".req")].pop();if(t)t.scrollIntoView({behavior:"smooth",block:"center"})},500)};
 
 /* ============ الاتصال بقاعدة البيانات (Supabase) ============ */
-const TABLES={people:"people",groups:"groups",files:"topics",items:"items",roles:"roles",requests:"requests",comments:"comments",reqtypes:"req_types",purchases:"purchases",vehicles:"vehicles",riders:"riders",transreqs:"trans_requests",trips:"trips",warehouses:"warehouses",stock:"stock_items",loans:"loans",routine:"routine"};
+const TABLES={people:"people",groups:"groups",files:"topics",items:"items",roles:"roles",requests:"requests",comments:"comments",reqtypes:"req_types",purchases:"purchases",vehicles:"vehicles",riders:"riders",transreqs:"trans_requests",trips:"trips",warehouses:"warehouses",stock:"stock_items",loans:"loans",routine:"routine",events:"events"};
 let sb=null;
 function rid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36)}
 function makeDb(){
@@ -2345,7 +2513,7 @@ function setAuthMode(m){authMode=m;$("a-title").textContent=AUTH_TXT[m][0];$("a-
   $("a-email").required=m!=="newpass";$("a-pass").required=m!=="reset";
   document.querySelectorAll("#a-tabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.m===m)));
   $("a-tabs").hidden=m==="newpass"||m==="invite";$("a-forgot").hidden=m!=="in";
-  $("a-hint").textContent=m==="up"?"إنشاء الحساب يكون عادة من رابط الدعوة اللي يرسله لك م. محمد نور عمر.":m==="reset"?"اكتب بريدك وسنرسل لك رابطاً لتعيين كلمة مرور جديدة.":m==="invite"?"اختر بريدك وكلمة مرور (8 أحرف أو أكثر). بهذي البيانات تدخل المنصة كل مرة.":"";
+  $("a-hint").textContent=m==="up"?"اكتب جوالك (أو بريدك) وكلمة مرور من 8 أحرف أو أكثر. فريق الدعم اللوجستي يفعّل حسابه من رابط الدعوة.":m==="reset"?"اكتب بريدك وسنرسل لك رابطاً لتعيين كلمة مرور جديدة.":m==="invite"?"اختر بريدك وكلمة مرور (8 أحرف أو أكثر). بهذي البيانات تدخل المنصة كل مرة.":"";
   authMsg("")}
 function authMsg(t,ok){const m=$("a-msg");m.textContent=t;m.className="amsg"+(ok?" ok":"")}
 function showAuth(){$("app").hidden=true;$("auth").hidden=false}
@@ -2399,13 +2567,13 @@ async function startApp(user){
   state.isTransport=!!me.transport;state.srvVehicles=Array.isArray(me.vehicles)?me.vehicles:[];state.srvStores=Array.isArray(me.stores)?me.stores:[];state.myVehicles=state.srvVehicles.slice();state.myStores=state.srvStores.slice();
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
-  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","settings","routine"].includes(hv))state.view=hv;}
+  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","settings","routine","events"].includes(hv))state.view=hv;}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)$("hsub").textContent="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
   else if(sup)$("hsub").textContent="متابعة مهام فريقك — أسند المهام وراسل مشرفي الأقسام الأخرى";
   else if(!admin)$("hsub").textContent="مهامك المسندة إليك — حدّث حالتها وأضف ملاحظاتك";
-  if(!admin&&!me.person_id){$("banner").hidden=false;$("banner").textContent="حسابك ("+(user.email||"")+") غير مربوط بأي موظف في المنصة. اطلب من م. محمد نور عمر رابط دعوة وافتحه."}
+  if(!admin&&!me.person_id){wireSelfReg(user.email)}
   db=makeDb();
   const sortO=a=>a.sort((x,y)=>(x.order||0)-(y.order||0));
   db.collection("people").onSnapshot(s=>{state.people=sortO(s.docs.map(d=>({id:d.id,...d.data()})));
@@ -2427,6 +2595,7 @@ async function startApp(user){
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("stock").onSnapshot(s=>{state.stockItems=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
+  db.collection("events").onSnapshot(s=>{state.events=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("loans").onSnapshot(s=>{state.loans=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   setTimeout(()=>checkNotify(false),8000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(()=>checkNotify(false),3000)});
   try{const {data}=await sb.rpc("transport_contacts");state.transContacts=Array.isArray(data)?data:[];safeRender()}catch(e){}
@@ -2452,7 +2621,7 @@ async function startApp(user){
     $("a-welcome").hidden=false;$("a-welcome").textContent="أهلاً "+(info.name||"")+(info.role?" — "+info.role:"")+". فعّل حسابك للدخول إلى منصة المتابعة.";
     $("a-email").value=info.email||info.phone||"";
     return}
-  setAuthMode(recovering?"newpass":"in");
+  const join=new URLSearchParams(location.search).has("join");setAuthMode(recovering?"newpass":join&&!session?"up":"in");if(join&&!session){$("a-welcome").hidden=false;$("a-welcome").textContent="أهلاً بك. رواد النشاط والإداريون: أنشئ حسابك بجوالك وكلمة مرور، ثم أكمل بياناتك لرفع طلبات المناسبات."}
   if(session&&!recovering){await redeemPending().catch(e=>{});startApp(session.user)}else showAuth();
 })();
 </script>
