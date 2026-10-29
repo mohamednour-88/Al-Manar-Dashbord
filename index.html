@@ -163,16 +163,18 @@ details.topics summary{cursor:pointer;color:var(--muted);padding:4px 0}
 .shg th,.shg td{text-align:center;vertical-align:middle;border:1px solid var(--line)}.shg td.ph{text-align:start;font-weight:600;min-width:150px}.shg td.ph .hint{font-weight:400}.shg td.tm{white-space:nowrap;font-size:.8rem;color:var(--muted)}.shg tr.shall td{background:var(--sunk)}.shg td{min-width:80px}
 .evrow{display:grid;grid-template-columns:minmax(0,1.4fr) 80px minmax(0,1.4fr) auto;gap:6px;align-items:center}@media (max-width:520px){.evrow{grid-template-columns:minmax(0,1fr) 70px auto}.evrow input[data-f="note"]{grid-column:1/-1;grid-row:2}}
 .hbrand{display:flex;align-items:center;gap:12px}.hlogo{height:54px;width:auto;flex:none;padding-inline-end:14px;border-inline-end:1px solid var(--line)}.alogo{height:78px;width:auto;justify-self:center;margin-bottom:4px}.aschools{height:46px;width:auto;justify-self:center;margin-top:6px;opacity:.95}.sitefoot{display:flex;flex-direction:column;align-items:center;gap:6px;margin:28px 0 8px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.78rem}.sitefoot img{height:52px;width:auto;background:#fff;border-radius:10px;padding:6px 12px}@media (max-width:520px){.hlogo{height:42px;padding-inline-end:10px}.sitefoot img{height:40px}}
-/* الإصدار 15: ترويسة في الوسط وشعار أكبر وبطاقات أصغر */
-header{flex-direction:column;align-items:center;text-align:center;gap:10px}
-header .hbrand{flex-direction:column;gap:8px}
+/* الإصدار 16: الشعار يمين، العنوان في الوسط، الحساب يسار */
+header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+header .hbrand{display:contents}
+header .hbrand>div{text-align:center}
 header .hbrand .sub{padding-inline-start:0}
-.hlogo{height:86px;padding:0;border:0}
-header .hright{justify-items:center}
+.hlogo{height:104px;padding:0;border:0;justify-self:start}
+header .hright{justify-self:end;justify-items:end}
 .stats{gap:8px;max-width:860px;width:100%;margin-inline:auto}
 .stat{padding:7px 12px;gap:0}.stat b{font-size:1.2rem}.stat span{font-size:.76rem}
 .sitefoot img{height:72px}
-@media (max-width:520px){.hlogo{height:64px}.sitefoot img{height:56px}}
+@media (max-width:760px){header{grid-template-columns:auto 1fr}header .hbrand>div{text-align:start}.hlogo{height:70px}header .hright{grid-column:1/-1;justify-self:stretch;justify-items:start;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}}
+@media (max-width:520px){.hlogo{height:58px}.sitefoot img{height:56px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 <style>
