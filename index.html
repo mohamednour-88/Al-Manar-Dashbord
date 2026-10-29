@@ -160,6 +160,7 @@ details.topics summary{cursor:pointer;color:var(--muted);padding:4px 0}
 .gform textarea{min-height:120px;font-size:.85rem}
 @media (max-width:860px){.main{grid-template-columns:minmax(0,1fr)} aside{position:static}}
 @media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))} .dates{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .fgrid .wide{grid-column:1/-1}}
+.shg th,.shg td{text-align:center;vertical-align:middle;border:1px solid var(--line)}.shg td.ph{text-align:start;font-weight:600;min-width:150px}.shg td.ph .hint{font-weight:400}.shg td.tm{white-space:nowrap;font-size:.8rem;color:var(--muted)}.shg tr.shall td{background:var(--sunk)}.shg td{min-width:80px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 <style>
@@ -1246,6 +1247,110 @@ function purCard(x){
 }
 
 const LOGO="";
+/* ================= الإصدار 9: جدول مناوبة الحراس ================= */
+const SH_SECS=[["boys","قسم البنين"],["m1","المنار 1 — قسم البنات"],["m2","المنار 2 — قسم البنات"],["intl","العالمي"]];
+const SH_WD=[0,1,2,3,4];
+const SH_DEF={p1:"06:00",p2:"08:00",p3:"12:00",p4:"13:00",end:"15:00",slot:60,n2:1,n4:1};
+const SH_PH={1:["الفترة الأولى: الحضور","كل حارس على بوابته: التأكد من نظافة المداخل والبوابات، وترتيب المسارات، واستقبال الطلاب"],
+  2:["الفترة الثانية: أثناء الدوام","تُقفل البوابات الفرعية وتبقى الرئيسية مفتوحة: استقبال طلبات الاستئذان والزوار، بالتناوب"],
+  3:["الفترة الثالثة: الانصراف","كل حارس على بوابته: ترتيب المسارات وتحديد مسارات الخروج وتنظيم الانصراف"],
+  4:["الفترة الرابعة: بعد خروج الطلاب","تُقفل البوابات الفرعية، والرئيسية بالتناوب حتى خروج آخر موظف أو عاملة"]};
+function shMin(t){const [h,m]=String(t||"0:0").split(":").map(Number);return (h||0)*60+(m||0)}
+function shT(m){let h=Math.floor(m/60),mm=m%60;const s=h<12?"ص":"م";h=h%12||12;return `${h}:${String(mm).padStart(2,"0")} ${s}`}
+function shSlots(a,b,len){const out=[];len=Math.max(15,+len||60);for(let s=a;s<b;s+=len)out.push([s,Math.min(b,s+len)]);return out}
+function shGuards(owner){const all=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const g=all.filter(w=>w.type==="guard");return g.length?g:all}
+function shKeys(owner){return [...SH_SECS.map(s=>s[0]),...rDocs("shiftsec",owner).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(d=>d.key).filter(k=>!SH_SECS.some(s=>s[0]===k))]}
+function shSec(owner,key){const id=`sh_${owner}_${key}`;const d=state.routine.find(x=>x.id===id);const def=SH_SECS.find(s=>s[0]===key);
+  return {name:def?def[1]:key,gates:[{id:"g1",name:"البوابة الرئيسية",main:true,guardIds:[]},{id:"g2",name:"بوابة فرعية 1",guardIds:[]},{id:"g3",name:"بوابة فرعية 2",guardIds:[]}],...SH_DEF,...(d||{}),id,key,saved:!!d}}
+function shWeek(sec,owner){
+  const W=new Map(shGuards(owner).map(w=>[w.id,w]));
+  const gates=(sec.gates||[]).map(g=>({...g,guardIds:(g.guardIds||[]).filter(id=>W.has(id))}));
+  const pool=[...new Set(gates.flatMap(g=>g.guardIds))];
+  const fixed=[...new Set(gates.filter(g=>g.main).flatMap(g=>g.guardIds))];
+  const rot=pool.filter(id=>!fixed.includes(id));const r2=rot.length?rot:pool;
+  const s2=shSlots(shMin(sec.p2),shMin(sec.p3),sec.slot),s4=shSlots(shMin(sec.p4),shMin(sec.end),sec.slot);
+  const cnt={};pool.forEach(id=>cnt[id]=0);let i2=0,i4=0;
+  const pick=(arr,n,p)=>{const o=[];for(let k=0;k<Math.min(Math.max(1,+n||1),arr.length);k++)o.push(arr[(p+k)%arr.length]);return o};
+  const step=(n,arr,len)=>arr.length&&(len*Math.min(Math.max(1,+n||1),arr.length))%arr.length===0;
+  const days=SH_WD.map((d,di)=>{if(di){if(step(sec.n2,r2,s2.length))i2++;if(step(sec.n4,pool,s4.length))i4++}return {d,
+    a:s2.map(([s,e])=>{const ids=pick(r2,sec.n2,i2);i2+=ids.length;ids.forEach(id=>cnt[id]+=e-s);return {s,e,ids:[...(rot.length?fixed:[]),...ids]}}),
+    b:s4.map(([s,e])=>{const ids=pick(pool,sec.n4,i4);i4+=ids.length;ids.forEach(id=>cnt[id]+=e-s);return {s,e,ids}})}});
+  return {gates,pool,fixed,s2,s4,days,cnt,name:id=>(W.get(id)||{}).name||""}}
+function shGrid(sec,W,print){
+  const nm=ids=>ids.length?ids.map(id=>esc(W.name(id))).join("<br>"):`<span class="lt">—</span>`;
+  const gl=W.gates.map(g=>`${esc(g.name)}${g.main?" (رئيسية)":""}: ${g.guardIds.length?g.guardIds.map(id=>esc(W.name(id))).join("، "):"—"}`).join(" · ");
+  const head=`<tr><th>الفترة</th><th>الوقت</th>${SH_WD.map(d=>`<th>${RDAYS[d]}</th>`).join("")}</tr>`;
+  const all=(k,a,b)=>`<tr class="shall"><td class="ph">${SH_PH[k][0]}</td><td class="tm">${shT(a)} – ${shT(b)}</td><td colspan="5">${SH_PH[k][1]}<div class="hint">${gl}</div></td></tr>`;
+  const rot=(k,slots,key,lastOpen)=>slots.map(([s,e],i)=>`<tr>${i===0?`<td class="ph" rowspan="${slots.length}">${SH_PH[k][0]}<div class="hint">${SH_PH[k][1]}</div></td>`:""}<td class="tm">${shT(s)} – ${lastOpen&&i===slots.length-1?"حتى خروج آخر شخص":shT(e)}</td>${W.days.map(D=>`<td>${nm(D[key][i].ids)}</td>`).join("")}</tr>`).join("");
+  return `<table class="shg">${print?"":"<thead>"}${head}${print?"":"</thead>"}<tbody>
+    ${all(1,shMin(sec.p1),shMin(sec.p2))}${rot(2,W.s2,"a")}${all(3,shMin(sec.p3),shMin(sec.p4))}${rot(4,W.s4,"b",true)}</tbody></table>`}
+function rShift(B,owner){
+  const keys=shKeys(owner);if(!keys.includes(state.shSec))state.shSec=keys[0];
+  const sec=shSec(owner,state.shSec);const W=shWeek(sec,owner);const guards=shGuards(owner);
+  const tot=Object.values(W.cnt).reduce((a,b)=>a+b,0);
+  B.innerHTML=`<div class="filters">${keys.map(k=>`<button type="button" class="chip" data-shs="${esc(k)}" aria-pressed="${state.shSec===k}">${esc(shSec(owner,k).name)}</button>`).join("")}<button type="button" class="linkbtn" data-shadd>+ قسم</button></div>
+   <div class="hint">التوزيع تلقائي: في الحضور والانصراف كل حارس على بوابته، وأثناء الدوام وبعد خروج الطلاب تُقفل البوابات الفرعية ويتناوب الحراس على البوابة الرئيسية. يتغير الدور كل ${num(+sec.slot||60)} دقيقة ويتوزع بالتساوي على أيام الأسبوع.</div>
+   ${W.pool.length?`<div class="ptab" style="margin-top:8px">${shGrid(sec,W)}</div>
+     <div class="acts"><button class="btn sm" type="button" data-shp="one">طباعة جدول ${esc(sec.name)}</button><button class="btn ghost sm" type="button" data-shp="all">طباعة كل الأقسام</button></div>
+     <section class="dcard"><h3>حصة كل حارس من التناوب في الأسبوع</h3><div class="rlist">${W.pool.map(id=>`<div class="rtrow"><span><b>${esc(W.name(id))}</b>${W.fixed.includes(id)?' <span class="hint">· ثابت على الرئيسية أثناء الدوام</span>':""}</span><span class="pill p-who">${num(Math.round(W.cnt[id]/6)/10)} ساعة تناوب</span></div>`).join("")}</div>${tot?"":'<div class="hint">لا توجد فترات تناوب.</div>'}</section>`
+     :`<div class="empty"><strong>حدد حراس كل بوابة</strong>${guards.length?"اختر من «إعدادات القسم» تحت حارس أو أكثر لكل بوابة، ويطلع الجدول تلقائياً.":"أضف أسماء الحراس أولاً من «الفريق» (النوع: حارس)، ثم وزعهم على البوابات من «إعدادات القسم» تحت."}</div>`}
+   <details class="newreq" ${state.shSetOpen||!W.pool.length?"open":""}><summary>إعدادات القسم: البوابات والحراس والأوقات</summary>
+    <div class="fgrid" style="margin-top:8px">
+     <label class="wide">اسم القسم<input data-sk="name" value="${esc(sec.name)}"></label>
+     <label>بداية الحضور<input type="time" data-sk="p1" value="${esc(sec.p1)}"></label>
+     <label>قفل البوابات الفرعية<input type="time" data-sk="p2" value="${esc(sec.p2)}"></label>
+     <label>بداية الانصراف<input type="time" data-sk="p3" value="${esc(sec.p3)}"></label>
+     <label>نهاية خروج الطلاب<input type="time" data-sk="p4" value="${esc(sec.p4)}"></label>
+     <label>خروج آخر شخص (تقريباً)<input type="time" data-sk="end" value="${esc(sec.end)}"></label>
+     <label>مدة كل مناوبة<select data-sk="slot">${[30,45,60,90,120].map(m=>`<option value="${m}" ${+sec.slot===m?"selected":""}>${num(m)} دقيقة</option>`).join("")}</select></label>
+     <label>المتناوبون مع حارس الرئيسية أثناء الدوام<select data-sk="n2">${[1,2,3].map(n=>`<option ${+sec.n2===n?"selected":""}>${n}</option>`).join("")}</select></label>
+     <label>الحراس على الرئيسية بعد الانصراف<select data-sk="n4">${[1,2,3].map(n=>`<option ${+sec.n4===n?"selected":""}>${n}</option>`).join("")}</select></label>
+    </div>
+    <div class="list" style="margin-top:10px">${(sec.gates||[]).map((g,i)=>`<article class="item" data-gi="${i}"><div class="row1"><input data-gn value="${esc(g.name)}" style="flex:1;max-width:240px" aria-label="اسم البوابة"><label class="st-wrap" style="flex-direction:row;gap:4px;align-items:center"><input type="checkbox" data-gm ${g.main?"checked":""} style="width:auto">رئيسية</label><button class="linkbtn mute" type="button" data-gdel>حذف البوابة</button></div>
+      <div class="sitepick" style="margin-top:6px"><fieldset><legend>حراس البوابة</legend>${guards.map(w=>`<label><input type="checkbox" value="${esc(w.id)}" ${(g.guardIds||[]).includes(w.id)?"checked":""}>${esc(w.name)}</label>`).join("")||'<span class="hint">أضف الحراس من «الفريق».</span>'}</fieldset></div></article>`).join("")}</div>
+    <div class="acts"><button class="btn ghost sm" type="button" data-gadd>+ بوابة</button>${SH_SECS.some(s=>s[0]===sec.key)?"":`<button class="linkbtn mute" type="button" data-shdel>حذف القسم</button>`}</div>
+   </details>`;
+  const det=B.querySelector("details.newreq");det.ontoggle=()=>{state.shSetOpen=det.open};
+  const save=async ch=>{const s={...sec,...ch};delete s.id;delete s.saved;
+    try{await db.doc("routine/"+sec.id).set({...s,kind:"shiftsec",ownerId:owner,key:sec.key,createdAt:sec.createdAt||Date.now(),updatedAt:Date.now()});toast("حُفظ")}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
+  const gates=()=>JSON.parse(JSON.stringify(sec.gates||[]));
+  B.querySelectorAll("[data-shs]").forEach(b=>b.onclick=()=>{state.shSec=b.dataset.shs;render()});
+  B.querySelector("[data-shadd]").onclick=()=>{const n=prompt("اسم القسم الجديد");if(!n||!n.trim())return;const key="x"+Date.now().toString(36);state.shSec=key;state.shSetOpen=true;
+    const s=shSec(owner,key);delete s.id;delete s.saved;db.doc(`routine/sh_${owner}_${key}`).set({...s,name:n.trim(),kind:"shiftsec",ownerId:owner,key,createdAt:Date.now()}).then(()=>{toast("أُضيف القسم");render()}).catch(()=>toast("تعذر الحفظ"))};
+  B.querySelectorAll("[data-sk]").forEach(i=>i.onchange=()=>{const v=i.value.trim();if(!v)return;save({[i.dataset.sk]:["slot","n2","n4"].includes(i.dataset.sk)?+v:v})});
+  B.querySelectorAll("article[data-gi]").forEach(el=>{const i=+el.dataset.gi;
+    el.querySelector("[data-gn]").onchange=e=>{const G=gates();G[i].name=e.target.value.trim()||G[i].name;save({gates:G})};
+    el.querySelector("[data-gm]").onchange=e=>{const G=gates();G[i].main=e.target.checked;save({gates:G})};
+    el.querySelector("[data-gdel]").onclick=()=>{if(!confirm("حذف «"+(sec.gates[i].name)+"»؟"))return;const G=gates();G.splice(i,1);save({gates:G})};
+    el.querySelectorAll(".sitepick input").forEach(c=>c.onchange=()=>{const G=gates();G[i].guardIds=[...el.querySelectorAll(".sitepick input:checked")].map(x=>x.value);save({gates:G})})});
+  B.querySelector("[data-gadd]").onclick=()=>{const G=gates();G.push({id:"g"+Date.now().toString(36),name:"بوابة فرعية "+(G.filter(g=>!g.main).length+1),guardIds:[]});save({gates:G})};
+  const sd=B.querySelector("[data-shdel]");if(sd)sd.onclick=()=>{if(!confirm("حذف القسم «"+sec.name+"»؟"))return;db.doc("routine/"+sec.id).delete().then(()=>{state.shSec=null;toast("حُذف القسم");render()}).catch(()=>toast("تعذر الحذف"))};
+  B.querySelectorAll("[data-shp]").forEach(b=>b.onclick=()=>shPrint(owner,b.dataset.shp==="all"?keys:[sec.key]));
+}
+function shPrint(owner,keys){
+  const parts=keys.map(k=>{const s=shSec(owner,k);const W=shWeek(s,owner);return W.pool.length?`<section><h2>${esc(s.name)}</h2>${shGrid(s,W,true)}</section>`:""}).filter(Boolean);
+  if(!parts.length){toast("لا توجد أقسام مكتملة للطباعة");return}
+  const p=person(owner);
+  const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>جدول مناوبة الحراس</title><style>
+   @page{size:A4 landscape;margin:10mm}body{font-family:Arial,Tahoma,sans-serif;color:#111;font-size:10.5pt;margin:0}
+   .hd{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #242482;padding-bottom:8px;margin-bottom:10px}
+   .br{display:grid;color:#242482;line-height:1.2}.br b{font-size:20pt}.br span{font-size:9pt}.hd .t{text-align:left;font-size:9.5pt;color:#444}
+   h1{font-size:16pt;text-align:center;margin:4px 0 8px;color:#242482}h2{font-size:13pt;color:#242482;margin:6px 0}
+   section{page-break-inside:avoid;margin-bottom:12px}section+section{page-break-before:always}
+   table{width:100%;border-collapse:collapse}th,td{border:1px solid #888;padding:4px 6px;text-align:center;vertical-align:middle}th{background:#ECECF6}
+   td.ph{text-align:right;font-weight:700;width:20%}td.ph .hint{font-weight:400;font-size:8.5pt;color:#444}td.tm{white-space:nowrap;width:12%}
+   tr.shall td{background:#F6F6FB}.hint{font-size:8.5pt;color:#444;margin-top:3px}.lt{color:#999}
+   .sig{display:flex;justify-content:space-between;margin-top:14px;font-size:10pt}.ft{margin-top:10px;font-size:8.5pt;color:#666;text-align:center}</style></head><body>
+   <div class="hd">${LOGO?`<img src="${LOGO}" style="height:50px" alt="شركة الأندلس التعليمية">`:`<div class="br"><b>الأندلس</b><span>شركة الأندلس التعليمية</span></div>`}<div class="t">فرع المنار — الدعم اللوجستي<br>${esc(p?p.name:"")}</div></div>
+   <h1>جدول مناوبة الحراس</h1>
+   ${parts.join("")}
+   <div class="sig"><span>مشرف الحراس: ${esc(p?p.name:"")} — التوقيع: ............</span><span>الاعتماد: م. محمد نور عمر — التوقيع: ............</span></div>
+   <div class="ft">صدر من منصة متابعات المنار</div>
+   <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+  const w=window.open("","_blank");if(!w){toast("اسمح بالنوافذ المنبثقة للطباعة");return}
+  w.document.open();w.document.write(html);w.document.close();
+}
+
 /* ================= الإصدار 8: الأعمال الدورية للمشرفين ================= */
 const RFREQ={daily:"يومي",weekly:"أسبوعي",monthly:"شهري"};
 const RDAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -1277,6 +1382,7 @@ function renderRoutine(){
   const v=$("rtView");if(state.view!=="routine"){v.innerHTML="";return}
   const admin=state.role==="admin";const owners=rOwners();const owner=routineDefaultOwner();
   const subs=[["today","أعمال اليوم"],["duties","الأعمال الدورية"],["assign","توزيع المسؤولين"],["team","الفريق"],["reports","التقارير"]];
+  if(owner&&(/حراس/.test(titleOf(person(owner)||{}))||rDocs("worker",owner).some(w=>w.type==="guard")||rDocs("shiftsec",owner).length))subs.splice(3,0,["shift","جدول المناوبة"]);
   if(admin)subs.push(["sites","المواقع"]);
   if(!subs.some(s=>s[0]===state.rTab))state.rTab="today";
   v.innerHTML=`<div class="phead"><div><h2>الأعمال الدورية</h2><div class="prole">${admin?"أعمال المشرفين الدورية: توزيع المسؤولين على الأدوار والبوابات، والسجل اليومي، والتقارير":"سجّل إنجاز أعمالك الدورية اليوم، ووزّع فريقك على الأدوار والبوابات"}</div></div></div>
@@ -1287,7 +1393,7 @@ function renderRoutine(){
   v.querySelectorAll("[data-rtab]").forEach(b=>b.onclick=()=>{state.rTab=b.dataset.rtab;state.confirm=null;render()});
   const B=v.querySelector("#rtBody");
   if(!owner&&state.rTab!=="sites"){B.innerHTML=`<div class="empty"><strong>لا يوجد مشرف محدد</strong>${admin?"أعطِ المشرف صلاحية «مشرف» من الإعدادات، أو أضف له عملاً دورياً.":"حسابك غير مربوط بموظف."}</div>`;return}
-  ({today:rToday,duties:rDuties,assign:rAssign,team:rTeam,reports:rReports,sites:rSitesView})[state.rTab](B,owner);
+  ({today:rToday,duties:rDuties,assign:rAssign,shift:rShift,team:rTeam,reports:rReports,sites:rSitesView})[state.rTab](B,owner);
 }
 /* أعمال اليوم */
 function rToday(B,owner){
