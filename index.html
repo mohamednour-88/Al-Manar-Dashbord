@@ -181,7 +181,8 @@ details.topics summary{cursor:pointer;color:var(--muted);padding:4px 0}
 .me .ltr{direction:ltr;unicode-bidi:isolate}
 .hright{display:grid;gap:4px;justify-items:end}
 body.staff aside{display:none}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs{display:flex;flex-wrap:wrap;gap:2px 4px;border-bottom:1px solid var(--line)}
+@media (max-width:620px){.tabs button{padding:8px 10px;font-size:.92rem}}
 .tabs button{all:unset;cursor:pointer;padding:10px 16px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
 .tabs button:focus-visible{outline:2px solid var(--accent)}
