@@ -293,6 +293,14 @@ table.acc th{white-space:nowrap;font-size:.75rem}table.acc td.ck{text-align:cent
 .rtrow.ok{border-inline-start-color:var(--ok);background:var(--ok-soft)}.rtrow.no{border-inline-start-color:var(--late);background:var(--late-soft)}
 .rwho{display:inline-flex;gap:4px;align-items:center;margin-inline-start:8px}.rwho select{width:auto;min-width:130px;padding:2px 6px;font-size:.85rem}
 .rtbtns{display:flex;gap:6px;align-items:center}
+.rkeys{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rkey{min-width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:inherit;font:inherit;font-weight:700;font-size:1.05rem;cursor:pointer}
+.rkey:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.rkey.on{color:#fff;border-color:transparent}
+.s1{background:#c4473a}.s2{background:#d9822b}.s3{background:#b8941f}.s4{background:#5f9440}.s5{background:#2f8a5b}
+.rchip{display:inline-block;min-width:26px;height:26px;line-height:26px;border-radius:6px;color:#fff;font-weight:700;text-align:center}
+.rchip.none{background:transparent;color:var(--muted)}
+@media (max-width:520px){.rrate .rkeys{width:100%;justify-content:space-between}.rrate .rkey{flex:1}}
 .sitepick{display:flex;flex-wrap:wrap;gap:8px}.sitepick fieldset{border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin:0;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem}.sitepick legend{font-size:.76rem;color:var(--muted)}.sitepick label{display:flex;gap:4px;align-items:center;color:var(--fg)}.sitepick input{width:auto}
 .welcome{margin:0;background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem}
 .acct{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:.85rem;color:var(--muted);margin-top:8px}
@@ -1768,6 +1776,8 @@ function rDueOn(d,dateStr){const dt=new Date(dateStr+"T12:00:00");const dow=dt.g
 function rWorkerFor(owner,siteId){const a=rDocs("assign",owner).find(x=>x.siteId===siteId);const w=a&&state.routine.find(x=>x.id===a.workerId);return w?w.name:""}
 function rRows(owner,dateStr){const out=[];
   for(const d of rDocs("duty",owner).sort((a,b)=>(a.order||0)-(b.order||0))){if(!rDueOn(d,dateStr))continue;if(d.createdAt&&dateOf(d.createdAt)>dateStr)continue;
+    if(d.mode==="rate"){(d.targets||[]).forEach((t,i)=>{if(!t||!t.label)return;const tid="t"+(t.key||i);const lid=`l_${dateStr}_${d.id}_${tid}`;
+      out.push({duty:d,siteId:"",site:null,target:t,lid,log:state.routine.find(x=>x.id===lid),worker:t.name||""})});continue}
     const sites=(d.siteIds&&d.siteIds.length)?d.siteIds:[""];
     for(const sid of sites){const lid=`l_${dateStr}_${d.id}_${sid||"x"}`;out.push({duty:d,siteId:sid,site:rSite(sid),lid,log:state.routine.find(x=>x.id===lid),worker:sid?rWorkerFor(owner,sid):""})}}
   return out}
@@ -1801,24 +1811,27 @@ function rToday(B,owner){
      ${rows.length?`<span class="pbar" style="width:120px"><span style="width:${pct||0}%"></span></span>`:""}</div>
    ${Object.values(byDuty).map(({d,rows})=>`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(d.title)}</h3><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.time?" · "+esc(d.time):""}</span></div>
      ${d.note?`<div class="hint">${esc(d.note)}</div>`:""}
-     <div class="rlist">${rows.map(r=>{const st=r.log&&r.log.status;return `<div class="rtrow ${st==="done"?"ok":st==="miss"?"no":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.site?rSiteName(r.site):"عام")}</b>${r.siteId?(()=>{const a=rDocs("assign",owner).find(x=>x.siteId===r.siteId);const ws=rDocs("worker",owner).filter(w=>rScope(owner).kind==="guards"?w.type!=="fworker"&&w.type!=="worker":w.type!=="guard").sort((x,y)=>(x.order||0)-(y.order||0));return ` <label class="hint rwho">المسؤول: <select data-who aria-label="المسؤول عن ${esc(rSiteName(r.site))}"><option value="">— اختر —</option>${ws.map(w=>`<option value="${esc(w.id)}" ${a&&a.workerId===w.id?"selected":""}>${esc(w.name)}</option>`).join("")}<option value="__new">+ اسم جديد…</option></select></label>`})():(r.worker?` <span class="hint">· المسؤول: ${esc(r.worker)}</span>`:"")}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
+     <div class="rlist">${rows.map(r=>{const st=r.log&&r.log.status;if(r.target){const sc=r.log&&Number(r.log.score)||0;return `<div class="rtrow rrate ${sc?"ok":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.target.label)}</b> <span class="hint">· ${esc(r.target.name||"")}</span>${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
+       <span class="rkeys" role="group" aria-label="تقييم ${esc(r.target.label)} — ${esc(r.target.name||"")}">${[1,2,3,4,5].map(n=>`<button type="button" class="rkey ${sc===n?"on s"+n:""}" data-score="${n}" aria-pressed="${sc===n}">${num(n)}</button>`).join("")}<button type="button" class="linkbtn" data-note>ملاحظة</button></span></div>`}return `<div class="rtrow ${st==="done"?"ok":st==="miss"?"no":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.site?rSiteName(r.site):"عام")}</b>${r.siteId?(()=>{const a=rDocs("assign",owner).find(x=>x.siteId===r.siteId);const ws=rDocs("worker",owner).filter(w=>rScope(owner).kind==="guards"?w.type!=="fworker"&&w.type!=="worker":w.type!=="guard").sort((x,y)=>(x.order||0)-(y.order||0));return ` <label class="hint rwho">المسؤول: <select data-who aria-label="المسؤول عن ${esc(rSiteName(r.site))}"><option value="">— اختر —</option>${ws.map(w=>`<option value="${esc(w.id)}" ${a&&a.workerId===w.id?"selected":""}>${esc(w.name)}</option>`).join("")}<option value="__new">+ اسم جديد…</option></select></label>`})():(r.worker?` <span class="hint">· المسؤول: ${esc(r.worker)}</span>`:"")}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
        <span class="rtbtns"><button type="button" class="btn sm ${st==="done"?"":"ghost"}" data-st="done">تم</button><button type="button" class="btn sm ${st==="miss"?"danger":"ghost"}" data-st="miss">لم يتم</button><button type="button" class="linkbtn" data-note>ملاحظة</button></span></div>`}).join("")}</div></section>`).join("")||`<div class="empty"><strong>لا توجد أعمال مجدولة لهذا اليوم</strong>أضف الأعمال من «الأعمال الدورية» وحدد تكرارها والأماكن.</div>`}
    ${rows.length?`<div class="acts"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(state.role==="admin"?(p&&p.phone):ADMIN_PHONE)}?text=${encodeURIComponent(rReportMsg(owner,date,rows))}">${state.role==="admin"?"إرسال ملخص اليوم للمشرف":"إرسال تقرير اليوم لـ م. محمد نور عمر"}</a></div>`:""}`;
   B.querySelector("#rDate").onchange=e=>{state.rDate=e.target.value;render()};
   B.querySelectorAll(".rtrow").forEach(el=>{const r=rows.find(x=>x.lid===el.dataset.lid);
-    const save=async patch=>{const base=r.log||{kind:"log",ownerId:owner,date,dutyId:r.duty.id,dutyTitle:r.duty.title,siteId:r.siteId,siteName:r.site?rSiteName(r.site):"",worker:r.worker,createdAt:Date.now()};
-      try{await db.doc("routine/"+r.lid).set({...base,...patch,by:myName(),at:Date.now()});toast("حُفظ")}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
+    const save=async patch=>{const base=r.log||{kind:"log",ownerId:owner,date,dutyId:r.duty.id,dutyTitle:r.duty.title,siteId:r.siteId,siteName:r.site?rSiteName(r.site):(r.target?r.target.label:""),worker:r.worker,createdAt:Date.now()};
+      if(r.target)Object.assign(base,{rate:true,targetKey:r.target.key||"",targetLabel:r.target.label,targetName:r.target.name||""});
+      try{await db.doc("routine/"+r.lid).set({...base,...patch,by:myName(),at:Date.now()});toast(patch.score?`تم التقييم: ${r.target.label} — ${num(patch.score)} من ${num(5)}`:"حُفظ")}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
     el.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>save({status:b.dataset.st}));
+    el.querySelectorAll("[data-score]").forEach(b=>b.onclick=()=>{el.querySelectorAll("[data-score]").forEach(x=>x.disabled=true);save({status:"done",score:Number(b.dataset.score)})});
     const wsel=el.querySelector("[data-who]");if(wsel)wsel.onchange=async()=>{let wid=wsel.value;
       try{if(wid==="__new"){const n=prompt("اسم المسؤول عن "+rSiteName(r.site));if(!n||!n.trim()){render();return}const ref=db.collection("routine").doc();await ref.set({kind:"worker",ownerId:owner,name:n.trim(),type:rScope(owner).kind==="guards"?"guard":/عاملات/.test(titleOf(person(owner)||{}))?"fworker":"worker",order:rDocs("worker",owner).length+1,createdAt:Date.now()});wid=ref.id}
         const aid=`a_${owner}_${r.siteId}`;if(wid)await db.doc("routine/"+aid).set({kind:"assign",ownerId:owner,siteId:r.siteId,workerId:wid,updatedAt:Date.now()});else await db.doc("routine/"+aid).delete();
         if(r.log){const w=state.routine.find(x=>x.id===wid);await db.doc("routine/"+r.lid).update({worker:w?w.name:""}).catch(()=>{})}toast("حُفظ المسؤول")}catch(e){toast("تعذر الحفظ")}render()};
-    el.querySelector("[data-note]").onclick=()=>{const n=prompt("ملاحظة على "+(r.site?rSiteName(r.site):r.duty.title),(r.log&&r.log.note)||"");if(n!==null)save({note:n.trim(),status:(r.log&&r.log.status)||"miss"})}});
+    el.querySelector("[data-note]").onclick=()=>{const n=prompt("ملاحظة على "+(r.site?rSiteName(r.site):r.duty.title),(r.log&&r.log.note)||"");if(n!==null)save({note:n.trim(),status:(r.log&&r.log.status)||(r.target?"":"miss")})}});
 }
 function rReportMsg(owner,date,rows){const p=person(owner);const done=rows.filter(r=>r.log&&r.log.status==="done").length;
   const L=["السلام عليكم ورحمة الله وبركاته",state.role==="admin"?`أ. ${p?p.name:""}`:"م. محمد نور عمر","",`تقرير الأعمال الدورية — ${fmtDate(date)}`];
   const by={};rows.forEach(r=>{(by[r.duty.title]=by[r.duty.title]||[]).push(r)});
-  for(const t in by){L.push("",`• ${t}`);by[t].forEach(r=>{const st=r.log?r.log.status:"";L.push(`  ${st==="done"?"✅":st==="miss"?"❌":"⏳"} ${r.site?rSiteName(r.site):"عام"}${r.worker?" ("+r.worker+")":""}${r.log&&r.log.note?" — "+r.log.note:""}`)})}
+  for(const t in by){L.push("",`• ${t}`);by[t].forEach(r=>{const st=r.log?r.log.status:"";L.push(r.target?`  ${r.log&&r.log.score?"⭐ "+r.log.score+"/5":"⏳ لم يُقيَّم"} ${r.target.label}${r.worker?" ("+r.worker+")":""}${r.log&&r.log.note?" — "+r.log.note:""}`:`  ${st==="done"?"✅":st==="miss"?"❌":"⏳"} ${r.site?rSiteName(r.site):"عام"}${r.worker?" ("+r.worker+")":""}${r.log&&r.log.note?" — "+r.log.note:""}`)})}
   L.push("",`نسبة الإنجاز: ${rows.length?Math.round(100*done/rows.length):0}% (${done} من ${rows.length})`,"",state.role==="admin"?"*نرجو استكمال ما لم يتم وتحديثه في المنصة.*":"*نرجو الاطلاع على التقرير.*","",state.role==="admin"?SIGN:myName());
   return L.join("\n")}
 /* الأعمال الدورية */
@@ -1833,16 +1846,21 @@ function rDuties(B,owner){
      <label>يوم الشهر (للشهري)<input data-k="monthday" type="number" min="1" max="28" value="${esc(d.monthday||1)}"></label>
      <label>الوقت (اختياري)<input data-k="time" value="${esc(d.time||"")}" placeholder="مثال: قبل نهاية الدوام"></label>
      <div class="full"><div class="hint" style="margin-bottom:4px">الأماكن (يتكرر العمل لكل مكان مع مسؤوله)</div><div class="sitepick">${bld.map(b=>`<fieldset><legend>${esc(b)}</legend>${sites.filter(s=>s.building===b).map(s=>`<label><input type="checkbox" value="${esc(s.id)}" ${(d.siteIds||[]).includes(s.id)?"checked":""}>${esc(s.name)}</label>`).join("")}</fieldset>`).join("")}</div></div>
+     <label>طريقة التسجيل<select data-k="mode"><option value="" ${d.mode==="rate"?"":"selected"}>تم / لم يتم</option><option value="rate" ${d.mode==="rate"?"selected":""}>تقييم من ١ إلى ٥</option></select></label>
+     <label class="full">البنود المقيّمة (للتقييم فقط): كل بند في سطر، المكان ثم الاسم بعد شرطة<textarea data-tg rows="5" placeholder="بوابة 2 - حسام">${esc((d.targets||[]).map(t=>t.label+(t.name?" - "+t.name:"")).join("\n"))}</textarea></label>
      <label class="full">تعليمات (اختياري)<input data-k="note" value="${esc(d.note||"")}"></label>
      <div class="full acts"><button class="btn ${d.id?"":"sm"}" type="submit">${d.id?"حفظ":"إضافة العمل"}</button>${d.id?`<button class="linkbtn mute" type="button" data-rcancel>إلغاء</button>`:""}</div></form>`};
   B.innerHTML=`<details class="newreq" ${state.newDutyOpen?"open":""}><summary>+ عمل دوري جديد</summary>${form(null)}</details>
    <div class="list">${list.map(d=>state.editDuty===d.id?`<article class="item">${form(d)}</article>`:`<article class="item ${d.paused?"s-done":""}" data-did="${esc(d.id)}"><div class="row1"><div class="ttl">${esc(d.title)}</div><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.freq==="weekly"?" — "+RDAYS[Number(d.weekday)||0]:d.freq==="monthly"?" — يوم "+num(Number(d.monthday)||1):""}</span></div>
-     <div class="meta"><span>الأماكن: ${(d.siteIds||[]).length?esc((d.siteIds||[]).map(id=>rSiteName(rSite(id))).filter(Boolean).join("، ")):"عام"}</span>${d.time?`<span>الوقت: ${esc(d.time)}</span>`:""}${d.paused?'<span class="pill p-late">متوقف</span>':""}</div>
+     <div class="meta">${d.mode==="rate"?`<span class="pill p-who">تقييم ١–٥</span><span>${esc((d.targets||[]).map(t=>t.label+(t.name?" ("+t.name+")":"")).join("، "))}</span>`:""}<span ${d.mode==="rate"?"hidden":""}>الأماكن: ${(d.siteIds||[]).length?esc((d.siteIds||[]).map(id=>rSiteName(rSite(id))).filter(Boolean).join("، ")):"عام"}</span>${d.time?`<span>الوقت: ${esc(d.time)}</span>`:""}${d.paused?'<span class="pill p-late">متوقف</span>':""}</div>
      <div class="acts"><button class="linkbtn" type="button" data-ed>تعديل</button><button class="linkbtn" type="button" data-pause>${d.paused?"تشغيل":"إيقاف مؤقت"}</button><button class="linkbtn mute" type="button" data-del>حذف</button></div>${delBtns("rd:"+d.id,"حذف العمل الدوري؟ يبقى سجله السابق.")}</article>`).join("")||'<div class="empty"><strong>لا توجد أعمال دورية بعد</strong>أضف أول عمل، مثل: متابعة ترشيد الكهرباء والإنارة في كل دور.</div>'}</div>`;
   const det=B.querySelector("details.newreq");if(det)det.ontoggle=()=>{state.newDutyOpen=det.open};
   B.querySelectorAll("form.rdform").forEach(f=>{const id=f.dataset.rd;
     f.onsubmit=async e=>{e.preventDefault();const d={};f.querySelectorAll("[data-k]").forEach(i=>d[i.dataset.k]=i.value.trim());if(!d.title){toast("اكتب العمل");return}
       d.siteIds=[...f.querySelectorAll(".sitepick input:checked")].map(i=>i.value);d.updatedAt=Date.now();
+      {const prev=(id!=="new"&&(state.routine.find(x=>x.id===id)||{}).targets)||[];const tg=f.querySelector("[data-tg]");
+       d.targets=(tg?tg.value:"").split(/\n+/).map(x=>x.trim()).filter(Boolean).map((ln,i)=>{const [label,...rest]=ln.split(/\s+[-–—]\s+/);const lb=(label||"").trim();const old=prev.find(t=>t.label===lb);return {key:old?old.key:rid().slice(0,6),label:lb,name:rest.join(" - ").trim()}}).filter(t=>t.label);
+       if(d.mode==="rate"&&!d.targets.length){toast("اكتب بنود التقييم: المكان ثم الاسم");return}}
       try{if(id==="new"){await db.collection("routine").doc().set({...d,kind:"duty",ownerId:owner,order:list.length+1,createdAt:Date.now()});state.newDutyOpen=false;toast("أُضيف العمل")}else{await db.doc("routine/"+id).update(d);state.editDuty=null;toast("حُفظ")}render()}catch(err){toast("تعذر الحفظ")}};
     const c=f.querySelector("[data-rcancel]");if(c)c.onclick=()=>{state.editDuty=null;render()}});
   B.querySelectorAll("article[data-did]").forEach(el=>{const id=el.dataset.did;const d=state.routine.find(x=>x.id===id);
@@ -1871,6 +1889,41 @@ function rTeam(B,owner){
     const type=B.querySelector("#rw-type").value;let o=list.length;
     try{for(const ln of lines){const [name,phone]=ln.split(/[،,\t]/).map(s=>(s||"").trim());if(!name)continue;await db.collection("routine").doc().set({kind:"worker",ownerId:owner,name,phone:phone||"",type,order:++o,createdAt:Date.now()})}toast("أُضيفت الأسماء");render()}catch(err){toast("تعذر الإضافة")}};
   B.querySelectorAll("tr[data-wid]").forEach(tr=>{const id=tr.dataset.wid;wireDel(tr,"rw:"+id,()=>db.doc("routine/"+id).delete())});
+}
+/* الإصدار 12: جولة متابعة المبنى من الخارج — تقييم نظافة بوابات المنار 1 (يُنشأ مرة واحدة لمشرف العمال عاصف) */
+const OUT_TITLE="جولة متابعة المبنى من الخارج";
+const OUT_GATES=[["g2","بوابة 2","حسام"],["g3","بوابة 3","سهل البلوشي"],["g4","بوابة 4","محمد محمود السباعي"],["g5","بوابة 5","إسماعيل"],["g6","بوابة 6","نادر"]];
+let rSeeding=false;
+async function rSeedOutside(){
+  if(rSeeding||state.role!=="admin"||!db||!state.people.length)return;
+  if(state.routine.some(x=>x.id==="meta_seed_outside_v1"))return;
+  const a=state.people.find(p=>/عاصف/.test(p.name||""));if(!a)return;
+  rSeeding=true;const owner=a.id;
+  try{
+    const mine=rDocs("duty",owner);let pow=mine.find(d=>/ترشيد/.test(d.title||""));
+    const now=Date.now();
+    for(const d of mine)if(d!==pow&&(d.order||0)<=2)await db.doc("routine/"+d.id).update({order:(d.order||0)+2});
+    if(pow)await db.doc("routine/"+pow.id).update({order:1});
+    else await db.doc("routine/d_pow_"+owner).set({kind:"duty",ownerId:owner,title:"ترشيد الكهرباء والإنارة",category:"ترشيد الكهرباء والإنارة",freq:"daily",siteIds:[],order:1,note:"التأكد من إطفاء الإنارة والمكيفات غير المستخدمة",createdAt:now,updatedAt:now});
+    if(!mine.some(d=>d.title===OUT_TITLE))await db.doc("routine/d_out_"+owner).set({kind:"duty",ownerId:owner,title:OUT_TITLE,category:"النظافة",freq:"daily",siteIds:[],order:2,mode:"rate",
+      targets:OUT_GATES.map(([key,label,name])=>({key,label,name})),note:"قيّم نظافة كل بوابة في المنار 1 من 1 (ضعيف) إلى 5 (ممتاز)",createdAt:now,updatedAt:now});
+    await db.doc("routine/meta_seed_outside_v1").set({kind:"meta",at:now});
+  }catch(e){console.warn("seed outside",e)}
+  rSeeding=false;
+}
+/* لوحة البيانات: بطاقة تقييم البوابات */
+function rRateCards(){
+  const duties=state.routine.filter(x=>x.kind==="duty"&&x.mode==="rate"&&!x.paused&&(x.targets||[]).length);if(!duties.length)return"";
+  const t=todayStr();const days=[];for(let i=0;days.length<10&&i<20;i++){const d=dateOf(Date.now()-i*864e5);const w=new Date(d+"T12:00:00").getDay();if(w===5||w===6)continue;days.unshift(d)}
+  const logOf=(d,tg,day)=>state.routine.find(x=>x.id===`l_${day}_${d.id}_t${tg.key}`);
+  const chip=l=>l&&l.score?`<span class="rchip s${l.score}">${num(l.score)}</span>`:`<span class="rchip none">·</span>`;
+  return duties.map(d=>{const p=person(d.ownerId);
+    const rows=d.targets.map(tg=>{const today=logOf(d,tg,t);const sc=days.slice(-5).map(day=>logOf(d,tg,day)).filter(l=>l&&l.score).map(l=>Number(l.score));
+      const av=sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:null;
+      return `<tr><td><b>${esc(tg.label)}</b> <span class="hint">${esc(tg.name||"")}</span></td><td>${chip(today)}${today&&today.at?` <span class="hint">${new Date(today.at).toLocaleTimeString("ar-SA-u-nu-latn",{hour:"numeric",minute:"2-digit"})}</span>`:""}</td><td>${av===null?"—":`<div class="pbar"><span style="width:${av/5*100}%"></span></div><span class="pv">${num(av.toFixed(1))}</span>`}</td>${days.map(day=>`<td>${chip(logOf(d,tg,day))}</td>`).join("")}</tr>`}).join("");
+    const todays=d.targets.map(tg=>logOf(d,tg,t)).filter(l=>l&&l.score);const tav=todays.length?todays.reduce((a,l)=>a+Number(l.score),0)/todays.length:null;
+    return `<section class="dcard"><h3>${esc(d.title)} — تقييم اليوم</h3><div class="hint">${esc(p?p.name:"")} · قُيّم ${num(todays.length)} من ${num(d.targets.length)}${tav!==null?` · متوسط اليوم ${num(tav.toFixed(1))} من ${num(5)}`:""}</div>
+     <div class="ptab"><table class="dt"><thead><tr><th>البوابة</th><th>اليوم</th><th>متوسط آخر ٥ أيام</th>${days.map(day=>`<th>${new Date(day+"T12:00:00").getDate()}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></section>`}).join("");
 }
 /* التقارير */
 function rReports(B,owner){
@@ -2654,6 +2707,7 @@ function renderDash(){
   v.innerHTML=`<div class="phead"><div><h2>لوحة البيانات</h2><div class="prole">${state.role==="admin"?"كل الأقسام":"أقسام فريقك"} · تتحدث تلقائياً</div></div></div>
    <div class="stats dstats">${kpi("مهام مفتوحة",num(it.length-done))}${kpi("مهام متأخرة",num(it.filter(isLate).length),"late")}${kpi("نسبة الإنجاز",it.length?Math.round(100*done/it.length)+"%":"—","ok",`${num(done)} من ${num(it.length)}`)}${kpi("طلبات مفتوحة",num(rq.filter(reqOpen).length),"due",`${num(rq.filter(reqLate).length)} متأخر`)}
    ${kpi("متوسط تنفيذ الطلب",rqDone.length?dur(avg):"—","",ontime===null?"":`${ontime}% في الموعد`)}${kpi("طلبات شراء مفتوحة",num(pu.filter(purOpen).length))}${kpi("قيمة المشتريات المعتمدة",puVal?money(puVal):"—")}${kpi("حسابات مفعّلة",num(state.people.filter(p=>p._linked).length)+" / "+num(state.people.length))}</div>
+   ${rRateCards()}
    <section class="dcard"><h3>المهام خلال آخر 14 يوماً</h3><div class="legend"><span><i class="k1"></i>مهام جديدة</span><span><i class="k2"></i>مهام منجزة</span></div><div class="bars">${bars}</div></section>
    <section class="dcard"><h3>الأقسام</h3><div class="ptab"><table class="dt"><thead><tr><th>القسم</th><th>الموظفون</th><th>مفتوحة</th><th>متأخرة</th><th>منجزة 7 أيام</th><th>نسبة الإنجاز</th><th>طلبات مفتوحة</th><th>مشتريات مفتوحة</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="hint">لا توجد أقسام فيها موظفون بعد.</td></tr>'}</tbody></table></div></section>
    <section class="dcard"><h3>يحتاج متابعة: الأكثر تأخراً</h3>${lateBy.length?`<div class="ptab"><table class="dt"><thead><tr><th>الموظف</th><th>مهام متأخرة</th><th>طلبات متأخرة</th></tr></thead><tbody>${lateBy.map(x=>`<tr><td><button type="button" class="linkbtn" data-p="${esc(x.p.id)}">${esc(x.p.name)}</button> <span class="hint">${esc(titleOf(x.p))}</span></td><td class="${x.n?"lt":""}">${num(x.n)}</td><td class="${x.r?"lt":""}">${num(x.r)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">لا يوجد تأخير حالياً.</div>'}</section>
@@ -2825,7 +2879,7 @@ async function startApp(user){
   db.collection("transreqs").onSnapshot(s=>{state.transReqs=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("stock").onSnapshot(s=>{state.stockItems=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
-  db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
+  db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender();rSeedOutside()});
   db.collection("events").onSnapshot(s=>{state.events=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("safety").onSnapshot(s=>{state.safety=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("loans").onSnapshot(s=>{state.loans=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
