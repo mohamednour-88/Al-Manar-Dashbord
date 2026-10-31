@@ -300,6 +300,16 @@ table.acc th{white-space:nowrap;font-size:.75rem}table.acc td.ck{text-align:cent
 .s1{background:#c4473a}.s2{background:#d9822b}.s3{background:#b8941f}.s4{background:#5f9440}.s5{background:#2f8a5b}
 .rchip{display:inline-block;min-width:26px;height:26px;line-height:26px;border-radius:6px;color:#fff;font-weight:700;text-align:center}
 .rchip.none{background:transparent;color:var(--muted)}
+.bflist{display:flex;flex-direction:column;gap:6px}
+.bfrow{display:grid;grid-template-columns:minmax(0,1fr) auto 92px 92px auto;gap:8px 12px;align-items:center;background:var(--sunk);border-radius:8px;padding:8px 10px;border-inline-start:3px solid transparent}
+.bfrow.low{border-inline-start-color:var(--late);background:var(--late-soft)}
+.bfname{display:flex;flex-direction:column;min-width:0}.bfname b{overflow-wrap:anywhere}
+.bfqty{display:flex;align-items:center;gap:4px}
+.bfqty input{width:64px;text-align:center;font-variant-numeric:tabular-nums}
+.bfstep{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:inherit;font-size:1.2rem;font-weight:700;cursor:pointer}
+.bfstep:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bfmin{display:flex;flex-direction:column;font-size:.75rem;color:var(--muted);gap:2px}.bfmin input{width:100%;text-align:center}
+@media (max-width:620px){.bfrow{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.bfrow .bfqty{justify-self:end}.bfrow .bfdel{grid-column:1/-1;justify-self:end}}
 @media (max-width:520px){.rrate .rkeys{width:100%;justify-content:space-between}.rrate .rkey{flex:1}}
 .sitepick{display:flex;flex-wrap:wrap;gap:8px}.sitepick fieldset{border:1px solid var(--line);border-radius:8px;padding:4px 10px;margin:0;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.85rem}.sitepick legend{font-size:.76rem;color:var(--muted)}.sitepick label{display:flex;gap:4px;align-items:center;color:var(--fg)}.sitepick input{width:auto}
 .welcome{margin:0;background:var(--accent-soft);border-radius:8px;padding:8px 10px;font-size:.9rem}
@@ -383,6 +393,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   <section class="panel" id="feedView" hidden></section>
   <section class="panel" id="trView" hidden></section>
   <section class="panel" id="whView" hidden></section>
+  <section class="panel" id="bfView" hidden></section>
   <section class="panel" id="setView" hidden></section>
   <section class="panel" id="rtView" hidden></section>
   <section class="panel" id="evView" hidden></section>
@@ -395,7 +406,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
 const ST = {new:"جديد", doing:"قيد التنفيذ", wait:"بانتظار طرف آخر", done:"مكتمل"};
 const SIGN = "م. محمد نور عمر";
 const state = {safety:[], sfTab:"round", events:[], evDraft:null, evOpen:false, evStatus:"open", evScope:"all", evDist:{}, evNotify:null, people:[], groups:[], open:{}, q:"", editGroup:null, topics:[], items:[], sel:"all", filter:"open", manage:false, confirm:null, editNote:null, edit:null, editPerson:null, req:null, reqText:{}, reqKind:{}, canWrite:false, canUpdate:false, canAssign:false, role:"", me:null, roles:[], purchases:[], purScope:"all", purStatus:"open", purDraft:null, newPurOpen:false, requests:[], comments:[], reqTypes:[], contacts:[], view:"tasks", reqFilter:"in", reqStatus:"open", openThreads:{}, drafts:{}, lastSeen:0, feedSeenAt:0, reqDraft:null, newReqOpen:false, reqNotify:null, editRole:null, buyers:[], purNotify:null, roleDraft:null, invite:null, bulk:null, unlinkConfirm:null,
-  vehicles:[], riders:[], transReqs:[], trips:[], warehouses:[], stockItems:[], loans:[], transContacts:[], isTransport:false, myVehicles:[], myStores:[], srvVehicles:[], srvStores:[],
+  vehicles:[], riders:[], transReqs:[], trips:[], warehouses:[], buffets:[], bfSel:"", bfQ:"", bfAddOpen:false, stockItems:[], loans:[], transContacts:[], isTransport:false, myVehicles:[], myStores:[], srvVehicles:[], srvStores:[],
   trTab:"requests", trScope:"all", trStatus:"open", trDraft:null, newTrOpen:false, trNotify:null, tripDraft:null, newTripOpen:false, tripRange:"week", tripVeh:"", editVeh:null, newVehOpen:false, rVeh:"", newRiderOpen:false, anRange:30,
   whSel:"", whTab:"items", whQ:"", whPick:{}, ldDraft:null, ldNotify:null, ldStatus:"open", editItem:null, newItemOpen:false, whEdit:null, newWhOpen:false, inOpen:false, inDraft:null, retOpen:null, setTab:"access", setQ:"", setGroup:"", ordGroup:"", routine:[], rTab:"today", rOwner:"", rDate:"", editDuty:null, newDutyOpen:false, rAllOwners:false};
 let db = null;
@@ -485,7 +496,7 @@ function render(){
   if(sig!==addFormSig){addFormSig=sig;buildAddForm()}
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
-  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderSettings();renderRemind();renderRoutine();renderEvents();renderSafety();
+  renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderBuffets();renderSettings();renderRemind();renderRoutine();renderEvents();renderSafety();
   document.querySelector(".stats").hidden=!canTab("tasks");
   document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
@@ -1159,7 +1170,7 @@ function renderTabs(){
   const purN=state.purchases.filter(x=>x.status==="new"&&(state.role==="admin"||isBuyer())).length;
   const trN=canTrans()?state.transReqs.filter(x=>x.status==="new").length:state.trips.filter(t=>t.startAt&&!t.endAt&&state.myVehicles.includes(t.vehicleId)).length;
   const sfN=canSafety()?state.safety.filter(i=>i.kind==="item"&&(sfBad(i)||sfDue(i)==="late")).length:0;const evN=evCanRoute()?state.events.filter(e=>e.status==="new").length:state.events.filter(e=>e.requesterId===state.me&&evOpen(e)).length;const whN=state.loans.filter(l=>l.status==="requested"&&isKeeper(l.warehouseId)).length;
-  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["events","طلبات المناسبات",evN?`<span class="tb">${num(evN)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""],["routine","الأعمال الدورية",""],["safety","الأمن والسلامة",sfN?`<span class="tb l">${num(sfN)}</span>`:""]];
+  const tabs=[["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["events","طلبات المناسبات",evN?`<span class="tb">${num(evN)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""],["buffets","البوفيهات",bfLowN()?`<span class="tb l">${num(bfLowN())}</span>`:""],["routine","الأعمال الدورية",""],["safety","الأمن والسلامة",sfN?`<span class="tb l">${num(sfN)}</span>`:""]];
   tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""],["dash","لوحة البيانات",""]);
   if(state.role==="admin")tabs.push(["settings","الإعدادات",""]);
   const allow=myTabs();for(let i=tabs.length-1;i>=0;i--)if(!allow.includes(tabs[i][0]))tabs.splice(i,1);
@@ -1167,7 +1178,7 @@ function renderTabs(){
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
   $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
-  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("setView").hidden=state.view!=="settings";$("rtView").hidden=state.view!=="routine";$("evView").hidden=state.view!=="events";$("sfView").hidden=state.view!=="safety";
+  $("purView").hidden=state.view!=="purchases";$("dashView").hidden=state.view!=="dash";$("trView").hidden=state.view!=="transport";$("whView").hidden=state.view!=="stores";$("bfView").hidden=state.view!=="buffets";$("setView").hidden=state.view!=="settings";$("rtView").hidden=state.view!=="routine";$("evView").hidden=state.view!=="events";$("sfView").hidden=state.view!=="safety";
 }
 
 /* ---------- المشتريات ---------- */
@@ -1999,9 +2010,9 @@ function checkNotify(force){
 setInterval(()=>checkNotify(false),30*60*1000);
 
 /* ================= الإصدار 6: صلاحيات الأقسام، الإعدادات، ترتيب الأسماء ================= */
-const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["events","طلبات المناسبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["routine","الأعمال الدورية"],["safety","الأمن والسلامة"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
+const TAB_DEFS=[["tasks","المهام"],["requests","الطلبات"],["events","طلبات المناسبات"],["purchases","المشتريات"],["transport","الحركة والنقل"],["stores","المستودعات"],["buffets","البوفيهات"],["routine","الأعمال الدورية"],["safety","الأمن والسلامة"],["feed","آخر التحديثات"],["dash","لوحة البيانات"]];
 const ACC_TXT={"":"حسب المسمى",staff:"موظف",supervisor:"مشرف",manager:"مدير"};
-function defaultTabs(p){const t=defaultTabs0(p);if(p&&state.routine.some(x=>x.ownerId===p.id&&x.kind!=="site")&&!t.includes("routine"))t.push("routine");return t}
+function defaultTabs(p){const t=defaultTabs0(p);if(p&&state.buffets.some(b=>b.keeperId===p.id)&&!t.includes("buffets"))t.push("buffets");if(p&&state.routine.some(x=>x.ownerId===p.id&&x.kind!=="site")&&!t.includes("routine"))t.push("routine");return t}
 function defaultTabs0(p){
   if(!p)return["tasks"];
   const r=roleOf(p.roleId);const acc=accessOf(p);
@@ -2418,6 +2429,109 @@ function analysisView(B){
   B.querySelectorAll("[data-an]").forEach(b=>b.onclick=()=>{state.anRange=+b.dataset.an;render()});
 }
 
+/* ================= الإصدار 13: البوفيهات — الجرد والحد الأدنى وإعادة الطلب التلقائي ================= */
+const BF_SEED=[["buf_admin","بوفيه الإدارة العامة","المنار 1"],["buf_boys","بوفيه مجمع البنين","المنار 1"],["buf_girls","بوفيه مجمع البنات","المنار 1"],["buf_small","بوفيه الأندلس الصغيرة","المنار 2"]];
+const BF_COMMON=[["قهوة عربية","كيس"],["هيل","كيس"],["زعفران","علبة"],["شاي أحمر","علبة"],["شاي أخضر","علبة"],["نسكافيه","علبة"],["حليب بودرة","علبة"],["حليب سائل","كرتون"],["سكر","كيس"],["سكر دايت","علبة"],["ماء صغير","كرتون"],["عصير","كرتون"],["تمر","كرتون"],["أكواب ورقية للقهوة","كرتون"],["أكواب ورقية للشاي","كرتون"],["أكواب بلاستيك للماء","كرتون"],["أعواد تقليب","كيس"],["مناديل","كرتون"],["أكياس قمامة","كرتون"],["سائل جلي","جالون"]];
+let bfSeeding=false;
+async function bfSeed(){
+  if(bfSeeding||state.role!=="admin"||!db||!state.routine.length)return;
+  if(state.routine.some(x=>x.id==="meta_seed_buffets_v1"))return;
+  bfSeeding=true;
+  try{let o=0;for(const [id,name,building] of BF_SEED){o++;if(state.buffets.some(b=>b.id===id))continue;
+      await db.doc("warehouses/"+id).set({kind:"buffet",name,building,place:building,keeperId:"",keeperName:"",keeperPhone:"",order:900+o,createdAt:Date.now()})}
+    await db.doc("routine/meta_seed_buffets_v1").set({kind:"meta",at:Date.now()})}catch(e){console.warn("seed buffets",e)}
+  bfSeeding=false}
+function bfOf(id){return state.buffets.find(b=>b.id===id)}
+function bfItems(id){return state.stockItems.filter(i=>i.warehouseId===id).sort((a,b)=>(a.name||"").localeCompare(b.name||""))}
+function bfLow(i){return i.min!=null&&i.min!==""&&Number(i.min)>0&&(Number(i.qty)||0)<=Number(i.min)}
+function bfReorderOpen(i){if(!i.reorderId)return false;const pu=state.purchases.find(x=>x.id===i.reorderId);return pu?purOpen(pu):(Date.now()-(i.reorderAt||0)<7*864e5)}
+function bfCanEdit(id){return state.role==="admin"||state.myStores.includes(id)}
+function bfLowN(){if(!canTab("buffets"))return 0;return state.buffets.filter(b=>bfCanEdit(b.id)).reduce((n,b)=>n+bfItems(b.id).filter(bfLow).length,0)}
+function bfOrderQty(i){const r=Number(i.reorderQty)||0;if(r>0)return r;const m=Number(i.min)||0;return Math.max(1,m*2-(Number(i.qty)||0))}
+/* عند وصول الصنف للحد الأدنى يُنشأ طلب شراء تلقائي لمسؤول المشتريات (مرة واحدة حتى يُغلق الطلب) */
+async function bfAutoReorder(i,b){
+  if(!bfLow(i)||bfReorderOpen(i))return null;
+  const now=Date.now();const g=groupOf(myGroupIds()[0]);const q=bfOrderQty(i);
+  const doc={requesterId:state.me||null,requesterName:myName(),groupId:g?g.id:"",groupName:g?g.name:"",title:`إعادة طلب: ${i.name} — ${b.name}`,
+    items:[{name:i.name,qty:q,unit:i.unit||""}],category:"الضيافة",neededBy:"",dueAt:purDue(now),
+    reason:`طلب تلقائي: وصل رصيد «${i.name}» في ${b.name} (${b.building||""}) إلى ${Number(i.qty)||0} ${i.unit||""}، والحد الأدنى ${Number(i.min)}.`,
+    status:"new",auto:true,buffetId:b.id,itemId:i.id,createdAt:now,updatedAt:now};
+  const ref=db.collection("purchases").doc();
+  await ref.set(doc);
+  await db.doc("stock/"+i.id).update({reorderId:ref.id,reorderAt:now}).catch(()=>{});
+  return {id:ref.id,qty:q}}
+function bfBuyerWa(i,b){const by=state.buyers.find(x=>waNum(x.phone));if(!by)return"";
+  const t=["السلام عليكم ورحمة الله وبركاته",`أ. ${by.name}`,"",`وصل صنف «${i.name}» في ${b.name} للحد الأدنى، وتم رفع طلب شراء تلقائي في المنصة:`,`• الكمية المطلوبة: ${bfOrderQty(i)} ${i.unit||""}`,`• بند المصروف: الضيافة`,"",`*نرجو تأمين الطلب وتحديثه في المنصة: ${here()}#purchases*`,"",state.role==="admin"?SIGN:myName()].join("\n");
+  return `https://wa.me/${waNum(by.phone)}?text=${encodeURIComponent(t)}`}
+async function bfSaveQty(i,b,patch){
+  const next={...i,...patch};const p={...patch,updatedAt:Date.now()};
+  if("qty" in patch){p.countedAt=Date.now();p.countedBy=myName()}
+  try{await db.doc("stock/"+i.id).update(p)}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ");return}
+  let msg="حُفظ";
+  if(bfLow(next)){try{const r=await bfAutoReorder(next,b);if(r)msg=`«${i.name}» وصل للحد الأدنى — أُرسل طلب شراء تلقائي (${num(r.qty)} ${i.unit||""}) إلى ${buyerNames()}`}catch(e){msg="وصل للحد الأدنى، لكن تعذر إنشاء طلب الشراء تلقائياً — أنشئه من «المشتريات»"}}
+  toast(msg);render()}
+function renderBuffets(){
+  const v=$("bfView");if(state.view!=="buffets"){v.innerHTML="";return}
+  const B=state.buffets;
+  if(!state.bfSel||!bfOf(state.bfSel))state.bfSel=(B.find(b=>state.myStores.includes(b.id))||B[0]||{}).id||"";
+  const b=bfOf(state.bfSel);const admin=state.role==="admin";
+  const blds=[...new Set(B.map(x=>x.building||""))];
+  v.innerHTML=`<div class="phead"><div><h2>البوفيهات</h2><div class="prole">جرد أصناف كل بوفيه ورصيدها. إذا وصل الصنف للحد الأدنى يُرفع طلب شراء تلقائي لمسؤول المشتريات.</div></div></div>
+   ${B.length?`<div class="bfgroups">${blds.map(bl=>`<div class="filters" style="align-items:center"><span class="hint" style="min-width:56px">${esc(bl)}</span>${B.filter(x=>(x.building||"")===bl).map(x=>{const n=bfItems(x.id).filter(bfLow).length;return `<button type="button" class="chip" data-bf="${esc(x.id)}" aria-pressed="${state.bfSel===x.id}">${esc(x.name.replace(/^بوفيه\s+/,""))}${n?` <span class="tb l">${num(n)}</span>`:""}</button>`}).join("")}</div>`).join("")}</div>`
+     :`<div class="empty"><strong>لا توجد بوفيهات بعد</strong>${admin?"تُنشأ البوفيهات الأربعة تلقائياً خلال ثوانٍ.":"اطلب من مدير المنصة إضافتها."}</div>`}
+   <div id="bfBody"></div>`;
+  v.querySelectorAll("[data-bf]").forEach(x=>x.onclick=()=>{state.bfSel=x.dataset.bf;state.bfQ="";render()});
+  if(!b)return;
+  const edit=bfCanEdit(b.id);const all=bfItems(b.id);const q=(state.bfQ||"").trim();
+  const list=q?all.filter(i=>(i.name||"").includes(q)):all;
+  const low=all.filter(bfLow),ordered=low.filter(bfReorderOpen);
+  const last=all.reduce((m,i)=>Math.max(m,i.countedAt||0),0);
+  const kp=person(b.keeperId);
+  const Bd=v.querySelector("#bfBody");
+  Bd.innerHTML=`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(b.name)} <span class="hint">· ${esc(b.building||"")}</span></h3>
+      <span class="pill ${low.length?"p-late":"p-done"}">${low.length?`تحت الحد الأدنى: ${num(low.length)}`:"المخزون سليم"}</span>${ordered.length?`<span class="pill p-req">طلبات شراء قائمة: ${num(ordered.length)}</span>`:""}</div>
+     <div class="meta"><span>الأصناف: ${num(all.length)}</span><span>المسؤول: ${esc(b.keeperName||(kp&&kp.name)||"— لم يُحدد —")}</span><span>آخر جرد: ${last?fmtTs(last):"—"}</span></div>
+     ${admin?`<label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px">مسؤول البوفيه (يحدّث الجرد)<select id="bfKeeper" style="width:auto"><option value="">— اختر —</option>${state.people.map(p=>`<option value="${esc(p.id)}" ${b.keeperId===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label>`:""}</section>
+   ${low.length?`<section class="dcard bflow"><h3>وصلت للحد الأدنى</h3><div class="rlist">${low.map(i=>{const op=bfReorderOpen(i);const wa=op?bfBuyerWa(i,b):"";return `<div class="rtrow no"><span><b>${esc(i.name)}</b> <span class="hint">الرصيد ${num(Number(i.qty)||0)} ${esc(i.unit||"")} · الحد ${num(Number(i.min))}</span></span>
+       <span class="rtbtns">${op?`<span class="pill p-req">طُلب ${num(bfOrderQty(i))} ${esc(i.unit||"")} تلقائياً</span>${wa?`<a class="linkbtn" target="_blank" rel="noopener" href="${wa}">تنبيه المشتريات</a>`:""}`:edit?`<button type="button" class="btn sm" data-reo="${esc(i.id)}">إعادة الطلب الآن</button>`:""}</span></div>`}).join("")}</div></section>`:""}
+   <section class="dcard"><div class="row1" style="flex-wrap:wrap;gap:8px"><h3 style="flex:1">الجرد</h3><input type="search" id="bfq" placeholder="ابحث عن صنف" aria-label="بحث في أصناف البوفيه" value="${esc(state.bfQ||"")}" style="max-width:220px"></div>
+     <div class="hint" style="margin:4px 0 8px">${edit?"عدّل الرصيد بالأزرار أو اكتب العدد بعد الجرد. «الحد الأدنى»: إذا وصل له الرصيد يُطلب تلقائياً. «كمية الطلب»: الكمية التي تُطلب كل مرة (إن تُركت فارغة تُحسب ضعف الحد الأدنى ناقص الرصيد).":"للاطلاع فقط."}</div>
+     <div class="bflist">${list.map(i=>{const lw=bfLow(i);return `<div class="bfrow ${lw?"low":""}" data-bi="${esc(i.id)}">
+        <div class="bfname"><b>${esc(i.name)}</b><span class="hint">${esc(i.unit||"")}${i.countedAt?` · جُرد ${fmtTs(i.countedAt)}`:""}</span></div>
+        <div class="bfqty">${edit?`<button type="button" class="bfstep" data-d="-1" aria-label="إنقاص ${esc(i.name)}">−</button><input type="number" min="0" inputmode="numeric" data-q value="${esc(Number(i.qty)||0)}" aria-label="رصيد ${esc(i.name)}"><button type="button" class="bfstep" data-d="1" aria-label="زيادة ${esc(i.name)}">+</button>`:`<b>${num(Number(i.qty)||0)}</b>`}</div>
+        <label class="bfmin">الحد الأدنى${edit?`<input type="number" min="0" inputmode="numeric" data-min value="${esc(i.min??"")}">`:`<b>${i.min?num(Number(i.min)):"—"}</b>`}</label>
+        <label class="bfmin">كمية الطلب${edit?`<input type="number" min="0" inputmode="numeric" data-rq value="${esc(i.reorderQty??"")}" placeholder="تلقائي">`:`<b>${i.reorderQty?num(Number(i.reorderQty)):"—"}</b>`}</label>
+        ${edit?`<span class="bfdel">${state.confirm==="bfi:"+i.id?`<button class="btn danger sm" type="button" data-dy>حذف</button><button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del aria-label="حذف ${esc(i.name)}">حذف</button>`}</span>`:""}
+       </div>`}).join("")||`<div class="empty"><strong>${q?"لا يوجد صنف بهذا الاسم":"لا توجد أصناف في هذا البوفيه بعد"}</strong>${edit&&!q?"أضف الأصناف من الأسفل، أو أضف الأصناف المعتادة ثم اكتب رصيد كل صنف.":""}</div>`}</div></section>
+   ${edit?`<details class="newreq" ${state.bfAddOpen?"open":""}><summary>+ إضافة أصناف</summary>
+     <form id="bfadd" class="fgrid" style="margin-top:10px"><label class="full">كل صنف في سطر: الاسم، الرصيد، الوحدة، الحد الأدنى، كمية الطلب<textarea id="bf-text" rows="5" placeholder="قهوة عربية، 6، كيس، 2، 10"></textarea></label>
+      <div class="full acts"><button class="btn" type="submit">إضافة</button><button class="btn ghost sm" type="button" data-common>إضافة الأصناف المعتادة (${num(BF_COMMON.length)} صنف)</button></div></form></details>`:""}`;
+  const ks=Bd.querySelector("#bfKeeper");if(ks)ks.onchange=async()=>{const p=person(ks.value);try{await db.doc("warehouses/"+b.id).update({keeperId:ks.value,keeperName:p?p.name:"",keeperPhone:p?(p.phone||""):"",updatedAt:Date.now()});toast(p?`${p.name} مسؤول ${b.name} — يظهر له تبويب «البوفيهات»`:"أُزيل المسؤول")}catch(e){toast("تعذر الحفظ")}};
+  const qs=Bd.querySelector("#bfq");qs.oninput=()=>{state.bfQ=qs.value;clearTimeout(renderBuffets._t);renderBuffets._t=setTimeout(()=>{render();const n=$("bfq");if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}},350)};
+  Bd.querySelectorAll("[data-reo]").forEach(x=>x.onclick=async()=>{const i=all.find(y=>y.id===x.dataset.reo);if(!i)return;x.disabled=true;try{const r=await bfAutoReorder(i,b);toast(r?`أُرسل طلب شراء (${num(r.qty)} ${i.unit||""}) إلى ${buyerNames()}`:"يوجد طلب قائم لهذا الصنف")}catch(e){toast("تعذر إنشاء طلب الشراء")}render()});
+  Bd.querySelectorAll(".bfrow").forEach(row=>{const i=all.find(y=>y.id===row.dataset.bi);if(!i||!edit)return;
+    const qi=row.querySelector("[data-q]");
+    row.querySelectorAll(".bfstep").forEach(st=>st.onclick=()=>{const n=Math.max(0,(Number(i.qty)||0)+Number(st.dataset.d));qi.value=n;bfSaveQty(i,b,{qty:n})});
+    qi.onchange=()=>{const n=Math.max(0,Number(qi.value)||0);if(n!==(Number(i.qty)||0))bfSaveQty(i,b,{qty:n})};
+    const mi=row.querySelector("[data-min]");mi.onchange=()=>bfSaveQty(i,b,{min:mi.value===""?null:Math.max(0,Number(mi.value)||0)});
+    const ri=row.querySelector("[data-rq]");ri.onchange=()=>bfSaveQty(i,b,{reorderQty:ri.value===""?null:Math.max(0,Number(ri.value)||0)});
+    wireDel(row,"bfi:"+i.id,()=>db.doc("stock/"+i.id).delete())});
+  const det=Bd.querySelector("details.newreq");if(det)det.ontoggle=()=>{state.bfAddOpen=det.open};
+  const add=async rows=>{const have=new Set(all.map(i=>i.name));let n=0;
+    for(const r of rows){if(!r.name||have.has(r.name))continue;have.add(r.name);
+      await db.collection("stock").doc().set({warehouseId:b.id,name:r.name,qty:r.qty||0,unit:r.unit||"",min:r.min>0?r.min:null,reorderQty:r.rq>0?r.rq:null,category:"ضيافة",condition:"سليم",out:0,createdAt:Date.now(),updatedAt:Date.now(),countedAt:r.qty!=null?Date.now():null,countedBy:myName()});n++}
+    return n};
+  const f=Bd.querySelector("#bfadd");if(f){f.onsubmit=async e=>{e.preventDefault();const rows=f.querySelector("#bf-text").value.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(ln=>{const [name,qty,unit,min,rq]=ln.split(/[،,\t]/).map(x=>(x||"").trim());return{name,qty:Number(qty)||0,unit,min:Number(min)||0,rq:Number(rq)||0}});
+      if(!rows.length){toast("اكتب صنفاً واحداً على الأقل");return}
+      try{const n=await add(rows);toast(n?`أُضيف ${num(n)} صنف`:"الأصناف موجودة مسبقاً");state.bfAddOpen=false;render()}catch(err){toast("ليست لديك صلاحية أو تعذر الإضافة")}};
+    f.querySelector("[data-common]").onclick=async()=>{try{const n=await add(BF_COMMON.map(([name,unit])=>({name,unit,qty:0})));toast(n?`أُضيف ${num(n)} صنف — اكتب رصيد كل صنف وحده الأدنى`:"الأصناف المعتادة موجودة مسبقاً");state.bfAddOpen=false;render()}catch(err){toast("ليست لديك صلاحية أو تعذر الإضافة")}}}
+}
+function bfDashCard(){
+  if(!state.buffets.length)return"";
+  const rows=state.buffets.map(b=>{const it=bfItems(b.id);const low=it.filter(bfLow);const op=low.filter(bfReorderOpen).length;const last=it.reduce((m,i)=>Math.max(m,i.countedAt||0),0);
+    return `<tr><td><button type="button" class="linkbtn" data-gobf="${esc(b.id)}">${esc(b.name)}</button> <span class="hint">${esc(b.building||"")}</span></td><td>${num(it.length)}</td><td class="${low.length?"lt":""}">${num(low.length)}</td><td>${num(op)}</td><td class="hint">${low.slice(0,4).map(i=>esc(i.name)).join("، ")}${low.length>4?"…":""}</td><td class="hint">${last?fmtTs(last):"—"}</td></tr>`}).join("");
+  return `<section class="dcard"><h3>البوفيهات</h3><div class="ptab"><table class="dt"><thead><tr><th>البوفيه</th><th>الأصناف</th><th>تحت الحد الأدنى</th><th>طُلبت تلقائياً</th><th>الأصناف الناقصة</th><th>آخر جرد</th></tr></thead><tbody>${rows}</tbody></table></div></section>`}
+
 /* ---------- صفحة المستودعات ---------- */
 function avail(i){return Math.max(0,(Number(i.qty)||0)-(Number(i.out)||0))}
 function renderStores(){
@@ -2707,7 +2821,7 @@ function renderDash(){
   v.innerHTML=`<div class="phead"><div><h2>لوحة البيانات</h2><div class="prole">${state.role==="admin"?"كل الأقسام":"أقسام فريقك"} · تتحدث تلقائياً</div></div></div>
    <div class="stats dstats">${kpi("مهام مفتوحة",num(it.length-done))}${kpi("مهام متأخرة",num(it.filter(isLate).length),"late")}${kpi("نسبة الإنجاز",it.length?Math.round(100*done/it.length)+"%":"—","ok",`${num(done)} من ${num(it.length)}`)}${kpi("طلبات مفتوحة",num(rq.filter(reqOpen).length),"due",`${num(rq.filter(reqLate).length)} متأخر`)}
    ${kpi("متوسط تنفيذ الطلب",rqDone.length?dur(avg):"—","",ontime===null?"":`${ontime}% في الموعد`)}${kpi("طلبات شراء مفتوحة",num(pu.filter(purOpen).length))}${kpi("قيمة المشتريات المعتمدة",puVal?money(puVal):"—")}${kpi("حسابات مفعّلة",num(state.people.filter(p=>p._linked).length)+" / "+num(state.people.length))}</div>
-   ${rRateCards()}
+   ${rRateCards()}${bfDashCard()}
    <section class="dcard"><h3>المهام خلال آخر 14 يوماً</h3><div class="legend"><span><i class="k1"></i>مهام جديدة</span><span><i class="k2"></i>مهام منجزة</span></div><div class="bars">${bars}</div></section>
    <section class="dcard"><h3>الأقسام</h3><div class="ptab"><table class="dt"><thead><tr><th>القسم</th><th>الموظفون</th><th>مفتوحة</th><th>متأخرة</th><th>منجزة 7 أيام</th><th>نسبة الإنجاز</th><th>طلبات مفتوحة</th><th>مشتريات مفتوحة</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="hint">لا توجد أقسام فيها موظفون بعد.</td></tr>'}</tbody></table></div></section>
    <section class="dcard"><h3>يحتاج متابعة: الأكثر تأخراً</h3>${lateBy.length?`<div class="ptab"><table class="dt"><thead><tr><th>الموظف</th><th>مهام متأخرة</th><th>طلبات متأخرة</th></tr></thead><tbody>${lateBy.map(x=>`<tr><td><button type="button" class="linkbtn" data-p="${esc(x.p.id)}">${esc(x.p.name)}</button> <span class="hint">${esc(titleOf(x.p))}</span></td><td class="${x.n?"lt":""}">${num(x.n)}</td><td class="${x.r?"lt":""}">${num(x.r)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">لا يوجد تأخير حالياً.</div>'}</section>
@@ -2715,6 +2829,7 @@ function renderDash(){
   v.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{const id=b.dataset.t,i=it.find(x=>x.id===id);if(!i)return;if(person(i.personId))state.sel=i.personId;state.filter="any";state.view="tasks";render();setTimeout(()=>{const x=document.querySelector(`[data-item="${CSS.escape(id)}"]`);if(x)x.scrollIntoView({behavior:"smooth",block:"center"})},100)});
   v.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{state.sel="g:"+b.dataset.g;state.view="tasks";setOpen(b.dataset.g,true);render();window.scrollTo({top:0})});
   v.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.p;state.view="tasks";state.filter="late";render();window.scrollTo({top:0})});
+  v.querySelectorAll("[data-gobf]").forEach(b=>b.onclick=()=>{state.bfSel=b.dataset.gobf;state.view="buffets";try{history.replaceState(null,"",location.pathname+"#buffets")}catch(e){}render();window.scrollTo({top:0})});
 }
 
 /* ---------- آخر التحديثات (يشمل المشتريات) ---------- */
@@ -2852,7 +2967,7 @@ async function startApp(user){
   state.isTransport=!!me.transport;state.srvVehicles=Array.isArray(me.vehicles)?me.vehicles:[];state.srvStores=Array.isArray(me.stores)?me.stores:[];state.myVehicles=state.srvVehicles.slice();state.myStores=state.srvStores.slice();
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
-  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","settings","routine","events","safety"].includes(hv))state.view=hv;}
+  {const hv=(location.hash||"").slice(1);if(["tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"].includes(hv))state.view=hv;}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)$("hsub").textContent="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
@@ -2874,7 +2989,7 @@ async function startApp(user){
   db.collection("reqtypes").onSnapshot(s=>{state.reqTypes=sortO(s.docs.map(d=>({id:d.id,...d.data()})));safeRender()});
   const uniq=a=>a.filter((x,i)=>a.indexOf(x)===i);
   db.collection("vehicles").onSnapshot(s=>{state.vehicles=sortO(s.docs.map(d=>({id:d.id,...d.data()})));state.myVehicles=uniq(state.srvVehicles.concat(state.vehicles.filter(v=>state.me&&(v.supervisorIds||[]).includes(state.me)).map(v=>v.id)));safeRender()});
-  db.collection("warehouses").onSnapshot(s=>{state.warehouses=sortO(s.docs.map(d=>({id:d.id,...d.data()})));state.myStores=uniq(state.srvStores.concat(state.warehouses.filter(w=>state.me&&w.keeperId===state.me).map(w=>w.id)));safeRender()});
+  db.collection("warehouses").onSnapshot(s=>{const all=sortO(s.docs.map(d=>({id:d.id,...d.data()})));state.warehouses=all.filter(w=>w.kind!=="buffet");state.buffets=all.filter(w=>w.kind==="buffet");state.myStores=uniq(state.srvStores.concat(all.filter(w=>state.me&&w.keeperId===state.me).map(w=>w.id)));safeRender();bfSeed()});
   db.collection("riders").onSnapshot(s=>{state.riders=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("transreqs").onSnapshot(s=>{state.transReqs=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
