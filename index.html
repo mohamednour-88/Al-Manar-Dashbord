@@ -491,6 +491,7 @@ async function copy(text,ok){try{await navigator.clipboard.writeText(text);toast
 
 /* ---------- render ---------- */
 function render(){
+  state.events=evVisible(state.eventsRaw||[]);
   const items=state.items, open=items.filter(i=>i.status!=="done"), wk=Date.now()-7*864e5;
   $("s-open").textContent=num(open.length);
   $("s-late").textContent=num(items.filter(isLate).length);
@@ -1493,11 +1494,14 @@ function ridersView2(B){
 /* ================= الإصدار 10: طلبات المناسبات والتسجيل الذاتي ================= */
 const EV_SECS=["قسم البنين","المنار 1 — قسم البنات","المنار 2 — قسم البنات","العالمي","الإدارة"];
 const EV_ST={new:"جديد",routed:"أُرسل للمستودعات",ready:"تم التجهيز",done:"انتهت المناسبة",cancelled:"ملغي",rejected:"معتذر عنه"};
-const EV_QUICK=["طاولات","كراسي","مفارش طاولات","استيج","شاشة عرض","بروجكتر","مايك وسماعات","فازات","سجاد","منبر","رول أب","تمديدات كهرباء"];
-const EV_GUESS=[["wh-tech",/شاش|بروجكتر|عرض|مايك|ميكروفون|سماع|صوت|لابتوب|كاميرا/],["wh-maint",/تمديد|كهرب|سلم|عدة|إضاءة|اضاءة|كشاف/],["wh-furn",/طاول|كرسي|كراسي|استيج|ستيج|منبر|بوديوم|سجاد|موكيت|كنب/],["wh-activity",/مفرش|مفارش|فاز|زين|بالون|ستاند|علم|أعلام|ورد/],["wh-comms",/رول|بنر|لوحة|درع|شهاد/],["wh-clean",/ماء|موية|مناديل|أكواب|اكواب|ضياف|قهوة/]];
+const EV_QUICK=["طاولات دائرية","طاولات مستطيلة","كراسي","مفارش","ديكورات مدخل","فازات","صحون تقديم","كاسات زجاجية"];
+const EV_GUESS=[["wh-tech",/شاش|بروجكتر|عرض|مايك|ميكروفون|سماع|صوت|لابتوب|كاميرا/],["wh-maint",/تمديد|كهرب|سلم|عدة|إضاءة|اضاءة|كشاف/],["wh-furn",/طاول|كرسي|كراسي|استيج|ستيج|منبر|بوديوم|سجاد|موكيت|كنب/],["wh-activity",/مفرش|مفارش|فاز|ديكور|زين|بالون|ستاند|علم|أعلام|ورد/],["wh-comms",/رول|بنر|لوحة|درع|شهاد/],["wh-clean",/ماء|موية|مناديل|أكواب|اكواب|صحن|صحون|كاس|زجاج|ضياف|قهوة/]];
 const EV_LEAD="رائد نشاط",EV_ADM="إداري";
 function evOpen(e){return !["done","cancelled","rejected"].includes(e.status)}
-function evCanRoute(){return state.role==="admin"||state.role==="supervisor"||state.role==="manager"}
+/* الإصدار 24: الاطلاع على كل طلبات المناسبات لأشخاص محددين فقط (evAll) */
+function evSeeAll(){if(state.role==="admin")return true;const m=person(state.me);return !!(m&&m.evAll)}
+function evVisible(list){if(evSeeAll())return list;const me=state.me||"__";return list.filter(e=>e.requesterId===me||e.coordId===me)}
+function evCanRoute(){return state.role==="admin"||((state.role==="supervisor"||state.role==="manager")&&evSeeAll())}
 function evCoords(){return state.people.filter(p=>!p.selfReg&&((p.groups||[]).includes("g-facilities")||["supervisor","manager"].includes(accessOf(p))))}
 function evGuess(name){const n=String(name||"").trim();if(!n)return{wh:"",item:""};
   const it=state.stockItems.find(i=>i.name===n)||state.stockItems.find(i=>i.name&&(i.name.includes(n)||n.includes(i.name)));
@@ -1523,7 +1527,7 @@ function renderEvents(){
   const st=state.evStatus;
   if(st==="open")list=list.filter(evOpen);else if(st==="new")list=list.filter(e=>e.status==="new");else if(st==="done")list=list.filter(e=>!evOpen(e));
   list.sort((a,b)=>(evOpen(b)-evOpen(a))||(String(a.date).localeCompare(String(b.date))));
-  const scopes=route?[["all","كل الطلبات"],["coord","المسندة إليّ"],["mine","طلباتي"]]:myScope()?[["all","كل الطلبات"],["mine","طلباتي"]]:[["mine","طلباتي"]];
+  const scopes=evSeeAll()?[["all","كل الطلبات"],["coord","المسندة إليّ"],["mine","طلباتي"]]:state.events.some(e=>e.coordId===me)?[["coord","المسندة إليّ"],["mine","طلباتي"]]:[["mine","طلباتي"]];
   if(!scopes.some(s=>s[0]===state.evScope))state.evScope=scopes[0][0];
   v.innerHTML=`<div class="phead"><div><h2>طلبات المناسبات</h2><div class="prole">${route?"طلبات الطاولات والكراسي والمفارش والاستيج والشاشات: اعتمدها، وحدد المنسق، ووزعها على المستودعات":"اطلب تجهيز مناسبتك (طاولات، كراسي، مفارش، استيج، شاشات…) وتابع حالة الطلب"}</div></div></div>
    <div class="filters">${scopes.map(([k,l])=>`<button type="button" class="chip" data-es="${k}" aria-pressed="${state.evScope===k}">${l}</button>`).join("")}</div>
@@ -1581,7 +1585,7 @@ function evCard(e){
   const isReq=e.requesterId===me,isCoord=e.coordId===me;const loans=evLoans(e);
   const late=open&&e.date&&e.date<todayStr();
   el.className="item "+(late?"s-late":"")+(!open?" s-done":"");
-  const lst={requested:"بانتظار أمين المستودع",issued:"سُلّمت",returned:"أُرجعت",cancelled:"ملغي",rejected:"معتذر عنه"};
+  const lst={requested:"بانتظار أمين المستودع",approved:"معتمد",issued:"سُلّمت",returned:"أُرجعت",cancelled:"ملغي",rejected:"معتذر عنه"};
   const byWh={};(e.lines||[]).forEach((r,i)=>{const k=r.warehouseId||"";(byWh[k]=byWh[k]||[]).push({...r,i})});
   const dist=state.evDist[e.id];
   const linesTbl=`<div class="ptab"><table><thead><tr><th>الصنف</th><th>العدد</th><th>ملاحظة</th>${e.status!=="new"||dist?"<th>المستودع</th><th>الحالة</th>":""}</tr></thead><tbody>${(e.lines||[]).map((r,i)=>{
@@ -1605,6 +1609,7 @@ function evCard(e){
     ${route&&e.status==="new"&&!dist?`<button class="btn sm" type="button" data-dist>اعتماد وتوزيع على المستودعات</button><button class="linkbtn mute" type="button" data-rej>اعتذار</button>`:""}
     ${(admin||isCoord)&&e.status==="routed"?`<button class="btn sm" type="button" data-ready>تم التجهيز</button>`:""}
     ${(admin||isCoord)&&["routed","ready"].includes(e.status)?`<button class="linkbtn" type="button" data-done>انتهت المناسبة</button>`:""}
+    ${!open&&e.status==="done"&&loans.some(loanOpenQ)&&loans.filter(loanOpenQ).every(l=>isKeeper(l.warehouseId))?`<button class="btn sm" type="button" data-evlc>إغلاق الإعارات (رجعت الأصناف)</button>`:""}
     ${isReq&&e.status==="new"?`<button class="linkbtn mute" type="button" data-cancel>إلغاء الطلب</button>`:""}
     ${isReq&&e.status==="new"&&!admin?`<a class="linkbtn" target="_blank" rel="noopener" href="https://wa.me/${waNum(ADMIN_PHONE)}?text=${encodeURIComponent(evMsgAdmin(e))}">تنبيه م. محمد نور عمر على الواتساب</a>`:""}
     ${admin&&e.status!=="new"&&e.coordName&&cp&&waNum(cp.phone)?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${waNum(cp.phone)}?text=${encodeURIComponent(evMsgCoord(e))}">تنبيه المنسق</a>`:""}
@@ -1636,7 +1641,13 @@ function evCard(e){
   }
   if(q("[data-rej]"))q("[data-rej]").onclick=()=>{const n=prompt("سبب الاعتذار (يظهر لصاحب الطلب)","");if(n===null)return;upd({status:"rejected",adminNote:n.trim()},"سُجّل الاعتذار")};
   if(q("[data-ready]"))q("[data-ready]").onclick=()=>upd({status:"ready",readyAt:Date.now()},"سُجّل التجهيز");
-  if(q("[data-done]"))q("[data-done]").onclick=()=>{const open=loans.filter(l=>l.status==="issued");if(open.length&&!confirm("فيه أصناف ما رجعت للمستودع بعد ("+open.map(l=>l.warehouseName).join("، ")+"). تسجيل انتهاء المناسبة؟"))return;upd({status:"done",doneAt:Date.now()},"سُجّلت المناسبة منتهية")};
+  if(q("[data-done]"))q("[data-done]").onclick=async()=>{const open=loans.filter(loanOpenQ);
+    if(open.length&&open.every(l=>isKeeper(l.warehouseId))){if(confirm("انتهت المناسبة. هل رجعت الأصناف المُعارة سليمة؟ ("+open.map(l=>l.warehouseName).join("، ")+")\n\nموافق = إغلاق طلبات الإعارة «تم الإرجاع»\nإلغاء = تسجيل انتهاء المناسبة فقط، وتغلق كل إعارة من بطاقتها مع ملاحظة"))
+      {try{for(const l of open)await loanClose(l,"سليم","")}catch(err){toast("تعذر إغلاق بعض الإعارات")}}}
+    else if(open.length&&!confirm("فيه أصناف ما رجعت للمستودع بعد ("+open.map(l=>l.warehouseName).join("، ")+"). تسجيل انتهاء المناسبة؟"))return;
+    upd({status:"done",doneAt:Date.now()},"سُجّلت المناسبة منتهية")};
+  if(q("[data-evlc]"))q("[data-evlc]").onclick=async()=>{const open=loans.filter(loanOpenQ);if(!confirm("إغلاق "+num(open.length)+" طلب إعارة لهذه المناسبة «تم الإرجاع» بحالة سليم؟ (لتسجيل ملاحظة على المستعير أغلق الإعارة من بطاقتها في المستودعات)"))return;
+    try{for(const l of open)await loanClose(l,"سليم","");toast("أُغلقت طلبات الإعارة")}catch(err){toast("تعذر إغلاق بعض الإعارات")}db.refreshAll();render()};
   if(q("[data-cancel]"))q("[data-cancel]").onclick=()=>{if(confirm("إلغاء طلب المناسبة؟"))upd({status:"cancelled"},"أُلغي الطلب")};
   if(q("[data-hn]"))q("[data-hn]").onclick=()=>{state.evNotify=null;render()};
   if(q("[data-del]"))q("[data-del]").onclick=()=>{state.confirm="ev:"+e.id;render()};
@@ -2043,7 +2054,7 @@ function qNew(x,k){return k==="stores"?x.status==="requested":x.status==="new"}
 function renderQStats(){
   const el=$("qstats");if(!el)return;
   const all=state.role==="admin"||!!myScope();
-  const cards=QK.map(([k,l])=>{const full=all||canTab(k);let list=qList(k);if(!full)list=list.filter(x=>qMine(x,k));
+  const cards=QK.map(([k,l])=>{const full=k==="events"?evSeeAll():(all||canTab(k));let list=qList(k);if(!full)list=list.filter(x=>qMine(x,k));
     if(!full&&!list.length)return"";if(k==="requests"&&!full&&!canReq())return"";
     const nw=list.filter(x=>qNew(x,k)).length;
     return `<button type="button" class="stat q modc" data-mod="${k}" data-q="${k}"><b>${num(list.length)}</b><span>${l}</span><span class="ksub">${full?(nw?num(nw)+" جديد":"مفتوحة"):"طلباتي المفتوحة"}</span></button>`}).join("");
@@ -2086,8 +2097,7 @@ function myEntries(){
   return out.sort((a,b)=>(b.open-a.open)||((b.when||0)-(a.when||0)))}
 function renderSend(){
   const v=$("sendView");if(!v)return;if(state.view!=="send"){v.innerHTML="";return}
-  const types=[["events","🎪","طلب مناسبة","طاولات، كراسي، مفارش، استيج، شاشات"],["purchases","🛒","طلب شراء","احتياجات القسم من مستلزمات وأدوات"],["transport","🚌","طلب نقل","مشوار أو رحلة بمركبة الفرع"],["stores","📦","إعارة أو صرف من المستودعات","استعارة أو صرف صنف من أحد المستودعات"]];
-  if(canReq())types.push(["requests","✉️","طلب لموظف","طلب أو مهمة لموظف آخر أو مشرف قسم"]);
+  const types=[["events","🎪","طلب مناسبة","طاولات، كراسي، مفارش، ديكورات، فازات، صحون وكاسات"],["purchases","🛒","طلب شراء","احتياجات القسم من مستلزمات وأدوات"],["transport","🚌","طلب نقل","مشوار أو رحلة بمركبة الفرع"]];
   const flt=state.myFilter||"open";let list=myEntries();const openN=list.filter(e=>e.open).length;if(flt==="open")list=list.filter(e=>e.open);
   v.innerHTML=`<div class="phead"><div><h2>إرسال طلب</h2><div class="prole">اختر نوع الطلب، وتابع من «طلباتي» وين وصل طلبك، واكتب ملاحظاتك عليه</div></div></div>
    <div class="sendgrid">${types.map(([k,ic,l,d])=>`<button type="button" class="sendcard" data-go="${k}"><span class="sic" aria-hidden="true">${ic}</span><b>${l}</b><span class="hint">${d}</span></button>`).join("")}</div>
@@ -2678,7 +2688,7 @@ function modSummaryHTML(){const M=[];const d30=Date.now()-30*864e5;const rec=x=>
   add("stores","المستودعات",[[ln.filter(x=>x.status==="requested").length,"بانتظار الموافقة"],[ln.filter(x=>x.status==="issued"&&x.type==="loan").length,"معارة حالياً"],[ln.filter(x=>["returned","received"].includes(x.status)&&rec(x)).length,"تمت (30 يوم)"]]);
   if(state.buffets.length){const low=state.buffets.reduce((n,b)=>n+bfItems(b.id).filter(bfLow).length,0),ro=state.buffets.reduce((n,b)=>n+bfItems(b.id).filter(bfLow).filter(bfReorderOpen).length,0);
     add("buffets","البوفيهات",[[state.buffets.length,"بوفيه"],[low,"تحت الحد الأدنى",low?"lt":""],[ro,"طُلبت تلقائياً"]])}
-  add("events","طلبات المناسبات",[[ev.filter(evOpen).length,"مفتوحة"],[ev.filter(x=>x.status==="new").length,"جديدة"],[ev.filter(x=>x.status==="done"&&rec(x)).length,"تمت (30 يوم)"]]);
+  if(evSeeAll())add("events","طلبات المناسبات",[[ev.filter(evOpen).length,"مفتوحة"],[ev.filter(x=>x.status==="new").length,"جديدة"],[ev.filter(x=>x.status==="done"&&rec(x)).length,"تمت (30 يوم)"]]);
   add("requests","الطلبات بين الموظفين",[[rq.filter(reqOpen).length,"مفتوحة"],[rq.filter(reqLate).length,"متأخرة","lt"],[rq.filter(x=>x.status==="done"&&rec(x)).length,"تمت (30 يوم)"]]);
   return M.length?`<section class="dcard"><h3>متابعة الطلبات حسب القسم</h3><div class="modgrid">${M.join("")}</div></section>`:""}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-gomod]");if(!b)return;const k=b.dataset.gomod;state.view=k;
@@ -2846,6 +2856,15 @@ function loanMessage(l,w){const L=["السلام عليكم ورحمة الله 
   (l.rows||[]).forEach(r=>L.push(`• ${r.name} — ${r.qty}${r.unit?" "+r.unit:""}`));
   L.push(`• الغرض: ${l.purpose||""}`);if(l.neededBy)L.push(`• مطلوب بتاريخ: ${fmtDate(l.neededBy)}`);if(l.returnBy)L.push(`• تاريخ الإرجاع: ${fmtDate(l.returnBy)}`);
   L.push(`• مقدّم الطلب: ${l.requesterName||""}`,`• رابط المنصة: ${here()}#stores`,"","*نرجو الاطلاع على الطلب والموافقة عليه في المنصة.*","","شاكرين تعاونكم،",l.requesterName||SIGN);return L.join("\n")}
+/* الإصدار 24: إغلاق الإعارة بعد رجوع الأصناف + ملاحظة على المستعير */
+function loanOpenQ(l){return l.type==="loan"&&["requested","approved","issued"].includes(l.status)}
+async function loanClose(l,cond,note){cond=cond||"سليم";const wasOut=l.status==="issued";
+  if(wasOut)for(const r of l.rows||[]){const it=state.stockItems.find(i=>i.id===r.itemId);if(!it)continue;const n=Math.max(0,(r.qty||0)-(r.returnedQty||0));if(!n)continue;
+    const p={out:Math.max(0,(Number(it.out)||0)-n)};if(["تالف","مفقود"].includes(cond))p.qty=Math.max(0,(Number(it.qty)||0)-n);await db.doc("stock/"+it.id).update({...p,updatedAt:Date.now()})}
+  const now=Date.now();const rows=(l.rows||[]).map(r=>({...r,returnedQty:r.qty||0,condition:(r.returnedQty||0)>=(r.qty||0)&&r.condition?r.condition:cond}));
+  const p={rows,status:"returned",returnedAt:now,returnedBy:myName(),closedQuick:true,updatedAt:now,borrowerIssue:!!note||cond!=="سليم"};if(note)p.returnNote=note;
+  await db.doc("loans/"+l.id).update(p);
+  try{await addComment("loan",l.id,`أُغلق الطلب: رجعت الأصناف (${cond})`+(note?` — ملاحظة على المستعير: ${note}`:""),"status")}catch(e){}}
 function loanCard(l,w){
   const el=document.createElement("article");const open=loanOpen(l),late=loanLate(l);
   el.className="item"+(open?"":" s-done")+(late?" s-late":"");
@@ -2856,7 +2875,8 @@ function loanCard(l,w){
   let acts="";
   if(keep&&l.status==="requested")acts=btn("approve","موافقة","")+btn("reject","رفض","ghost");
   else if(keep&&l.status==="approved")acts=`<label class="st-wrap">اسم المستلِم<input data-recv value="${esc(l.receiverName||l.requesterName||"")}" style="width:180px"></label>`+btn("issue","تسليم الآن وطباعة النموذج","");
-  else if(keep&&l.status==="issued"&&l.type==="loan")acts=btn("ret",retMode?"إخفاء":"استلام الإرجاع","");
+  else if(keep&&l.status==="issued"&&l.type==="loan")acts=btn("ret",retMode?"إخفاء":"استلام الإرجاع بالتفصيل","ghost");
+  if(keep&&loanOpenQ(l))acts+=btn("qopen",state.lcOpen===l.id?"إخفاء":"إغلاق: رجعت الأصناف","");
   if(!keep&&l.requesterId===state.me&&l.status==="requested")acts+=`<button class="linkbtn mute" type="button" data-la="cancel">إلغاء الطلب</button>`;
   const pr=[];if(["issued","returned"].includes(l.status)&&l.type!=="in")pr.push(`<button class="linkbtn" type="button" data-pf="deliver">نموذج التسليم</button>`);
   if(l.status==="returned"||l.type==="in")pr.push(`<button class="linkbtn" type="button" data-pf="receive">نموذج الاستلام</button>`);
@@ -2867,10 +2887,11 @@ function loanCard(l,w){
    <div class="dates"><div><span>${l.type==="in"?"تاريخ الاستلام":"تاريخ الطلب"}</span><b>${fmtTs(l.receivedAt||l.createdAt)}</b></div><div><span>${l.type==="in"?"المرجع":"مطلوب بتاريخ"}</span><b>${l.type==="in"?esc(l.ref||"—"):fmtDate(l.neededBy)}</b></div><div><span>${l.type==="loan"?"تاريخ الإرجاع":"التسليم"}</span><b class="${late?"l":""}">${l.type==="loan"?fmtDate(l.returnBy):l.issuedAt?fmtTs(l.issuedAt):"—"}</b></div></div>
    <div class="ptab"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>الوحدة</th>${l.type==="loan"&&["issued","returned"].includes(l.status)?"<th>المُرجَع</th><th>الحالة عند الإرجاع</th>":""}</tr></thead><tbody>${(l.rows||[]).map(r=>`<tr><td>${esc(r.name)}</td><td>${num(r.qty||0)}</td><td>${esc(r.unit||"")}</td>${l.type==="loan"&&["issued","returned"].includes(l.status)?`<td>${num(r.returnedQty||0)}</td><td>${esc(r.condition||"")}</td>`:""}</tr>`).join("")}</tbody></table></div>
    ${l.purpose?`<div class="note">${esc(l.purpose)}</div>`:""}
-   <div class="meta">${l.approvedBy?`<span>وافق: ${esc(l.approvedBy)}</span>`:""}${l.issuedBy?`<span>سلّم: ${esc(l.issuedBy)} ← ${esc(l.receiverName||"")}</span>`:""}${l.returnedAt?`<span>أُرجع: ${fmtTs(l.returnedAt)}</span>`:""}${l.returnNote?`<span>ملاحظة الإرجاع: ${esc(l.returnNote)}</span>`:""}</div>
+   <div class="meta">${l.approvedBy?`<span>وافق: ${esc(l.approvedBy)}</span>`:""}${l.issuedBy?`<span>سلّم: ${esc(l.issuedBy)} ← ${esc(l.receiverName||"")}</span>`:""}${l.returnedAt?`<span>أُرجع: ${fmtTs(l.returnedAt)}</span>`:""}${l.borrowerIssue?`<span class="pill p-late">ملاحظة على المستعير${l.returnNote?": "+esc(l.returnNote):""}</span>`:l.returnNote?`<span>ملاحظة الإرجاع: ${esc(l.returnNote)}</span>`:""}</div>
    ${acts?`<div class="acts">${acts}</div>`:""}
+   ${state.lcOpen===l.id?`<div class="req"><h3>إغلاق الطلب بعد رجوع الأصناف</h3><div class="fgrid"><label>حالة الأصناف عند الرجوع<select data-lcc>${["سليم","به ملاحظة","تالف","مفقود"].map(c=>`<option>${c}</option>`).join("")}</select></label><label class="wide">ملاحظة على المستعير (اختياري)<input data-lcn placeholder="مثل: مفرش متسخ، كرسي مكسور، تأخر في الإرجاع"></label></div><div class="hint">يُسجَّل الطلب «تم الإرجاع» بكامل الكميات${l.status==="issued"?" وتُعاد الكميات للمستودع":""}، وأي ملاحظة تظهر على اسم المستعير ${esc(l.requesterName||"")}.</div><div class="acts"><button class="btn sm" type="button" data-la="qclose">تأكيد الإغلاق</button></div></div>`:""}
    ${retMode?`<div class="req"><h3>استلام الإرجاع</h3><div class="rlist">${(l.rows||[]).map((r,i)=>`<div class="rrow"><span>${esc(r.name)} <span class="hint">(مُعار ${num(r.qty)} · أُرجع ${num(r.returnedQty||0)})</span></span><input type="number" min="0" max="${(r.qty||0)-(r.returnedQty||0)}" data-rq="${i}" value="${(r.qty||0)-(r.returnedQty||0)}" aria-label="الكمية المُرجعة"><select data-rc="${i}" aria-label="الحالة">${["سليم","به ملاحظة","تالف","مفقود"].map(c=>`<option>${c}</option>`).join("")}</select><span></span></div>`).join("")}</div>
-     <input data-rnote placeholder="ملاحظة (اختياري)"><div class="acts"><button class="btn sm" type="button" data-la="doret">تأكيد الاستلام وطباعة النموذج</button></div></div>`:""}
+     <input data-rnote placeholder="ملاحظة على المستعير (اختياري): تلف، نقص، تأخر…"><div class="acts"><button class="btn sm" type="button" data-la="doret">تأكيد الاستلام وطباعة النموذج</button></div></div>`:""}
    <div class="acts"><button class="linkbtn" type="button" data-t>${openT?"إخفاء الردود والملفات":"الردود والملفات"} (${num(replies)} رد · ${num(files)} ملف)</button>${pr.join("")}${!keep&&open&&l.requesterId===state.me&&state.ldNotify!==l.id&&l.status==="requested"&&whp?`<button class="linkbtn" type="button" data-pw>تنبيه أمين المستودع</button>`:""}${state.role==="admin"?`<button class="linkbtn mute" type="button" data-del>حذف</button>`:""}</div>
    ${delBtns("ld:"+l.id,"حذف السجل؟ لن تتغير الكميات.")}
    ${openT?threadHTML("loan",l.id):""}`;
@@ -2888,13 +2909,15 @@ function loanCard(l,w){
         await stockAdj((it,r)=>l.type==="issue"?{qty:Math.max(0,(Number(it.qty)||0)-r.qty)}:{out:(Number(it.out)||0)+r.qty});
         const p={status:"issued",issuedBy:myName(),issuedAt:Date.now(),receiverName:recv};
         await upd(p,"تم التسليم وحُدّثت الكميات",`سُلّمت الأصناف إلى ${recv}`);printForm({...l,...p},"deliver",win)}
-      else if(a==="ret"){state.retOpen=retMode?null:l.id;render();return}
+      else if(a==="ret"){state.retOpen=retMode?null:l.id;state.lcOpen=null;render();return}
+      else if(a==="qopen"){state.lcOpen=state.lcOpen===l.id?null:l.id;state.retOpen=null;render();return}
+      else if(a==="qclose"){await loanClose(l,(q("[data-lcc]")||{}).value,((q("[data-lcn]")||{}).value||"").trim());state.lcOpen=null;toast("أُغلق الطلب: تم الإرجاع")}
       else if(a==="doret"){const rows=(l.rows||[]).map((r,i)=>{const n=Math.max(0,Math.min(Number((q(`[data-rq="${i}"]`)||{}).value)||0,(r.qty||0)-(r.returnedQty||0)));return{...r,_n:n,returnedQty:(r.returnedQty||0)+n,condition:(q(`[data-rc="${i}"]`)||{}).value||r.condition||""}});
         if(!rows.some(r=>r._n>0)){toast("اكتب الكمية المُرجعة");b.disabled=false;return}
         const win=window.open("","_blank");
         await stockAdj((it,r)=>{const x=rows.find(y=>y.itemId===it.id);if(!x||!x._n)return null;const p={out:Math.max(0,(Number(it.out)||0)-x._n)};if(["تالف","مفقود"].includes(x.condition))p.qty=Math.max(0,(Number(it.qty)||0)-x._n);return p});
         const all=rows.every(r=>r.returnedQty>=r.qty);const clean=rows.map(({_n,...r})=>r);
-        const p={rows:clean,status:all?"returned":"issued",returnedAt:Date.now(),returnedBy:myName(),returnNote:((q("[data-rnote]")||{}).value||"").trim()};
+        const p={rows:clean,status:all?"returned":"issued",returnedAt:Date.now(),returnedBy:myName(),returnNote:((q("[data-rnote]")||{}).value||"").trim()};p.borrowerIssue=!!p.returnNote||clean.some(r=>["به ملاحظة","تالف","مفقود"].includes(r.condition));
         await upd(p,all?"اكتمل الإرجاع":"سُجّل إرجاع جزئي",all?"استُلمت الأصناف المُعارة كاملة":"استُلم جزء من الأصناف المُعارة");state.retOpen=null;printForm({...l,...p,status:"returned"},"receive",win)}
       db.refreshAll();render()}catch(e){toast("ليست لديك صلاحية لهذا الإجراء أو تعذر الحفظ");b.disabled=false}});
   el.querySelectorAll("[data-pf]").forEach(b=>b.onclick=()=>printForm(l,b.dataset.pf));
@@ -3153,7 +3176,7 @@ async function startApp(user){
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("stock").onSnapshot(s=>{state.stockItems=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender();rSeedOutside()});
-  db.collection("events").onSnapshot(s=>{state.events=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
+  db.collection("events").onSnapshot(s=>{state.eventsRaw=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("safety").onSnapshot(s=>{state.safety=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("loans").onSnapshot(s=>{state.loans=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   setTimeout(()=>checkNotify(false),8000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(()=>checkNotify(false),3000)});
