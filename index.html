@@ -1771,7 +1771,12 @@ function shPrint(owner,keys){
 }
 
 /* ================= الإصدار 8: الأعمال الدورية للمشرفين ================= */
-const RFREQ={daily:"يومي",weekly:"أسبوعي",monthly:"شهري"};
+const RFREQ={daily:"يومي",everyday:"يومي (كل أيام الأسبوع)",weekly:"أسبوعي",monthly:"شهري"};
+/* الإصدار 28: تناوب أسبوعي (يبدأ الأسبوع من السبت) + مدة سريان للعمل الدوري */
+function rRotaIdx(d,dateStr){const r=d.rota;if(!r||!Array.isArray(r.names)||!r.names.length)return -1;const s=new Date((r.start||dateStr)+"T12:00:00"),x=new Date(dateStr+"T12:00:00");const w=Math.floor((x-s)/(7*864e5));return ((w%r.names.length)+r.names.length)%r.names.length}
+function rRotaName(d,dateStr){const i=rRotaIdx(d,dateStr);return i<0?"":d.rota.names[i]}
+function rRotaWeek(dateStr){const x=new Date(dateStr+"T12:00:00");const back=(x.getDay()+1)%7;const s=new Date(x-back*864e5),e=new Date(s.getTime()+6*864e5);return [dateOf(s.getTime()),dateOf(e.getTime())]}
+function rRotaTxt(d,dateStr){const n=rRotaName(d,dateStr);if(!n)return"";const [a,b]=rRotaWeek(dateStr);return `مسؤول هذا الأسبوع: ${n} (من ${fmtDate(a)} إلى ${fmtDate(b)})`}
 const RDAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const RCAT=["ترشيد الكهرباء والإنارة","النظافة","الأمن والبوابات","السلامة","الصيانة","الضيافة","أخرى"];
 const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",fguard:"حارسة أمن",fsup:"مشرفة العاملات",other:"أخرى"};
@@ -1806,7 +1811,7 @@ function rOwners(){if(state.role!=="admin")return state.me?[state.me]:[];
   state.people.forEach(p=>{if(accessOf(p)==="supervisor"&&(p.groups||[]).includes("g-facilities"))ids.add(p.id)});
   return state.people.filter(p=>ids.has(p.id)).map(p=>p.id)}
 function rDueOn(d,dateStr){const dt=new Date(dateStr+"T12:00:00");const dow=dt.getDay();
-  if(d.paused)return false;
+  if(d.paused)return false;if(d.from&&dateStr<d.from)return false;if(d.until&&dateStr>d.until)return false;if(d.freq==="everyday")return true;
   if(d.freq==="weekly")return Number(d.weekday)===dow;
   if(d.freq==="monthly")return Number(d.monthday||1)===dt.getDate();
   return dow!==5&&dow!==6}
@@ -1846,7 +1851,7 @@ function rToday(B,owner){
   B.innerHTML=`<div class="filters" style="align-items:center"><label class="st-wrap">التاريخ<input type="date" id="rDate" value="${esc(date)}" style="width:auto"></label>
      <span class="pill ${pct===100?"p-done":"p-req"}">${rows.length?`المنجز ${num(done)} من ${num(rows.length)}${miss?` · لم يتم ${num(miss)}`:""}`:"لا توجد أعمال مجدولة لهذا اليوم"}</span>
      ${rows.length?`<span class="pbar" style="width:120px"><span style="width:${pct||0}%"></span></span>`:""}</div>
-   ${Object.values(byDuty).map(({d,rows})=>`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(d.title)}</h3><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.time?" · "+esc(d.time):""}</span></div>
+   ${Object.values(byDuty).map(({d,rows})=>`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(d.title)}</h3><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.time?" · "+esc(d.time):""}</span></div>${d.rota?`<div class="pill p-req" style="margin:4px 0">${esc(rRotaTxt(d,date))}</div>`:""}
      ${d.note?`<div class="hint">${esc(d.note)}</div>`:""}
      <div class="rlist">${rows.map(r=>{const st=r.log&&r.log.status;if(r.target){const sc=r.log&&Number(r.log.score)||0;return `<div class="rtrow rrate ${sc?"ok":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.target.label)}</b> <span class="hint">· ${esc(r.target.name||"")}</span>${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
        <span class="rkeys" role="group" aria-label="تقييم ${esc(r.target.label)} — ${esc(r.target.name||"")}">${[1,2,3,4,5].map(n=>`<button type="button" class="rkey ${sc===n?"on s"+n:""}" data-score="${n}" aria-pressed="${sc===n}">${num(n)}</button>`).join("")}<button type="button" class="linkbtn" data-note>ملاحظة</button></span></div>`}return `<div class="rtrow ${st==="done"?"ok":st==="miss"?"no":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.site?rSiteName(r.site):"عام")}</b>${r.siteId?(()=>{const a=rDocs("assign",owner).find(x=>x.siteId===r.siteId);const ws=rDocs("worker",owner).filter(w=>rScope(owner).kind==="guards"?w.type!=="fworker"&&w.type!=="worker":w.type!=="guard").sort((x,y)=>(x.order||0)-(y.order||0));return ` <label class="hint rwho">المسؤول: <select data-who aria-label="المسؤول عن ${esc(rSiteName(r.site))}"><option value="">— اختر —</option>${ws.map(w=>`<option value="${esc(w.id)}" ${a&&a.workerId===w.id?"selected":""}>${esc(w.name)}</option>`).join("")}<option value="__new">+ اسم جديد…</option></select></label>`})():(r.worker?` <span class="hint">· المسؤول: ${esc(r.worker)}</span>`:"")}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
@@ -1854,7 +1859,7 @@ function rToday(B,owner){
    ${rows.length?`<div class="acts"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(state.role==="admin"?(p&&p.phone):ADMIN_PHONE)}?text=${encodeURIComponent(rReportMsg(owner,date,rows))}">${state.role==="admin"?"إرسال ملخص اليوم للمشرف":"إرسال تقرير اليوم لـ م. محمد نور عمر"}</a></div>`:""}`;
   B.querySelector("#rDate").onchange=e=>{state.rDate=e.target.value;render()};
   B.querySelectorAll(".rtrow").forEach(el=>{const r=rows.find(x=>x.lid===el.dataset.lid);
-    const save=async patch=>{const base=r.log||{kind:"log",ownerId:owner,date,dutyId:r.duty.id,dutyTitle:r.duty.title,siteId:r.siteId,siteName:r.site?rSiteName(r.site):(r.target?r.target.label:""),worker:r.worker,createdAt:Date.now()};
+    const save=async patch=>{const base=r.log||{kind:"log",ownerId:owner,date,dutyId:r.duty.id,dutyTitle:r.duty.title+(r.duty.rota?"، "+rRotaName(r.duty,date):""),rotaName:r.duty.rota?rRotaName(r.duty,date):undefined,siteId:r.siteId,siteName:r.site?rSiteName(r.site):(r.target?r.target.label:""),worker:r.worker,createdAt:Date.now()};
       if(r.target)Object.assign(base,{rate:true,targetKey:r.target.key||"",targetLabel:r.target.label,targetName:r.target.name||""});
       try{await db.doc("routine/"+r.lid).set({...base,...patch,by:myName(),at:Date.now()});toast(patch.score&&r.target?`تم التقييم: ${r.target.label} — ${num(patch.score)} من ${num(5)}`:"حُفظ")}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
     el.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>save({status:b.dataset.st}));
@@ -1892,7 +1897,7 @@ function rDuties(B,owner){
      <label class="full">تعليمات (اختياري)<input data-k="note" value="${esc(d.note||"")}"></label>
      <div class="full acts"><button class="btn ${d.id?"":"sm"}" type="submit">${d.id?"حفظ":"إضافة العمل"}</button>${d.id?`<button class="linkbtn mute" type="button" data-rcancel>إلغاء</button>`:""}</div></form>`};
   B.innerHTML=`<details class="newreq" ${state.newDutyOpen?"open":""}><summary>+ عمل دوري جديد</summary>${form(null)}</details>
-   <div class="list">${list.map(d=>state.editDuty===d.id?`<article class="item">${form(d)}</article>`:`<article class="item ${d.paused?"s-done":""}" data-did="${esc(d.id)}"><div class="row1"><div class="ttl">${esc(d.title)}</div><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.freq==="weekly"?" — "+RDAYS[Number(d.weekday)||0]:d.freq==="monthly"?" — يوم "+num(Number(d.monthday)||1):""}</span></div>
+   <div class="list">${list.map(d=>state.editDuty===d.id?`<article class="item">${form(d)}</article>`:`<article class="item ${d.paused?"s-done":""}" data-did="${esc(d.id)}"><div class="row1"><div class="ttl">${esc(d.title)}</div><span class="pill p-file">${esc(d.category||"")}</span>${d.rota?`<span class="pill p-req">تناوب أسبوعي: ${esc(d.rota.names.join("، "))} · ${esc(rRotaTxt(d,todayStr()))}</span>`:""}${d.until?`<span class="pill p-late">ينتهي ${fmtDate(d.until)}</span>`:""}${d.from&&d.from>todayStr()?`<span class="pill p-who">يبدأ ${fmtDate(d.from)}</span>`:""}<span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.freq==="weekly"?" — "+RDAYS[Number(d.weekday)||0]:d.freq==="monthly"?" — يوم "+num(Number(d.monthday)||1):""}</span></div>
      <div class="meta">${d.mode==="rate"?`<span class="pill p-who">تقييم ١–٥</span><span>${esc((d.targets||[]).map(t=>t.label+(t.name?" ("+t.name+")":"")).join("، "))}</span>`:""}${d.mode==="checks"?`<span class="pill p-who">فحص ١/٠: ${esc((d.items&&d.items.length?d.items:RCHK_DEF).map(x=>x.label).join("، "))}</span>`:""}<span ${d.mode==="rate"?"hidden":""}>الأماكن: ${(d.siteIds||[]).length?esc((d.siteIds||[]).map(id=>rSiteName(rSite(id))).filter(Boolean).join("، ")):"عام"}</span>${d.time?`<span>الوقت: ${esc(d.time)}</span>`:""}${d.paused?'<span class="pill p-late">متوقف</span>':""}</div>
      <div class="acts"><button class="linkbtn" type="button" data-ed>تعديل</button><button class="linkbtn" type="button" data-pause>${d.paused?"تشغيل":"إيقاف مؤقت"}</button><button class="linkbtn mute" type="button" data-del>حذف</button></div>${delBtns("rd:"+d.id,"حذف العمل الدوري؟ يبقى سجله السابق.")}</article>`).join("")||'<div class="empty"><strong>لا توجد أعمال دورية بعد</strong>أضف أول عمل، مثل: متابعة ترشيد الكهرباء والإنارة في كل دور.</div>'}</div>`;
   const det=B.querySelector("details.newreq");if(det)det.ontoggle=()=>{state.newDutyOpen=det.open};
