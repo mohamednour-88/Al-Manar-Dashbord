@@ -169,7 +169,7 @@ details.topics summary{cursor:pointer;color:var(--muted);padding:4px 0}
 .lvbig{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.lvb{flex-direction:column;padding:18px 12px;font-size:1.1rem}.lvb small{font-weight:400;font-size:.8rem;opacity:.85}.lvb.alt{background:var(--surface);color:var(--accent)}
 .lvlist{display:grid;gap:6px;margin:10px 0}.lvrow{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--sunk);border-radius:10px;padding:10px 12px;border-inline-start:4px solid transparent}
 .lvrow.ok{border-inline-start-color:var(--ok)}.lvrow.ab{opacity:.6;border-inline-start-color:var(--late)}.lvn{display:grid;gap:2px;min-width:0}.lvt{font-size:.8rem;color:var(--muted)}.lvc{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem}
-.lva{display:flex;gap:6px;flex:none}.lva .btn{min-width:72px;padding:12px 14px}.lvend{width:100%;padding:16px;font-size:1.1rem}
+.lva{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}.lvcam{cursor:pointer;min-width:64px;padding:12px 10px}.lvcam.has{color:var(--ok)}.vsec{margin:6px 0 0;font-size:.9rem;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:3px}.note.okn{background:var(--ok-soft,#E8F3EC)}.note.lt{color:var(--late)}.tremind{margin:8px 0}.trprog{margin-top:6px}.lva .btn{min-width:72px;padding:12px 14px}.lvend{width:100%;padding:16px;font-size:1.1rem}
 @media (max-width:520px){.lvbig{grid-template-columns:1fr}.lvrow{flex-wrap:wrap}.lva{width:100%}.lva .btn{flex:1}}
 /* الإصدار 16: الشعار يمين، العنوان في الوسط، الحساب يسار */
 header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
@@ -1426,32 +1426,33 @@ function liveTripView(B){
   const chips=vs.length>1?`<div class="filters">${vs.map(x=>`<button class="chip" type="button" data-lv="${esc(x.id)}" aria-pressed="${state.lvVeh===x.id}">${esc(vName(x))}${liveTripOf(x.id)?" ●":""}</button>`).join("")}</div>`:"";
   if(!t){
     const today=state.trips.filter(x=>x.vehicleId===v.id&&x.date===todayStr()&&x.endAt).sort((a,b)=>a.startAt-b.startAt);
-    B.innerHTML=`${chips}<section class="dcard lvstart"><h3>${esc(vName(v))}</h3><div class="hint">${num(riders.length)} طالب على هذا الباص${v.driverName?` · السائق: ${esc(v.driverName)}`:""}</div>
+    B.innerHTML=`${chips}${lvReqHTML(v)}<section class="dcard lvstart"><h3>${esc(vName(v))}</h3><div class="hint">${num(riders.length)} طالب على هذا الباص${v.driverName?` · السائق: ${esc(v.driverName)}`:""}</div>
       <div class="lvbig"><button class="btn lvb" type="button" data-go="to_school">بدء رحلة الذهاب<small>من المنازل إلى المدرسة</small></button><button class="btn lvb alt" type="button" data-go="from_school">بدء رحلة العودة<small>من المدرسة إلى المنازل</small></button></div>
       ${riders.length?"":`<div class="hint">ما فيه طلاب مسجلين على الباص. ${canTrans()?"أضفهم من «الطلاب والمسارات».":"اطلب من مسؤول النقل إضافتهم."}</div>`}</section>
       ${today.length?`<section class="dcard"><h3>رحلات اليوم</h3><div class="rlist">${today.map(x=>`<div class="rtrow"><span><b>${TDIR[x.direction]||""}</b> <span class="hint ltr">${hm(x.startAt)} → ${hm(x.endAt)}</span></span><span class="pill p-who">${minTxt(mins(tripDur(x)))}</span></div>`).join("")}</div></section>`:""}`;
-    B.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{state.lvVeh=b.dataset.lv;render()});
+    B.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{state.lvVeh=b.dataset.lv;render()});lvReqWire(B,v);
     B.querySelectorAll("[data-go]").forEach(b=>b.onclick=async()=>{const dir=b.dataset.go;const now=Date.now();const hr=new Date().getHours();
       const doc={vehicleId:v.id,vehicleName:vName(v),owner:v.owner||"alandalus",date:todayStr(),kind:"periodic",shift:hr>=15?"after":"during",direction:dir,purpose:dir==="to_school"?"رحلة الذهاب":"رحلة العودة",pax:0,startAt:now,endAt:null,km1:null,km2:null,
         riders:riders.map(r=>({id:r.id,name:r.name,absent:false,at:null})),note:"",requestId:"",driverName:v.driverName||"",loggedBy:state.me||null,loggedByName:myName(),createdAt:now,updatedAt:now};
       try{await db.collection("trips").doc().set(doc);toast("انطلقت الرحلة الساعة "+hm(now))}catch(e){toast("تعذر بدء الرحلة")}render()});
     return}
+  if(t.requestId||t.direction==="other"){lvReqLive(B,v,t,chips);return}
   const to=t.direction==="to_school";const rs=(t.riders||[]).map(r=>({...r}));
   const done=rs.filter(r=>r.at).length,abs=rs.filter(r=>r.absent).length;
   const info=id=>state.riders.find(r=>r.id===id)||{};
   B.innerHTML=`${chips}<section class="dcard lvlive"><div class="row1"><h3 style="flex:1">${esc(vName(v))} — ${to?"رحلة الذهاب":"رحلة العودة"}</h3><span class="pill p-today">جارية</span></div>
     <div class="dates"><div><span>الانطلاق</span><b class="ltr">${hm(t.startAt)}</b></div><div><span>المدة حتى الآن</span><b>${minTxt(mins(Date.now()-t.startAt))}</b></div><div><span>${to?"ركب":"نزل"}</span><b>${num(done)} من ${num(rs.length-abs)}${abs?` · غائب ${num(abs)}`:""}</b></div></div>
     <div class="lvlist">${rs.map((r,i)=>{const x=info(r.id);const loc=mapLink(x.location);return `<div class="lvrow ${r.absent?"ab":r.at?"ok":""}"><div class="lvn"><b>${num(i+1)}. ${esc(r.name)}</b><span class="hint">${esc([x.district,x.grade].filter(Boolean).join(" · "))}</span>
-        <span class="lvt ltr">انطلاق ${hm(t.startAt)}${r.at?` · ${to?"ركب":"نزل"} ${hm(r.at)}`:""}</span>
+        <span class="lvt ltr">انطلاق ${hm(t.startAt)}${r.arrAt?" · وصل البيت "+hm(r.arrAt):""}${r.at?` · ${to?"ركب":"نزل"} ${hm(r.at)}`:""}</span>${r.arrAt&&!r.absent?`<span class="lvt ${(r.at||Date.now())-r.arrAt>RD_WAIT*6e4?"lt":""}">${rdWaitTxt(r)}</span>`:""}
         <span class="lvc">${loc?`<a class="linkbtn" target="_blank" rel="noopener" href="${esc(loc)}">الموقع</a>`:""}${telA(rdPhone(x),"الأب")}${telA(x.motherPhone,"الأم")}</span></div>
-      <div class="lva">${r.absent?`<button class="btn ghost" type="button" data-un="${i}">حاضر</button>`:r.at?`<button class="linkbtn mute" type="button" data-un="${i}">تراجع</button>`:`<button class="btn" type="button" data-hit="${i}">${to?"ركب":"نزل"}</button><button class="btn ghost" type="button" data-abs="${i}">غائب</button>`}</div></div>`}).join("")||'<div class="hint">ما فيه طلاب على الرحلة.</div>'}</div>
+      <div class="lva">${lvRiderActs(t,r,i,to)}</div></div>`}).join("")||'<div class="hint">ما فيه طلاب على الرحلة.</div>'}</div>
     <div class="acts"><button class="btn lvend" type="button" data-end>${to?"وصلنا المدرسة":"انتهت الرحلة"}</button></div>
-    <div class="hint">${to?"«ركب» يسجل وقت ركوب الطالب، و«وصلنا المدرسة» يسجل وقت الوصول للجميع. إذا ما سجلت وقت الركوب، تنحسب مدة الطالب من وقت انطلاق الباص.":"وقت الانطلاق من المدرسة مسجل للجميع، واضغط «نزل» عند كل طالب لحظة نزوله عند بيته."}</div></section>`;
+    <div class="hint">${to?`عند كل بيت: «وصلنا البيت» يسجل وقت الوصول ويبدأ عداد الانتظار (${num(RD_WAIT)} د)، ثم «ركب» عند ركوب الطالب، ومعها زر «صورة» لتوثيق الوقت. «وصلنا المدرسة» ينهي الرحلة ويحسب زمن كل طالب من لحظة ركوبه.`:"وقت الانطلاق من المدرسة مسجل للجميع، واضغط «نزل» عند كل طالب لحظة نزوله عند بيته."}</div></section>`;
   const save=async(list,msg)=>{try{await db.doc("trips/"+t.id).update({riders:list,pax:list.filter(r=>!r.absent).length,updatedAt:Date.now()});if(msg)toast(msg)}catch(e){toast("تعذر الحفظ")}render()};
   B.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{state.lvVeh=b.dataset.lv;render()});
   B.querySelectorAll("[data-hit]").forEach(b=>b.onclick=()=>{const i=+b.dataset.hit;rs[i].at=Date.now();rs[i].absent=false;save(rs,rs[i].name+" — "+hm(rs[i].at))});
   B.querySelectorAll("[data-abs]").forEach(b=>b.onclick=()=>{const i=+b.dataset.abs;rs[i].absent=true;rs[i].at=null;save(rs)});
-  B.querySelectorAll("[data-un]").forEach(b=>b.onclick=()=>{const i=+b.dataset.un;rs[i].absent=false;rs[i].at=null;save(rs)});
+  B.querySelectorAll("[data-un]").forEach(b=>b.onclick=()=>{const i=+b.dataset.un;rs[i].absent=false;if(rs[i].at)rs[i].at=null;else rs[i].arrAt=null;save(rs)});lvRiderWire(B,t,rs,save);
   B.querySelector("[data-end]").onclick=async()=>{const left=rs.filter(r=>!r.absent&&!r.at).length;
     if(!to&&left&&!confirm(`باقي ${left} طالب ما سجلت نزولهم. إنهاء الرحلة؟`))return;
     try{await db.doc("trips/"+t.id).update({endAt:Date.now(),updatedAt:Date.now()});toast((to?"وصلتم المدرسة الساعة ":"انتهت الرحلة الساعة ")+hm(Date.now()))}catch(e){toast("تعذر الحفظ")}render()};
@@ -2079,12 +2080,12 @@ function renderQStats(){
 /* ---------- إرسال طلب + طلباتي (وين وصل الطلب) ---------- */
 const MY_STEPS={
   purchase:[["new","استلام الطلب"],["review","المراجعة"],["approved","الاعتماد"],["ordered","الطلب من المورد"],["received","الاستلام"]],
-  trans:[["new","استلام الطلب"],["approved","الاعتماد"],["assigned","تحديد المركبة"],["done","التنفيذ"]],
+  trans:[["new","استلام الطلب"],["approved","الاعتماد وتحديد المركبة"],["started","تنفيذ الرحلة"],["done","انتهت الرحلة"]],
   event:[["new","استلام الطلب"],["routed","الاعتماد والتوزيع"],["ready","التجهيز"],["done","انتهت المناسبة"]],
   loan:[["requested","استلام الطلب"],["approved","الموافقة"],["issued","التسليم"],["returned","الإرجاع"]],
   request:[["new","استلام الطلب"],["doing","قيد التنفيذ"],["done","تم التنفيذ"]]};
 const MY_KIND={purchase:["purchases","طلب شراء"],trans:["transport","طلب نقل"],event:["events","طلب مناسبة"],loan:["stores","طلب مستودع"],request:["requests","طلب لموظف"]};
-function myStepIdx(kind,x){const s=x.status;if(kind==="loan"){if(s==="received")return 3;if(x.type!=="loan"&&s==="issued")return 3}
+function myStepIdx(kind,x){const s=x.status;if(kind==="trans"&&s==="assigned")return 1;if(kind==="trans"&&s==="query")return 0;if(kind==="loan"){if(s==="received")return 3;if(x.type!=="loan"&&s==="issued")return 3}
   const i=MY_STEPS[kind].findIndex(r=>r[0]===s);return i<0?0:i}
 function myStepper(kind,x){
   const steps=kind==="loan"&&x.type!=="loan"?MY_STEPS.loan.slice(0,3):MY_STEPS[kind];
@@ -2248,7 +2249,7 @@ function orderView(B){
 
 /* ================= الإصدار 5: الحركة والنقل + المستودعات ================= */
 const TRT=["رحلة طلابية","نقل موظفين","نقل أغراض أو شحن","مشوار إداري","أخرى"];
-const TRS={new:"جديد",approved:"معتمد",assigned:"حُددت المركبة",done:"منفّذ",rejected:"مرفوض",cancelled:"ملغي"};
+const TRS={new:"جديد",query:"استفسار لمقدّم الطلب",approved:"معتمد: المركبة والسائق جاهزان",assigned:"حُددت المركبة",started:"الرحلة جارية",done:"منفّذ",rejected:"مرفوض",cancelled:"ملغي"};
 const VKIND=["باص كبير","باص متوسط","باص صغير","فان","سيارة"];
 const VSTAT={active:"في الخدمة",maint:"في الصيانة",out:"خارج الخدمة"};
 const TKIND={periodic:"دورية",adhoc:"عرضية"};
@@ -2261,6 +2262,107 @@ const ICOND=["جديد","سليم","مستعمل","يحتاج صيانة","تا�
 function canTrans(){return state.role==="admin"||!!state.isTransport}
 function canTrips(){return canTrans()||state.myVehicles.length>0||myScope()==="all"}
 function isKeeper(whId){return state.role==="admin"||state.myStores.includes(whId)}
+/* ================= الإصدار 29: دورة طلب النقل كاملة + تطبيق السائق + أوقات الطلاب بالتصوير ================= */
+const TDELAY={driver:"تأخر السائق",riders:"تأخر المستفيدين في الحضور أو النزول",traffic:"ازدحام مروري",vehicle:"عطل أو تجهيز المركبة",other:"سبب آخر"};
+const TR_GRACE=5,RD_WAIT=3;
+function getLoc(){return new Promise(res=>{try{if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(p=>res({lat:+p.coords.latitude.toFixed(6),lng:+p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy||0)}),()=>res(null),{enableHighAccuracy:true,timeout:8000,maximumAge:60000})}catch(e){res(null)}})}
+function locA(l,label){return l&&l.lat?`<a class="linkbtn" target="_blank" rel="noopener" href="https://maps.google.com/?q=${l.lat},${l.lng}">${label||"الموقع"}</a>`:""}
+function vUsers(v){return [...new Set([...(v.supervisorIds||[]),...(v.driverIds||[]),...(v.userIds||[])].filter(Boolean))]}
+function trPhone(x){const p=person(x.requesterId);return (p&&p.phone)||""}
+function trTripOf(x){return state.trips.filter(t=>t.requestId===x.id).sort((a,b)=>(b.startAt||0)-(a.startAt||0))[0]}
+function trSched(x){return atTime(x.date,x.timeOut)}
+function trApprovedMsg(x,to){const v=vehicleOf(x.vehicleId)||{};const L=["السلام عليكم ورحمة الله وبركاته",`أ. ${to==="driver"?(v.driverName||"السائق"):(x.requesterName||"")}`,""];
+  if(to==="driver")L.push(`لديكم رحلة معتمدة: «${x.title}»`,`• التاريخ: ${fmtDate(x.date)} الساعة ${x.timeOut||""}${x.timeBack?`، والعودة ${x.timeBack}`:""}`,`• نقطة الانطلاق: ${x.from||"—"}`,`• الوجهة: ${x.to||"—"}`,x.pax?`• عدد الركاب: ${x.pax}`:"",`• مقدّم الطلب: ${x.requesterName||""}${trPhone(x)?" "+trPhone(x):""}`,"",`*نرجو التواجد في نقطة الانطلاق قبل الموعد، وبدء الرحلة وإنهاؤها من المنصة: ${here()}#transport*`);
+  else L.push(`تم اعتماد طلب النقل «${x.title}».`,`• المركبة: ${vName(v)}${v.plate?" ("+v.plate+")":""}`,v.driverName?`• السائق: ${v.driverName}${v.driverPhone?" "+v.driverPhone:""}`:"",`• تكون المركبة في «${x.from||"نقطة الانطلاق"}» يوم ${fmtDate(x.date)} الساعة ${x.timeOut||""}.`,x.transNote?`• ملاحظة: ${x.transNote}`:"","",`*نرجو التواجد في الموعد، وللمتابعة: ${here()}#transport*`);
+  L.push("",SIGN);return L.filter(s=>s!=="").join("\n")}
+function trProgressHTML(x){const t=trTripOf(x);if(!t)return"";const P=[];
+  const st=(l,ms,loc)=>`<div><span>${l}</span><b class="ltr">${ms?hm(ms):"—"}</b>${loc?" "+locA(loc):""}</div>`;
+  P.push(st("بدء الرحلة",t.startAt,t.startLoc),st("الوصول للوجهة",t.arriveAt,t.arriveLoc));if(t.hasReturn||t.backAt)P.push(st("بدء العودة",t.backAt,t.backLoc));P.push(st("انتهاء الرحلة",t.endAt,t.endLoc));
+  const d=[];if(t.arriveAt&&t.startAt)d.push("الذهاب "+minTxt(mins(t.arriveAt-t.startAt)));if(t.backAt&&t.arriveAt)d.push(`الانتظار ${minTxt(mins(t.backAt-t.arriveAt))}${t.waitMode==="return"?" (عاد السائق ثم رجع)":t.waitMode==="wait"?" (انتظر في المكان)":""}`);if(t.endAt&&(t.backAt||t.arriveAt))d.push((t.backAt?"العودة ":"")+minTxt(mins(t.endAt-(t.backAt||t.startAt))));
+  return `<div class="dates trprog">${P.join("")}</div>${d.length?`<div class="meta"><span>${d.join(" · ")}</span></div>`:""}${t.delayMin>0?`<div class="note lt">تأخر بدء الرحلة ${num(t.delayMin)} د — ${esc(TDELAY[t.delayReason]||t.delayReason||"")}${t.delayNote?": "+esc(t.delayNote):""}</div>`:""}${t.backDelayMin>0?`<div class="note lt">تأخر بدء العودة ${num(t.backDelayMin)} د — ${esc(TDELAY[t.backDelayReason]||"")}${t.backDelayNote?": "+esc(t.backDelayNote):""}</div>`:""}`}
+function trFlowHTML(x){const can=canTrans();const mine=x.requesterId===state.me;const v=vehicleOf(x.vehicleId);let h="";
+  if(x.status==="query"){h+=`<div class="req"><h3>استفسار من مسؤول الحركة والنقل</h3><div class="note">${esc(x.queryText||"")}</div>${mine?`<label>ردك على الاستفسار<textarea data-qr rows="2"></textarea></label><div class="acts"><button class="btn sm" type="button" data-qsend>إرسال الرد وإعادة الطلب</button></div>`:'<div class="hint">بانتظار رد مقدّم الطلب.</div>'}</div>`}
+  if(["approved","assigned","started"].includes(x.status)&&v){h+=`<div class="note okn">تم اعتماد الطلب: ${esc(vName(v))}${v.plate?` <span class="ltr">${esc(v.plate)}</span>`:""}${v.driverName?` · السائق ${esc(v.driverName)} ${telA(v.driverPhone,v.driverPhone)}`:""}. تكون المركبة في «${esc(x.from||"نقطة الانطلاق")}» يوم ${fmtDate(x.date)} الساعة ${esc(x.timeOut||"")}.</div>`;
+    if(can){const rp=waNum(trPhone(x)),dp=waNum(v.driverPhone);h+=`<div class="acts">${rp?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${rp}?text=${encodeURIComponent(trApprovedMsg(x,"req"))}">إبلاغ مقدّم الطلب</a>`:""}${dp?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${dp}?text=${encodeURIComponent(trApprovedMsg(x,"driver"))}">إبلاغ السائق</a>`:""}</div>`}}
+  h+=trProgressHTML(x);
+  if(can&&["new","query"].includes(x.status))h+=`<div class="acts"><button class="btn sm" type="button" data-tapp>اعتماد الطلب (المركبة والسائق جاهزان)</button><button class="btn ghost sm" type="button" data-tq>استفسار من مقدّم الطلب</button><button class="linkbtn mute" type="button" data-trej>اعتذار</button></div>`;
+  return h}
+function trFlowWire(el,x){const q=s=>el.querySelector(s);const up=async(p,note,msg)=>{try{await db.doc("transreqs/"+x.id).update({...p,updatedAt:Date.now(),statusBy:myName()});if(note)await addComment("trans",x.id,note,"status");toast(msg||"حُفظ");db.refreshAll()}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ");render()}};
+  const a=q("[data-tapp]");if(a)a.onclick=()=>{const vs=q("[data-veh]");const vid=(vs&&vs.value)||x.vehicleId;if(!vid){toast("اختر المركبة أولاً");return}const v=vehicleOf(vid);const tn=q("[data-tnote]");
+    up({status:"approved",vehicleId:vid,driverName:v.driverName||"",driverPhone:v.driverPhone||"",transNote:tn?tn.value.trim():(x.transNote||""),decidedAt:Date.now()},`اعتُمد الطلب: ${vName(v)}${v.driverName?"، السائق "+v.driverName:""}`,"اعتُمد الطلب — أبلغ مقدّم الطلب والسائق")};
+  const qq=q("[data-tq]");if(qq)qq.onclick=()=>{const t=prompt("اكتب الاستفسار أو الملاحظة لمقدّم الطلب","");if(!t||!t.trim())return;up({status:"query",queryText:t.trim(),queryAt:Date.now()},"استفسار: "+t.trim(),"أُرجع الطلب لمقدّمه بالاستفسار")};
+  const rj=q("[data-trej]");if(rj)rj.onclick=()=>{const t=prompt("سبب الاعتذار (يظهر لمقدّم الطلب)","");if(t===null)return;up({status:"rejected",transNote:t.trim()},"اعتذار عن الطلب"+(t.trim()?": "+t.trim():""),"سُجّل الاعتذار")};
+  const qs=q("[data-qsend]");if(qs)qs.onclick=()=>{const t=(q("[data-qr]").value||"").trim();if(!t){toast("اكتب ردك");return}up({status:"new",queryReply:t,queryReplyAt:Date.now()},"رد مقدّم الطلب: "+t,"أُرسل ردك وعاد الطلب لمسؤول الحركة والنقل")}}
+/* السائق: رحلات الطلبات المعتمدة */
+function lvReqs(v){const d=todayStr(),tm=dateOf(Date.now()+864e5);return state.transReqs.filter(x=>x.vehicleId===v.id&&["approved","assigned"].includes(x.status)&&(x.date===d||x.date===tm)&&!state.trips.some(t=>t.requestId===x.id)).sort((a,b)=>((a.date||"")+(a.timeOut||"")).localeCompare((b.date||"")+(b.timeOut||"")))}
+function delayFormHTML(id,min){return `<div class="req" data-dlf="${esc(id)}"><h3>تأخر ${num(min)} دقيقة عن الموعد، اذكر السبب</h3><div class="fgrid"><label>السبب<select data-dr>${optsOf(TDELAY,"")}</select></label><label class="wide">توضيح (اختياري)<input data-dn></label></div><div class="acts"><button class="btn sm" type="button" data-dok>متابعة</button><button class="linkbtn mute" type="button" data-dx>إلغاء</button></div></div>`}
+function lvReqHTML(v){const L=lvReqs(v);if(!L.length)return"";const now=Date.now();
+  return `<section class="dcard"><h3>رحلات معتمدة لهذه المركبة</h3><div class="rlist">${L.map(x=>{const s=trSched(x);const late=s&&x.date===todayStr()?mins(now-s):0;return `<div class="rtrow"><span><b>${esc(x.title)}</b> <span class="hint">${x.date===todayStr()?"اليوم":"غداً"} الساعة ${esc(x.timeOut||"")} · من ${esc(x.from||"—")} إلى ${esc(x.to||"—")}${x.pax?` · ${num(x.pax)} راكب`:""} · ${esc(x.requesterName||"")} ${telA(trPhone(x),trPhone(x))}</span>${late>0?`<span class="pill p-late">متأخر ${num(late)} د</span>`:s&&s-now<36e5&&x.date===todayStr()?`<span class="pill p-today">بعد ${minTxt(mins(s-now))}</span>`:""}</span>${x.date===todayStr()?`<button class="btn sm" type="button" data-rgo="${esc(x.id)}">بدء الرحلة</button>`:""}</div>${state.lvDelay&&state.lvDelay.id===x.id?delayFormHTML(x.id,state.lvDelay.min):""}`}).join("")}</div></section>`}
+function lvReqWire(B,v){
+  const start=async(x,dl)=>{const now=Date.now();toast("جارٍ تحديد الموقع…");const loc=await getLoc();const s=trSched(x);
+    const doc={vehicleId:v.id,vehicleName:vName(v),owner:v.owner||"alandalus",date:todayStr(),kind:"adhoc",shift:new Date().getHours()>=15?"after":"during",direction:"other",purpose:x.title,from:x.from||"",to:x.to||"",pax:x.pax||0,requestId:x.id,hasReturn:!!x.timeBack,
+      sched:s||null,startAt:now,startLoc:loc,delayMin:dl?dl.min:0,delayReason:dl?dl.reason:"",delayNote:dl?dl.note:"",phase:"out",endAt:null,riders:[],driverName:v.driverName||"",loggedBy:state.me||null,loggedByName:myName(),createdAt:now,updatedAt:now};
+    try{await db.collection("trips").doc().set(doc);try{await db.doc("transreqs/"+x.id).update({status:"started",startedAt:now,updatedAt:now})}catch(e){}state.lvDelay=null;toast("بدأت الرحلة الساعة "+hm(now))}catch(e){toast("تعذر بدء الرحلة")}render()};
+  B.querySelectorAll("[data-rgo]").forEach(b=>b.onclick=()=>{const x=state.transReqs.find(y=>y.id===b.dataset.rgo);if(!x)return;const s=trSched(x);const late=s?mins(Date.now()-s):0;
+    if(late>TR_GRACE){state.lvDelay={id:x.id,min:late};render();return}start(x,null)});
+  const f=B.querySelector("[data-dlf]");if(f){f.querySelector("[data-dx]").onclick=()=>{state.lvDelay=null;render()};
+    f.querySelector("[data-dok]").onclick=()=>{const r=f.querySelector("[data-dr]").value;if(!r){toast("اختر سبب التأخير");return}const x=state.transReqs.find(y=>y.id===f.dataset.dlf);start(x,{min:state.lvDelay.min,reason:r,note:f.querySelector("[data-dn]").value.trim()})}}}
+function lvReqLive(B,v,t,chips){const x=state.transReqs.find(y=>y.id===t.requestId)||{};const ph=t.phase||(t.arriveAt?"arrived":"out");
+  const btn=(k,l,cls)=>`<button class="btn lvend ${cls||""}" type="button" data-ph="${k}">${l}</button>`;let acts="";
+  if(ph==="out")acts=btn("arrive","وصلنا الوجهة");else if(ph==="arrived")acts=`<div class="lvbig">${btn("wait","الانتظار في المكان حتى العودة")}${btn("goback","العودة الآن وانتظار الاستدعاء","alt")}</div>`;
+  else if(ph==="wait")acts=btn("back","بدء رحلة العودة");else if(ph==="back")acts=btn("end","إنهاء الرحلة (وصلنا)");
+  const bd=state.lvDelay&&state.lvDelay.id==="back:"+t.id?delayFormHTML("back:"+t.id,state.lvDelay.min):"";
+  B.innerHTML=`${chips}<section class="dcard lvlive"><div class="row1"><h3 style="flex:1">${esc(vName(v))} — ${esc(t.purpose||"مشوار")}</h3><span class="pill p-today">جارية</span></div>
+    <div class="meta"><span>من: <b>${esc(t.from||x.from||"—")}</b></span><span>إلى: <b>${esc(t.to||x.to||"—")}</b></span>${x.timeBack?`<span>العودة المطلوبة: <b>${esc(x.timeBack)}</b></span>`:""}${x.requesterName?`<span>${esc(x.requesterName)} ${telA(trPhone(x),trPhone(x))}</span>`:""}</div>
+    ${trProgressHTML({id:t.requestId})||`<div class="dates"><div><span>بدء الرحلة</span><b class="ltr">${hm(t.startAt)}</b></div><div><span>المدة حتى الآن</span><b>${minTxt(mins(Date.now()-t.startAt))}</b></div></div>`}
+    ${bd}<div class="acts" style="margin-top:10px">${acts}</div><div class="hint">يُسجَّل الوقت والموقع مع كل ضغطة. زمن الذهاب والانتظار والعودة يُحسب تلقائياً.</div></section>`;
+  B.querySelectorAll("[data-lv]").forEach(b=>b.onclick=()=>{state.lvVeh=b.dataset.lv;render()});
+  const up=async(p,msg,rq)=>{try{await db.doc("trips/"+t.id).update({...p,updatedAt:Date.now()});if(rq&&t.requestId)try{await db.doc("transreqs/"+t.requestId).update({...rq,updatedAt:Date.now()})}catch(e){}toast(msg)}catch(e){toast("تعذر الحفظ")}state.lvDelay=null;render()};
+  const doBack=async dl=>{const loc=await getLoc();up({phase:"back",backAt:Date.now(),backLoc:loc,backDelayMin:dl?dl.min:0,backDelayReason:dl?dl.reason:"",backDelayNote:dl?dl.note:""},"بدأت رحلة العودة الساعة "+hm(Date.now()))};
+  B.querySelectorAll("[data-ph]").forEach(b=>b.onclick=async()=>{const k=b.dataset.ph;b.disabled=true;const now=Date.now();
+    if(k==="arrive"){const loc=await getLoc();if(t.hasReturn)up({phase:"arrived",arriveAt:now,arriveLoc:loc},"سُجّل الوصول الساعة "+hm(now));else up({phase:"done",arriveAt:now,arriveLoc:loc,endAt:now,endLoc:loc},"انتهت الرحلة الساعة "+hm(now),{status:"done",doneAt:now})}
+    else if(k==="wait"||k==="goback")up({phase:"wait",waitMode:k==="wait"?"wait":"return"},k==="wait"?"سُجّل: ينتظر في المكان":"سُجّل: عاد وينتظر الاستدعاء");
+    else if(k==="back"){const s=atTime(t.date,x.timeBack);const late=s?mins(now-s):0;if(late>TR_GRACE){state.lvDelay={id:"back:"+t.id,min:late};render();return}doBack(null)}
+    else if(k==="end"){const loc=await getLoc();up({phase:"done",endAt:now,endLoc:loc},"انتهت الرحلة الساعة "+hm(now),{status:"done",doneAt:now})}});
+  const f=B.querySelector("[data-dlf]");if(f){f.querySelector("[data-dx]").onclick=()=>{state.lvDelay=null;render()};f.querySelector("[data-dok]").onclick=()=>{const r=f.querySelector("[data-dr]").value;if(!r){toast("اختر سبب التأخير");return}doBack({min:state.lvDelay.min,reason:r,note:f.querySelector("[data-dn]").value.trim()})}}}
+/* الطلاب: الوصول للبيت + الانتظار + الركوب + التصوير */
+function rdWaitTxt(r){if(!r.arrAt)return"";const w=(r.at||Date.now())-r.arrAt;const m=Math.floor(w/6e4),s=Math.floor(w%6e4/1e3);return `${r.at?"انتظر":"الانتظار"} ${num(m)}:${String(s).padStart(2,"0")}${w>RD_WAIT*6e4?" (تجاوز "+num(RD_WAIT)+" د)":""}`}
+function lvRiderActs(t,r,i,to){if(r.absent)return `<button class="btn ghost" type="button" data-un="${i}">حاضر</button>`;
+  const cam=(k,has)=>`<label class="btn ghost lvcam ${has?"has":""}">${has?"تم التصوير":"صورة"}<input type="file" accept="image/*" capture="environment" data-cam="${i}:${k}" hidden></label>`;
+  if(!to)return r.at?`<button class="linkbtn mute" type="button" data-un="${i}">تراجع</button>`:`<button class="btn" type="button" data-hit="${i}">نزل</button><button class="btn ghost" type="button" data-abs="${i}">غائب</button>`;
+  if(r.at)return `${cam("board",!!r.boardPhoto)}<button class="linkbtn mute" type="button" data-un="${i}">تراجع</button>`;
+  if(r.arrAt)return `${cam("arr",!!r.arrPhoto)}<button class="btn" type="button" data-hit="${i}">ركب</button><button class="btn ghost" type="button" data-abs="${i}">غائب</button>`;
+  return `<button class="btn" type="button" data-arr="${i}">وصلنا البيت</button><button class="btn ghost" type="button" data-abs="${i}">غائب</button>`}
+function lvRiderWire(B,t,rs,save){
+  B.querySelectorAll("[data-arr]").forEach(b=>b.onclick=()=>{const i=+b.dataset.arr;rs[i].arrAt=Date.now();save(rs,"وصلتم بيت "+rs[i].name+" — "+hm(rs[i].arrAt)+". الانتظار "+num(RD_WAIT)+" د")});
+  B.querySelectorAll("[data-cam]").forEach(inp=>inp.onchange=async()=>{const [i,k]=inp.dataset.cam.split(":");const f=inp.files&&inp.files[0];if(!f)return;const at=Date.now();const r=rs[+i];
+    const path=`trip/${t.id}/${at}-${r.id||i}-${k}.${(f.type.split("/")[1]||"jpg").replace("jpeg","jpg")}`;toast("جارٍ رفع الصورة…");
+    const {error}=await sb.storage.from("files").upload(path,f,{contentType:f.type||"image/jpeg",upsert:false});if(error){toast("تعذر رفع الصورة");return}
+    r[k+"Photo"]=path;r[k+"PhotoAt"]=at;save(rs,"حُفظت الصورة الساعة "+hm(at))});
+  if(rs.some(r=>r.arrAt&&!r.at&&!r.absent)){clearTimeout(window._lvT);window._lvT=setTimeout(()=>{if(state.view==="transport"&&state.trTab==="live"&&!document.querySelector(".lvlive input:focus"))render()},10000)}}
+function riderExtra(r){const p=[];if(r.arrAt)p.push("وصل البيت "+hm(r.arrAt));if(r.arrAt&&r.at){const w=r.at-r.arrAt;p.push(`انتظار ${minTxt(Math.max(1,mins(w)))}`+(w>RD_WAIT*6e4?" (تجاوز)":""))}
+  const ph=[r.arrPhoto?`<button class="linkbtn" type="button" data-opf="${esc(r.arrPhoto)}">صورة الوصول</button>`:"",r.boardPhoto?`<button class="linkbtn" type="button" data-opf="${esc(r.boardPhoto)}">صورة الركوب</button>`:""].join("");
+  return (p.length?" · "+p.join(" · "):"")+(ph?" "+ph:"")}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-opf]");if(b)openFile(b.dataset.opf)});
+/* التذكير بالرحلات */
+function trUpcoming(){const now=Date.now(),me=state.me;return state.transReqs.filter(x=>["approved","assigned","started"].includes(x.status)).filter(x=>{const s=trSched(x);if(!s||s<now-3*36e5||s>now+36*36e5)return false;
+  if(x.status==="started"&&!canTrans())return false;return canTrans()||x.requesterId===me||state.myVehicles.includes(x.vehicleId)}).sort((a,b)=>trSched(a)-trSched(b))}
+function trRemindHTML(){const L=trUpcoming();if(!L.length)return"";const now=Date.now();
+  return `<div class="req tremind"><h3>رحلات قريبة</h3><div class="rlist">${L.map(x=>{const s=trSched(x),v=vehicleOf(x.vehicleId);const left=s-now;const drv=state.myVehicles.includes(x.vehicleId);
+    return `<div class="rtrow"><span><b>${esc(x.title)}</b> <span class="hint">${dateOf(s)===todayStr()?"اليوم":"غداً"} الساعة ${esc(x.timeOut)} · ${v?esc(vName(v)):""}${v&&v.driverName?" · "+esc(v.driverName):""} · من ${esc(x.from||"—")}</span>${drv&&left>0?`<span class="hint" style="display:block">توجّه إلى نقطة الانطلاق «${esc(x.from||"")}» وابدأ الرحلة من «الرحلة الآن».</span>`:""}</span><span class="pill ${x.status==="started"?"p-today":left<0?"p-late":left<36e5?"p-today":"p-who"}">${x.status==="started"?"جارية":left<0?"تجاوزت الموعد "+minTxt(mins(-left)):"بعد "+minTxt(mins(left))}</span></div>`}).join("")}</div></div>`}
+function trNotifyTick(){try{if(!("Notification" in window)||Notification.permission!=="granted")return;const now=Date.now();let seen={};try{seen=JSON.parse(localStorage.getItem("manar-trn")||"{}")}catch(e){}
+  for(const x of trUpcoming()){if(x.status==="started")continue;const s=trSched(x);const left=s-now;let k="";
+    if(left>0&&left<=30*6e4)k="30m";else if(dateOf(s)!==todayStr()&&left>0)k="1d";if(!k||seen[x.id+":"+k])continue;seen[x.id+":"+k]=now;
+    const v=vehicleOf(x.vehicleId);const title=k==="30m"?"بعد "+minTxt(mins(left))+": "+x.title:"رحلة غداً: "+x.title;const body=`الساعة ${x.timeOut} · من ${x.from||"—"} إلى ${x.to||"—"}${v?" · "+vName(v):""}`;
+    const opt={body,dir:"rtl",lang:"ar",tag:"manar-tr-"+x.id,data:location.origin+location.pathname+"#transport"};try{if(swReg&&swReg.showNotification)swReg.showNotification(title,opt);else new Notification(title,opt)}catch(e){}}
+  for(const k in seen)if(now-seen[k]>3*864e5)delete seen[k];try{localStorage.setItem("manar-trn",JSON.stringify(seen))}catch(e){}}catch(e){}}
+setInterval(trNotifyTick,60000);setTimeout(trNotifyTick,9000);
+/* التحليل: أسباب التأخير وأزمنة المشاوير */
+function trDelayHTML(T){const R=T.filter(t=>t.requestId||t.direction==="other");const dl=[];R.forEach(t=>{if(t.delayMin>0)dl.push({r:t.delayReason,m:t.delayMin});if(t.backDelayMin>0)dl.push({r:t.backDelayReason,m:t.backDelayMin})});
+  const by={};dl.forEach(d=>{const o=by[d.r]=by[d.r]||{n:0,m:0};o.n++;o.m+=d.m});const av=f=>{const L=R.map(f).filter(x=>x>0);return L.length?minTxt(mins(L.reduce((a,b)=>a+b,0)/L.length)):"—"};
+  return `<section class="dcard"><h3>المشاوير: التأخير وأزمنة الرحلة</h3><div class="meta"><span>مشاوير مسجّلة: <b>${num(R.length)}</b></span><span>بدأت متأخرة: <b class="${dl.length?"lt":""}">${num(dl.length)}</b></span><span>متوسط الذهاب: <b>${av(t=>t.arriveAt&&t.startAt?t.arriveAt-t.startAt:0)}</b></span><span>متوسط الانتظار: <b>${av(t=>t.backAt&&t.arriveAt?t.backAt-t.arriveAt:0)}</b></span><span>متوسط العودة: <b>${av(t=>t.endAt&&t.backAt?t.endAt-t.backAt:0)}</b></span></div>
+   ${dl.length?`<div class="ptab"><table class="dt"><thead><tr><th>سبب التأخير</th><th>المرات</th><th>متوسط التأخير</th></tr></thead><tbody>${Object.entries(by).sort((a,b)=>b[1].n-a[1].n).map(([k,o])=>`<tr><td>${esc(TDELAY[k]||k||"غير محدد")}</td><td>${num(o.n)}</td><td>${minTxt(o.m/o.n)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">لا يوجد تأخير مسجّل في هذه الفترة.</div>'}</section>`}
+
 function vehicleOf(id){return state.vehicles.find(v=>v.id===id)}
 function vName(v){return v?(v.name||v.plate||"مركبة"):"—"}
 function whOf(id){return state.warehouses.find(w=>w.id===id)}
@@ -2290,7 +2392,7 @@ function renderTransport(){
   if(!subs.some(s=>s[0]===state.trTab))state.trTab=subs[0][0];
   const lead=canTrans()?"طلبات النقل الواردة، المركبات، وسجل الرحلات الدورية والعرضية":state.myVehicles.length?"سجّل رحلات مركبتك وأوقات الطلاب، واطلب مشاوير النقل":"اطلب مشوار نقل لقسمك وتابع حالته حتى التنفيذ";
   v.innerHTML=`<div class="phead"><div><h2>الحركة والنقل</h2><div class="prole">${lead}</div></div></div>
-   <div class="filters">${subs.map(([k,l])=>`<button type="button" class="chip" data-tt="${k}" aria-pressed="${state.trTab===k}">${l}</button>`).join("")}</div><div id="trBody" class="panel"></div>`;
+   ${trRemindHTML()}<div class="filters">${subs.map(([k,l])=>`<button type="button" class="chip" data-tt="${k}" aria-pressed="${state.trTab===k}">${l}</button>`).join("")}</div><div id="trBody" class="panel"></div>`;
   v.querySelectorAll("[data-tt]").forEach(b=>b.onclick=()=>{state.trTab=b.dataset.tt;state.trTabSet=true;state.confirm=null;render()});
   const B=v.querySelector("#trBody");
   ({live:liveTripView,requests:trRequestsView,trips:tripsView,vehicles:vehiclesView,riders:ridersView2,analysis:analysisView})[state.trTab](B);
@@ -2365,11 +2467,12 @@ function trCard(x){
   const veh=vehicleOf(x.vehicleId);const trip=state.trips.find(t=>t.requestId===x.id);
   el.innerHTML=`<div class="row1"><div class="ttl">${esc(x.title)}</div>
     ${can?`<label class="st-wrap">حالة الطلب<select class="st v-${x.status==="done"?"done":["rejected","cancelled"].includes(x.status)?"wait":x.status==="new"?"new":"doing"}">${optsOf(TRS,x.status)}</select></label>`:`<span class="pill ${open?"p-req":"p-done"}">${TRS[x.status]||""}</span>`}</div>
-    <div class="route"><span><span class="hint">من</span> <b>${esc(x.requesterName||"")}</b></span><span class="arr">←</span><span><span class="hint">إلى</span> <b>${esc(transNames())}</b></span><span class="pill p-file">${esc(x.type||"")}</span>${x.groupName?`<span class="pill p-file">${esc(x.groupName)}</span>`:""}</div>
+    <div class="route"><span><span class="hint">من</span> <b>${esc(x.requesterName||"")}</b>${trPhone(x)?" "+telA(trPhone(x),trPhone(x)):""}</span><span class="arr">←</span><span><span class="hint">إلى</span> <b>${esc(transNames())}</b></span><span class="pill p-file">${esc(x.type||"")}</span>${x.groupName?`<span class="pill p-file">${esc(x.groupName)}</span>`:""}</div>
     ${state.trNotify===x.id?`<div class="req"><h3>نبّه مسؤول الحركة والنقل بالطلب</h3><div class="acts">${trNotifyHTML(x)}<button class="linkbtn mute" type="button" data-pn>لاحقاً</button></div></div>`:""}
     <div class="dates"><div><span>التاريخ</span><b>${fmtDate(x.date)}</b></div><div><span>الانطلاق والعودة</span><b>${esc(x.timeOut||"—")}${x.timeBack?" إلى "+esc(x.timeBack):""}</b></div><div><span>عدد الركاب</span><b>${x.pax?num(x.pax):"—"}</b></div></div>
     <div class="meta"><span>من: <b>${esc(x.from||"—")}</b></span><span>إلى: <b>${esc(x.to||"—")}</b></span>${veh?`<span class="pill p-who">المركبة: ${esc(vName(veh))}${veh.driverName?" · السائق "+esc(veh.driverName):""}</span>`:""}${trip?`<span class="pill p-done">سُجّلت الرحلة${tripDur(trip)?" · "+minTxt(mins(tripDur(trip))):""}</span>`:""}</div>
     ${x.note?`<div class="note">${esc(x.note)}</div>`:""}
+    ${trFlowHTML(x)}
     ${can&&open?`<div class="fgrid buyer"><label>المركبة<select data-veh>${vehOpts(x.vehicleId,state.vehicles.filter(v=>v.status!=="out"))}</select></label><label>ملاحظة لمقدّم الطلب<input data-tnote value="${esc(x.transNote||"")}"></label><div><button class="btn ghost sm" type="button" data-tsave>حفظ</button></div></div>`:x.transNote?`<div class="note">${esc(x.transNote)}</div>`:""}
     <div class="acts"><button class="linkbtn" type="button" data-t>${openT?"إخفاء الردود والملفات":"الردود والملفات"} (${num(replies)} رد · ${num(files)} ملف)</button>
     ${can&&!trip&&!["rejected","cancelled"].includes(x.status)?`<button class="linkbtn" type="button" data-logtrip>تسجيل الرحلة</button>`:""}
@@ -2385,6 +2488,7 @@ function trCard(x){
     try{await db.doc("transreqs/"+x.id).update(p);await addComment("trans",x.id,`غيّر حالة طلب النقل إلى «${TRS[v]}»`,"status");toast("تم تحديث الحالة");db.refreshAll()}catch(e){toast("ليست لديك صلاحية لهذا التعديل");render()}};
   const ts=q("[data-tsave]");if(ts)ts.onclick=async()=>{const vid=q("[data-veh]").value;const p={vehicleId:vid,transNote:q("[data-tnote]").value.trim(),updatedAt:Date.now()};if(vid&&["new","approved"].includes(x.status))p.status="assigned";
     try{await db.doc("transreqs/"+x.id).update(p);if(p.status)await addComment("trans",x.id,`حُددت المركبة: ${vName(vehicleOf(vid))}`,"status");toast("حُفظ");db.refreshAll()}catch(e){toast("تعذر الحفظ")}};
+  trFlowWire(el,x);
   q("[data-t]").onclick=()=>{state.openThreads[k]=!openT;render()};
   const lt=q("[data-logtrip]");if(lt)lt.onclick=()=>{state.trTab="trips";state.tripDraft={vehicleId:x.vehicleId||"",date:x.date||todayStr(),kind:"adhoc",shift:(x.timeOut||"")>="14:30"?"after":"during",direction:"other",purpose:x.title,start:x.timeOut||"",end:x.timeBack||"",pax:x.pax||"",requestId:x.id,rt:{}};state.newTripOpen=true;render();window.scrollTo({top:0})};
   const pn=q("[data-pn]");if(pn)pn.onclick=()=>{state.trNotify=null;render()};
@@ -2471,13 +2575,14 @@ function tripCard(t){
   const avgR=rides.length?rides.reduce((a,b)=>a+b,0)/rides.length:null,maxR=rides.length?Math.max(...rides):null;
   const k="tp:"+t.id,openR=!!state.openThreads[k];
   el.innerHTML=`<div class="row1"><div class="ttl">${esc(t.vehicleName||vName(vehicleOf(t.vehicleId)))} — ${esc(t.purpose||TDIR[t.direction]||"")}</div>${live?`<span class="pill p-today">جارية الآن</span>`:""}</div>
-   <div class="meta"><span class="pill ${t.kind==="adhoc"?"p-req":"p-who"}">${TKIND[t.kind]||""}</span><span class="pill p-file">${TSHIFT[t.shift]||""}</span><span class="pill p-file">${TDIR[t.direction]||""}</span><span class="pill p-file">${t.owner==="operator"?"الشركة المشغلة":"باصات الأندلس"}</span>${t.requestId?`<span class="pill p-done">من طلب نقل</span>`:""}</div>
+   <div class="meta"><span class="pill ${t.kind==="adhoc"?"p-req":"p-who"}">${TKIND[t.kind]||""}</span><span class="pill p-file">${TSHIFT[t.shift]||""}</span><span class="pill p-file">${TDIR[t.direction]||""}</span><span class="pill p-file">${t.owner==="operator"?"الشركة المشغلة":"مركبات الأندلس"}</span>${t.requestId?`<span class="pill p-done">من طلب نقل</span>`:""}</div>
    <div class="dates"><div><span>التاريخ</span><b>${fmtDate(t.date)}</b></div><div><span>الانطلاق والوصول</span><b>من ${hm(t.startAt)||"—"} إلى ${hm(t.endAt)||"…"}</b></div><div><span>مدة الرحلة</span><b>${du?minTxt(mins(du)):live?"جارية":"—"}</b></div></div>
    <div class="meta">${t.pax?`<span>الركاب: <b>${num(t.pax)}</b></span>`:""}${rs.length?`<span>الطلاب: ${num(present.length)} حاضر${rs.length-present.length?` · ${num(rs.length-present.length)} غائب`:""}</span>`:""}${avgR?`<span>متوسط وقت الطالب: <b>${minTxt(mins(avgR))}</b> · الأطول ${minTxt(mins(maxR))}</span>`:""}${t.km1&&t.km2&&t.km2>t.km1?`<span>المسافة: ${num(t.km2-t.km1)} كم</span>`:""}${t.loggedByName?`<span>سجّلها: ${esc(t.loggedByName)}</span>`:""}</div>
+   ${t.requestId?trProgressHTML({id:t.requestId}):""}
    ${t.note?`<div class="note">${esc(t.note)}</div>`:""}
    <div class="acts">${live&&can?`<button class="btn sm" type="button" data-end>وصلنا الآن</button>`:""}${rs.length?`<button class="linkbtn" type="button" data-rs>${openR?"إخفاء أوقات الطلاب":"أوقات الطلاب"} (${num(rs.length)})</button>`:""}${canTrans()?`<button class="linkbtn mute" type="button" data-del>حذف</button>`:""}</div>
    ${delBtns("tp:"+t.id,"حذف الرحلة من السجل؟")}
-   ${openR?`<div class="rlist">${rs.map((r,i)=>{const ride=riderRide(t,r);return `<div class="rrow"><span>${esc(r.name)}</span>${can?`<input type="time" data-rt="${i}" value="${r.at?hm(r.at):""}" aria-label="وقت ${esc(r.name)}">`:`<b class="ltr">${r.at?hm(r.at):"—"}</b>`}${can?`<span class="rbtns"><button class="linkbtn" type="button" data-rnow="${i}">${t.direction==="from_school"?"نزل الآن":"ركب الآن"}</button><label class="ab"><input type="checkbox" data-ra="${i}" ${r.absent?"checked":""}>غائب</label></span>`:r.absent?`<span class="pill p-late">غائب</span>`:"<span></span>"}<span class="hint">${ride?minTxt(mins(ride)):""}</span></div>`}).join("")}</div>`:""}`;
+   ${openR?`<div class="rlist">${rs.map((r,i)=>{const ride=riderRide(t,r);return `<div class="rrow"><span>${esc(r.name)}</span>${can?`<input type="time" data-rt="${i}" value="${r.at?hm(r.at):""}" aria-label="وقت ${esc(r.name)}">`:`<b class="ltr">${r.at?hm(r.at):"—"}</b>`}${can?`<span class="rbtns"><button class="linkbtn" type="button" data-rnow="${i}">${t.direction==="from_school"?"نزل الآن":"ركب الآن"}</button><label class="ab"><input type="checkbox" data-ra="${i}" ${r.absent?"checked":""}>غائب</label></span>`:r.absent?`<span class="pill p-late">غائب</span>`:"<span></span>"}<span class="hint">${ride?minTxt(mins(ride)):""}${riderExtra(r)}</span></div>`}).join("")}</div>`:""}`;
   const q=s=>el.querySelector(s);
   const upd=async(p,msg)=>{try{await db.doc("trips/"+t.id).update({...p,updatedAt:Date.now()});if(msg)toast(msg)}catch(e){toast("تعذر الحفظ")}};
   const en=q("[data-end]");if(en)en.onclick=()=>upd({endAt:Date.now()},"سُجّل وقت الوصول");
@@ -2491,22 +2596,31 @@ function tripCard(t){
 }
 
 /* المركبات */
-function vehForm(v){v=v||{owner:"alandalus",status:"active",kind:VKIND[0]};const s=v.supervisorIds||[];const id=v.id||"new";
+function vehForm(v){v=v||{owner:"alandalus",status:"active",kind:VKIND[0]};const s=v.supervisorIds||[],dr=v.driverIds||[],us=v.userIds||[];const id=v.id||"new";
   return `<form class="fgrid vform" data-vf="${esc(id)}" style="margin-top:10px">
     <label>اسم أو رقم المركبة<input data-k="name" required value="${esc(v.name||"")}" placeholder="مثال: باص 3"></label>
     <label>رقم اللوحة<input data-k="plate" value="${esc(v.plate||"")}"></label>
     <label>النوع<select data-k="kind">${VKIND.map(x=>`<option ${v.kind===x?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
     <label>السعة (ركاب)<input data-k="capacity" type="number" min="0" value="${esc(v.capacity||"")}"></label>
-    <label>التبعية<select data-k="owner"><option value="alandalus" ${v.owner!=="operator"?"selected":""}>باصات الأندلس</option><option value="operator" ${v.owner==="operator"?"selected":""}>الشركة المشغلة</option></select></label>
-    <label>اسم الشركة المشغلة<input data-k="operatorName" value="${esc(v.operatorName||"")}"></label>
-    <label>السائق<input data-k="driverName" value="${esc(v.driverName||"")}"></label>
-    <label>جوال السائق<input data-k="driverPhone" type="tel" value="${esc(v.driverPhone||"")}"></label>
-    <label>المشرف 1<select data-sup="0">${peopleOpts(s[0],"— بدون —")}</select></label>
-    <label>المشرف 2<select data-sup="1">${peopleOpts(s[1],"— بدون —")}</select></label>
-    <label class="wide">المسار أو الأحياء<input data-k="route" value="${esc(v.route||"")}"></label>
-    <label>الحالة<select data-k="status">${optsOf(VSTAT,v.status||"active")}</select></label>
+    <label>التبعية<select data-k="owner"><option value="alandalus" ${v.owner!=="operator"?"selected":""}>مركبات الأندلس</option><option value="operator" ${v.owner==="operator"?"selected":""}>الشركة المشغلة</option></select></label>
+    <label>اسم الشركة المشغلة (إلزامي لمركبات الشركة)<input data-k="operatorName" value="${esc(v.operatorName||"")}"></label>
+    <h4 class="full vsec">السائق</h4>
+    <label>اسم السائق<input data-k="driverName" value="${esc(v.driverName||"")}"></label>
+    <label>جوال السائق<input data-k="driverPhone" type="tel" dir="ltr" placeholder="05xxxxxxxx" value="${esc(v.driverPhone||"")}"></label>
+    <label>حساب السائق في المنصة<select data-drv="0">${peopleOpts(dr[0],"— بدون حساب —")}</select></label>
+    <label>سائق آخر (حساب)<select data-drv="1">${peopleOpts(dr[1],"— بدون —")}</select></label>
+    <h4 class="full vsec">المشرف أو المشرفة</h4>
+    <label>اسم المشرف/المشرفة<input data-k="supName" value="${esc(v.supName||"")}" placeholder="إن لم يكن له حساب"></label>
+    <label>جوال المشرف/المشرفة<input data-k="supPhone" type="tel" dir="ltr" placeholder="05xxxxxxxx" value="${esc(v.supPhone||"")}"></label>
+    <label>حساب المشرف/المشرفة 1<select data-sup="0">${peopleOpts(s[0],"— بدون —")}</select></label>
+    <label>حساب المشرف/المشرفة 2<select data-sup="1">${peopleOpts(s[1],"— بدون —")}</select></label>
+    <h4 class="full vsec">المستخدمون المصرح لهم باستخدام المركبة</h4>
+    ${[0,1,2,3].map(i=>`<label>مستخدم ${num(i+1)}<select data-usr="${i}">${peopleOpts(us[i],"— بدون —")}</select></label>`).join("")}
+    <label class="wide">المسار أو الأحياء التي تخدمها<input data-k="route" value="${esc(v.route||"")}"></label>
+    <label>حالة المركبة<select data-k="status">${optsOf(VSTAT,v.status||"active")}</select></label>
     <div class="full acts"><button class="btn" type="submit">${v.id?"حفظ":"إضافة المركبة"}</button>${v.id?`<button class="linkbtn mute" type="button" data-vcancel>إلغاء</button>`:""}</div>
-    <div class="full hint">المشرف يقدر يسجّل رحلات هذي المركبة وأوقات طلابها من حسابه في المنصة.</div></form>`}
+    <div class="full hint">كل من له حساب هنا (السائق، المشرف، المستخدمون) تظهر له المركبة في «الرحلة الآن»، ويبدأ الرحلة وينهيها بنفسه، ويصله التذكير بالرحلات المعتمدة.</div></form>`}
+
 function vehiclesView(B){
   const can=canTrans();const mStart=dateOf(Date.now()-29*864e5);
   const cnt=id=>state.trips.filter(t=>t.vehicleId===id&&(t.date||"")>=mStart).length;
@@ -2514,19 +2628,20 @@ function vehiclesView(B){
   const card=v=>{if(state.editVeh===v.id)return `<article class="item">${vehForm(v)}</article>`;
     const sup=(v.supervisorNames||[]).filter(Boolean);const riders=state.riders.filter(r=>r.vehicleId===v.id).length;
     return `<article class="item ${v.status&&v.status!=="active"?"s-done":""}" data-vid="${esc(v.id)}"><div class="row1"><div class="ttl">${esc(vName(v))}${v.plate?` <span class="hint ltr">${esc(v.plate)}</span>`:""}</div><span class="pill ${(v.status||"active")==="active"?"p-done":"p-late"}">${VSTAT[v.status||"active"]}</span></div>
-     <div class="meta"><span class="pill p-file">${esc(v.kind||"")}</span>${v.capacity?`<span>السعة: ${num(+v.capacity)} راكب</span>`:""}<span>${v.owner==="operator"?"الشركة المشغلة"+(v.operatorName?": "+esc(v.operatorName):""):"باصات الأندلس"}</span>${v.route?`<span>المسار: ${esc(v.route)}</span>`:""}</div>
-     <div class="meta">${v.driverName?`<span>السائق: <b>${esc(v.driverName)}</b>${v.driverPhone?` <span class="ltr">${esc(v.driverPhone)}</span>`:""}</span>`:""}${sup.length?`<span>المشرف: ${esc(sup.join("، "))}</span>`:`<span class="nolink">بدون مشرف</span>`}${canTrips()?`<span>الطلاب: ${num(riders)}</span>`:""}${canTrips()?`<span>رحلات آخر 30 يوماً: <b>${num(cnt(v.id))}</b></span>`:""}</div>
+     <div class="meta"><span class="pill p-file">${esc(v.kind||"")}</span>${v.capacity?`<span>السعة: ${num(+v.capacity)} راكب</span>`:""}<span>${v.owner==="operator"?"الشركة المشغلة"+(v.operatorName?": "+esc(v.operatorName):""):"مركبات الأندلس"}</span>${v.route?`<span>المسار: ${esc(v.route)}</span>`:""}</div>
+     <div class="meta">${v.driverName?`<span>السائق: <b>${esc(v.driverName)}</b>${v.driverPhone?` <span class="ltr">${esc(v.driverPhone)}</span>`:""}</span>`:""}${sup.length||v.supName?`<span>المشرف: ${esc([v.supName,...sup].filter(Boolean).join("، "))}${v.supPhone?" "+telA(v.supPhone,v.supPhone):""}</span>`:`<span class="nolink">بدون مشرف</span>`}${(v.userNames||[]).filter(Boolean).length?`<span>المستخدمون: ${esc(v.userNames.filter(Boolean).join("، "))}</span>`:""}${canTrips()?`<span>الطلاب: ${num(riders)}</span>`:""}${canTrips()?`<span>رحلات آخر 30 يوماً: <b>${num(cnt(v.id))}</b></span>`:""}</div>
      ${can?`<div class="acts"><button class="linkbtn" type="button" data-ev>تعديل</button><button class="linkbtn mute" type="button" data-del>حذف</button></div>`:""}
      ${delBtns("v:"+v.id,"حذف المركبة؟ لن تُحذف رحلاتها من السجل.")}</article>`};
   B.innerHTML=`${can?`<details class="newreq" ${state.newVehOpen?"open":""}><summary>+ إضافة مركبة</summary>${vehForm(null)}</details>`:""}
-   <section class="dcard"><h3>باصات الأندلس (${num(own.length)})</h3><div class="list">${own.map(card).join("")||'<div class="hint">لا توجد مركبات.</div>'}</div></section>
-   <section class="dcard"><h3>باصات الشركة المشغلة (${num(op.length)})</h3><div class="list">${op.map(card).join("")||'<div class="hint">لا توجد مركبات.</div>'}</div></section>`;
+   <section class="dcard"><h3>مركبات الأندلس (${num(own.length)})</h3><div class="list">${own.map(card).join("")||'<div class="hint">لا توجد مركبات.</div>'}</div></section>
+   <section class="dcard"><h3>مركبات الشركة المشغلة (${num(op.length)})</h3><div class="list">${op.map(card).join("")||'<div class="hint">لا توجد مركبات.</div>'}</div></section>`;
   const det=B.querySelector(".newreq");if(det)det.ontoggle=()=>{state.newVehOpen=det.open};
   B.querySelectorAll("form.vform").forEach(f=>{const id=f.dataset.vf;
     f.onsubmit=async e=>{e.preventDefault();const d={};f.querySelectorAll("[data-k]").forEach(i=>d[i.dataset.k]=i.type==="number"?(Number(i.value)||0):i.value.trim());
       if(!d.name){toast("اكتب اسم أو رقم المركبة");return}
       const ids=[...f.querySelectorAll("[data-sup]")].map(s=>s.value).filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i);
-      d.supervisorIds=ids;d.supervisorNames=ids.map(x=>(person(x)||{}).name||"");d.updatedAt=Date.now();
+      d.supervisorIds=ids;d.supervisorNames=ids.map(x=>(person(x)||{}).name||"");const pick=a=>[...f.querySelectorAll("["+a+"]")].map(s=>s.value).filter(Boolean).filter((x,i,arr)=>arr.indexOf(x)===i);d.driverIds=pick("data-drv");d.userIds=pick("data-usr");d.userNames=d.userIds.map(x=>(person(x)||{}).name||"");
+      if(d.owner==="operator"&&!d.operatorName){toast("اكتب اسم الشركة المشغلة");return}if(!d.driverName&&d.driverIds[0])d.driverName=(person(d.driverIds[0])||{}).name||"";if(!d.driverPhone&&d.driverIds[0])d.driverPhone=(person(d.driverIds[0])||{}).phone||"";d.updatedAt=Date.now();
       try{if(id==="new"){d.createdAt=Date.now();d.order=state.vehicles.length+1;await db.collection("vehicles").doc().set(d);state.newVehOpen=false;toast("أُضيفت المركبة")}
         else{await db.doc("vehicles/"+id).update(d);state.editVeh=null;toast("حُفظت بيانات المركبة")}render()}catch(err){toast("تعذر الحفظ")}};
     const c=f.querySelector("[data-vcancel]");if(c)c.onclick=()=>{state.editVeh=null;render()}});
@@ -2585,7 +2700,7 @@ function analysisView(B){
    <section class="dcard"><h3>توزيع الضغط على المركبات</h3>${bal[1]?`<div class="balance ${bal[0]}">${esc(bal[1])}</div>`:""}
     <div class="ptab"><table class="dt"><thead><tr><th>المركبة</th><th>التبعية</th><th>الرحلات</th><th>الحصة</th><th>عرضية</th><th>بعد الدوام</th><th>ساعات التشغيل</th><th>متوسط المدة</th><th>المسافة</th></tr></thead><tbody>
     ${sorted.map(p=>`<tr><td>${esc(vName(p.v))}</td><td>${p.v.owner==="operator"?"الشركة المشغلة":"الأندلس"}</td><td>${num(p.n)}</td><td><span class="sharebar"><span style="width:${100*p.n/mx}%"></span></span>${total?num(Math.round(100*p.n/total))+"%":"—"}</td><td>${num(p.adhoc)}</td><td>${num(p.after)}</td><td>${minTxt(mins(p.ms))}</td><td>${minTxt(p.avg&&mins(p.avg))}</td><td>${p.km?num(p.km)+" كم":"—"}</td></tr>`).join("")||`<tr><td colspan="9" class="hint">أضف المركبات أولاً.</td></tr>`}</tbody></table></div></section>
-   <section class="dcard"><h3>باصات الأندلس مقابل الشركة المشغلة</h3><div class="meta"><span>باصات الأندلس: <b>${num(ownN)}</b> رحلة${total?` (${num(Math.round(100*ownN/total))}%)`:""}</span><span>الشركة المشغلة: <b>${num(opN)}</b> رحلة${total?` (${num(Math.round(100*opN/total))}%)`:""}</span></div></section>
+   ${trDelayHTML(T)}<section class="dcard"><h3>مركبات الأندلس مقابل الشركة المشغلة</h3><div class="meta"><span>مركبات الأندلس: <b>${num(ownN)}</b> رحلة${total?` (${num(Math.round(100*ownN/total))}%)`:""}</span><span>الشركة المشغلة: <b>${num(opN)}</b> رحلة${total?` (${num(Math.round(100*opN/total))}%)`:""}</span></div></section>
    <section class="dcard"><h3>أطول أوقات الطلاب في الباص</h3>${top.length?`<div class="ptab"><table class="dt"><thead><tr><th>الطالب</th><th>المركبة</th><th>الحي</th><th>الذهاب</th><th>العودة</th></tr></thead><tbody>${top.map(o=>`<tr><td>${esc(o.x.name)}</td><td>${esc(vName(vehicleOf(o.x.vehicleId)))}</td><td>${esc(o.x.district||"")}</td><td class="${o.s.am>60?"lt":""}">${minTxt(o.s.am)}</td><td class="${o.s.pm>60?"lt":""}">${minTxt(o.s.pm)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">تظهر هنا بعد تسجيل أوقات الطلاب في الرحلات.</div>'}</section>`;
   B.querySelectorAll("[data-an]").forEach(b=>b.onclick=()=>{state.anRange=+b.dataset.an;render()});
 }
