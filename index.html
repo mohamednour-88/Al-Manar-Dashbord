@@ -1774,10 +1774,11 @@ function shPrint(owner,keys){
 const RFREQ={daily:"يومي",weekly:"أسبوعي",monthly:"شهري"};
 const RDAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const RCAT=["ترشيد الكهرباء والإنارة","النظافة","الأمن والبوابات","السلامة","الصيانة","الضيافة","أخرى"];
-const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",fguard:"حارسة أمن",other:"أخرى"};
+const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",fguard:"حارسة أمن",fsup:"مشرفة العاملات",other:"أخرى"};
 /* الإصدار 26: أنواع الفريق حسب المشرف (عامل/حارس، أو عاملة/عامل/حارسة أمن/حارس لقسم البنات) */
 function rFemaleOwner(owner){const p=person(owner)||{};const fn=String(p.name||"").trim().split(/\s+/)[0]||"";return /[ةء]$/.test(fn)||rDocs("worker",owner).some(w=>w.type==="fworker"||w.type==="fguard")}
-function rTypeOpts(owner){return rFemaleOwner(owner)?{fworker:"عاملة",worker:"عامل",fguard:"حارسة أمن",guard:"حارس",other:"أخرى"}:{worker:"عامل",guard:"حارس",other:"أخرى"}}
+/* الإصدار 27: مشرفة العاملات = عاملات فقط، ومسؤولة القسم = مشرفة العاملات وحارسة الأمن */
+function rTypeOpts(owner){if(!rFemaleOwner(owner))return {worker:"عامل",guard:"حارس",other:"أخرى"};const ws=rDocs("worker",owner);if(ws.some(w=>w.type==="fworker")||/عاملات/.test(titleOf(person(owner)||{})))return {fworker:"عاملة"};return {fsup:"مشرفة العاملات",fguard:"حارسة أمن",other:"أخرى"}}
 const ADMIN_PHONE="0545967881";
 function rDocs(kind,owner){return state.routine.filter(x=>x.kind===kind&&(owner===undefined||x.ownerId===owner))}
 function rSites(){return rDocs("site").sort((a,b)=>(a.order||0)-(b.order||0))}
