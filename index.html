@@ -1774,7 +1774,10 @@ function shPrint(owner,keys){
 const RFREQ={daily:"يومي",weekly:"أسبوعي",monthly:"شهري"};
 const RDAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 const RCAT=["ترشيد الكهرباء والإنارة","النظافة","الأمن والبوابات","السلامة","الصيانة","الضيافة","أخرى"];
-const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",other:"أخرى"};
+const RWTYPE={worker:"عامل",fworker:"عاملة",guard:"حارس",fguard:"حارسة أمن",other:"أخرى"};
+/* الإصدار 26: أنواع الفريق حسب المشرف (عامل/حارس، أو عاملة/عامل/حارسة أمن/حارس لقسم البنات) */
+function rFemaleOwner(owner){const p=person(owner)||{};const fn=String(p.name||"").trim().split(/\s+/)[0]||"";return /[ةء]$/.test(fn)||rDocs("worker",owner).some(w=>w.type==="fworker"||w.type==="fguard")}
+function rTypeOpts(owner){return rFemaleOwner(owner)?{fworker:"عاملة",worker:"عامل",fguard:"حارسة أمن",guard:"حارس",other:"أخرى"}:{worker:"عامل",guard:"حارس",other:"أخرى"}}
 const ADMIN_PHONE="0545967881";
 function rDocs(kind,owner){return state.routine.filter(x=>x.kind===kind&&(owner===undefined||x.ownerId===owner))}
 function rSites(){return rDocs("site").sort((a,b)=>(a.order||0)-(b.order||0))}
@@ -1921,13 +1924,15 @@ function rTeam(B,owner){
   const list=rDocs("worker",owner).sort((a,b)=>(a.order||0)-(b.order||0));const p=person(owner);
   const defType=rScope(owner).kind==="guards"?"guard":/عاملات/.test(titleOf(p||{}))?"fworker":"worker";
   B.innerHTML=`<form id="rwform" class="fgrid"><label class="full">أضف أسماء الفريق، كل اسم في سطر (ويمكن إضافة الجوال بعد فاصلة)<textarea id="rw-bulk" placeholder="فاطمة علي، 0551234567"></textarea></label>
-     <label>النوع<select id="rw-type">${optsOf(RWT_K[rScope(owner).kind],defType)}</select></label><div><button class="btn" type="submit">إضافة</button></div></form>
+     <label>النوع<select id="rw-type">${optsOf(rTypeOpts(owner),defType)}</select></label><div><button class="btn" type="submit">إضافة</button></div></form>
    <div class="ptab"><table><thead><tr><th>#</th><th>الاسم</th><th>النوع</th><th>الجوال</th><th>المسؤول عن</th><th></th></tr></thead><tbody>
-   ${list.map((w,i)=>{const where=rDocs("assign",owner).filter(a=>a.workerId===w.id).map(a=>rSiteName(rSite(a.siteId))).filter(Boolean);return `<tr data-wid="${esc(w.id)}"><td>${num(i+1)}</td><td>${esc(w.name)}</td><td>${RWTYPE[w.type]||""}</td><td class="ltr">${esc(w.phone||"")}</td><td>${esc(where.join("، "))}</td><td>${state.confirm==="rw:"+w.id?`<button class="btn danger sm" type="button" data-dy>حذف</button> <button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del>حذف</button>`}</td></tr>`}).join("")||`<tr><td colspan="6" class="hint">لا توجد أسماء بعد.</td></tr>`}</tbody></table></div>`;
+   ${list.map((w,i)=>{const where=rDocs("assign",owner).filter(a=>a.workerId===w.id).map(a=>rSiteName(rSite(a.siteId))).filter(Boolean);return `<tr data-wid="${esc(w.id)}"><td>${num(i+1)}</td><td>${esc(w.name)}</td><td><select data-wt aria-label="نوع ${esc(w.name)}">${optsOf(Object.assign({},rTypeOpts(owner),RWTYPE[w.type]&&!rTypeOpts(owner)[w.type]?{[w.type]:RWTYPE[w.type]}:{}),w.type)}</select></td><td><input data-wp dir="ltr" inputmode="tel" value="${esc(w.phone||"")}" placeholder="05xxxxxxxx" aria-label="جوال ${esc(w.name)}" style="width:130px"></td><td>${esc(where.join("، "))}</td><td>${state.confirm==="rw:"+w.id?`<button class="btn danger sm" type="button" data-dy>حذف</button> <button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del>حذف</button>`}</td></tr>`}).join("")||`<tr><td colspan="6" class="hint">لا توجد أسماء بعد.</td></tr>`}</tbody></table></div>`;
   B.querySelector("#rwform").onsubmit=async e=>{e.preventDefault();const lines=B.querySelector("#rw-bulk").value.split(/\n+/).map(s=>s.trim()).filter(Boolean);if(!lines.length){toast("اكتب اسماً واحداً على الأقل");return}
     const type=B.querySelector("#rw-type").value;let o=list.length;
     try{for(const ln of lines){const [name,phone]=ln.split(/[،,\t]/).map(s=>(s||"").trim());if(!name)continue;await db.collection("routine").doc().set({kind:"worker",ownerId:owner,name,phone:phone||"",type,order:++o,createdAt:Date.now()})}toast("أُضيفت الأسماء");render()}catch(err){toast("تعذر الإضافة")}};
-  B.querySelectorAll("tr[data-wid]").forEach(tr=>{const id=tr.dataset.wid;wireDel(tr,"rw:"+id,()=>db.doc("routine/"+id).delete())});
+  B.querySelectorAll("tr[data-wid]").forEach(tr=>{const id=tr.dataset.wid;wireDel(tr,"rw:"+id,()=>db.doc("routine/"+id).delete());
+    const ws=tr.querySelector("[data-wt]");if(ws)ws.onchange=async()=>{try{await db.doc("routine/"+id).update({type:ws.value,updatedAt:Date.now()});toast("حُفظ النوع")}catch(e){toast("تعذر الحفظ")}};
+    const wp=tr.querySelector("[data-wp]");if(wp)wp.onchange=async()=>{const v=wp.value.trim();if(v&&!waNum(v)){toast("رقم الجوال غير صحيح");return}try{await db.doc("routine/"+id).update({phone:v,updatedAt:Date.now()});toast("حُفظ الجوال")}catch(e){toast("تعذر الحفظ")}}});
 }
 /* الإصدار 12: جولة متابعة المبنى من الخارج — تقييم نظافة بوابات المنار 1 (يُنشأ مرة واحدة لمشرف العمال عاصف) */
 /* الإصدار 21: جولة الترشيد — فحص بنود لكل موقع (1 = تم 100%، 0 = غير مكتمل) */
