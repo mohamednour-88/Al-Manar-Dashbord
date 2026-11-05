@@ -2166,7 +2166,7 @@ const TAB_DEFS=[["tasks","المهام"],["events","طلبات المناسبا�
 const ACC_TXT={"":"حسب المسمى",staff:"موظف",supervisor:"مشرف",manager:"مدير"};
 function defaultTabs(p){const t=defaultTabs0(p);if(p&&state.buffets.some(b=>b.keeperId===p.id)&&!t.includes("buffets"))t.push("buffets");if(p&&state.routine.some(x=>x.ownerId===p.id&&x.kind!=="site")&&!t.includes("routine"))t.push("routine");return t}
 function defaultTabs0(p){
-  if(!p)return[];
+  if(!p)return[];if(/بوفيه/.test(p.role||"")&&state.buffets.some(b=>b.keeperId===p.id))return["buffets"];if(/(أمين|أمينة|مسؤول|مسؤولة) (ال)?مستودع/.test(p.role||"")&&state.warehouses.some(w=>w.keeperId===p.id))return["stores"];
   if(true){const r=roleOf(p.roleId);const acc=accessOf(p);
     const buyer=!!(r&&r.purchasing),tr=!!(r&&r.transport),keeper=state.warehouses.some(w=>w.keeperId===p.id),vs=state.vehicles.some(v=>(v.supervisorIds||[]).includes(p.id));
     const t=[];if(acc!=="staff"||state.items.some(i=>i.personId===p.id))t.push("tasks");
@@ -2723,10 +2723,16 @@ function bfOf(id){return state.buffets.find(b=>b.id===id)}
 function bfItems(id){return state.stockItems.filter(i=>i.warehouseId===id).sort((a,b)=>(a.name||"").localeCompare(b.name||""))}
 /* الإصدار 25: الاحتياج الشهري + الحد الأدنى التلقائي (احتياج أيام عمل محددة) + دعوة مسؤول البوفيه */
 const BF_WD=22;
-function bfDays(id){const b=bfOf(id);return Number(b&&b.minDays)||5}
+function bfDays(id){const b=bfOf(id);return Math.max(5,Number(b&&b.minDays)||5)}
 function bfAutoMin(i){const mo=Number(i.monthly)||0;return mo>0?Math.max(1,Math.ceil(mo*bfDays(i.warehouseId)/BF_WD)):null}
 function bfMinOf(i){return i.min!=null&&i.min!==""&&Number(i.min)>0?Number(i.min):bfAutoMin(i)}
-function bfLow(i){const m=bfMinOf(i);return m!=null&&m>0&&(Number(i.qty)||0)<=m}
+function bfLow(i){if(i.pending)return false;const m=bfMinOf(i);return m!=null&&m>0&&(Number(i.qty)||0)<=m}
+/* الإصدار 31: فترة الإعداد ثم قفل التعديل (بعدها: المخزون فقط، والصنف الجديد وتعديل الاستهلاك الشهري بالاعتماد) */
+const BF_LOCK="2026-11-15";
+function bfLockFrom(b){return (b&&b.lockFrom)||BF_LOCK}
+function bfLocked(b){return state.role!=="admin"&&todayStr()>=bfLockFrom(b)}
+function bfKeeperTitle(b){return /بنات|الصغيرة/.test((b&&b.name)||"")?"عاملة بوفيه":"عامل بوفيه"}
+function bfNotify(title,body){try{if("Notification" in window&&Notification.permission==="granted"){const o={body,dir:"rtl",lang:"ar",tag:"manar-bf",data:location.origin+location.pathname+"#buffets"};if(swReg&&swReg.showNotification)swReg.showNotification(title,o);else new Notification(title,o)}}catch(e){}}
 function bfDaysTxt(d){return d===3?"3 أيام عمل":d===5?"أسبوع (5 أيام عمل)":d===10?"أسبوعين (10 أيام عمل)":num(d)+" أيام عمل"}
 function bfInviteMsg(b,name,link){const d=bfDays(b.id);return ["السلام عليكم ورحمة الله وبركاته",`أ. ${name||""}`,"",
   `تمت إضافتكم مسؤولاً عن «${b.name}» في منصة متابعات المنار، وهذا رابط تفعيل حسابكم:`,link,"",
@@ -2739,7 +2745,7 @@ function bfInviteMsg(b,name,link){const d=bfDays(b.id);return ["السلام ع�
 async function bfInvite(b){const kp=person(b.keeperId);let pid=kp&&kp.id,name=(kp&&kp.name)||b.keeperName||"",phone=b.keeperPhone||(kp&&kp.phone)||"";
   if(!name){toast("اكتب اسم مسؤول البوفيه ورقمه ثم احفظ");return}
   try{if(!pid){const order=state.people.reduce((m,x)=>Math.max(m,x.order||0),0)+1;
-      const ref=await db.collection("people").add({name,phone,role:"مسؤول بوفيه",groups:["g-facilities"],tabs:["buffets"],order,createdAt:Date.now()});pid=ref.id;
+      const ref=await db.collection("people").add({name,phone,role:bfKeeperTitle(b),groups:["g-facilities"],tabs:["buffets"],order,createdAt:Date.now()});pid=ref.id;
       await db.doc("warehouses/"+b.id).update({keeperId:pid,keeperName:name,keeperPhone:phone,updatedAt:Date.now()})}
     const token=(crypto.randomUUID?crypto.randomUUID():rid()+rid()).replace(/-/g,"");
     const {error}=await sb.from("invites").insert({token,person_id:pid});if(error)throw error;
@@ -2772,7 +2778,7 @@ async function bfSaveQty(i,b,patch){
   if("qty" in patch){p.countedAt=Date.now();p.countedBy=myName()}
   try{await db.doc("stock/"+i.id).update(p)}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ");return}
   let msg="حُفظ";
-  if(bfLow(next)){try{const r=await bfAutoReorder(next,b);if(r)msg=`«${i.name}» وصل للحد الأدنى — أُرسل طلب شراء تلقائي (${num(r.qty)} ${i.unit||""}) إلى ${buyerNames()}`}catch(e){msg="وصل للحد الأدنى، لكن تعذر إنشاء طلب الشراء تلقائياً — أنشئه من «المشتريات»"}}
+  if(bfLow(next)){try{const r=await bfAutoReorder(next,b);if(r)bfNotify("طلب شراء تلقائي: "+i.name,`وصل «${i.name}» في ${b.name} للحد الأدنى، وأُرسل طلب شراء ${r.qty} ${i.unit||""} للمشتريات.`);if(r)msg=`«${i.name}» وصل للحد الأدنى — أُرسل طلب شراء تلقائي (${num(r.qty)} ${i.unit||""}) إلى ${buyerNames()}`}catch(e){msg="وصل للحد الأدنى، لكن تعذر إنشاء طلب الشراء تلقائياً — أنشئه من «المشتريات»"}}
   toast(msg);render()}
 function renderBuffets(){
   const v=$("bfView");if(state.view!=="buffets"){v.innerHTML="";return}
@@ -2786,7 +2792,7 @@ function renderBuffets(){
    <div id="bfBody"></div>`;
   v.querySelectorAll("[data-bf]").forEach(x=>x.onclick=()=>{state.bfSel=x.dataset.bf;state.bfQ="";render()});
   if(!b)return;
-  const edit=bfCanEdit(b.id);const all=bfItems(b.id);const q=(state.bfQ||"").trim();
+  const edit=bfCanEdit(b.id);const lk=bfLocked(b);const em=edit&&!lk;const admin2=state.role==="admin";const all=bfItems(b.id);const pend=all.filter(i=>i.pending||i.pendingMonthly!=null);const q=(state.bfQ||"").trim();
   const list=q?all.filter(i=>(i.name||"").includes(q)):all;
   const low=all.filter(bfLow),ordered=low.filter(bfReorderOpen);
   const last=all.reduce((m,i)=>Math.max(m,i.countedAt||0),0);
@@ -2796,18 +2802,21 @@ function renderBuffets(){
       <span class="pill ${low.length?"p-late":"p-done"}">${low.length?`تحت الحد الأدنى: ${num(low.length)}`:"المخزون سليم"}</span>${ordered.length?`<span class="pill p-req">طلبات شراء قائمة: ${num(ordered.length)}</span>`:""}</div>
      <div class="meta"><span>الأصناف: ${num(all.length)}</span><span>المسؤول: ${esc(b.keeperName||(kp&&kp.name)||"— لم يُحدد —")}${b.keeperPhone&&waNum(b.keeperPhone)?` · <a class="linkbtn" target="_blank" rel="noopener" href="https://wa.me/${waNum(b.keeperPhone)}">واتساب <span class="ltr">${esc(b.keeperPhone)}</span></a>`:""}</span><span>آخر جرد: ${last?fmtTs(last):"—"}</span></div>
      ${admin?`<div class="fgrid" style="margin-top:8px"><label>اسم مسؤول البوفيه<input id="bfKName" value="${esc(b.keeperName||(kp&&kp.name)||"")}" placeholder="مثال: محمد جمال"></label><label>رقم الواتساب<input id="bfKPhone" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx" value="${esc(b.keeperPhone||(kp&&kp.phone)||"")}"></label><label>ربطه بحساب موظف (اختياري)<select id="bfKeeper"><option value="">— بدون حساب —</option>${state.people.map(p=>`<option value="${esc(p.id)}" ${b.keeperId===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></label><div style="align-self:end"><button class="btn sm" type="button" id="bfKSave">حفظ المسؤول</button></div></div><div class="hint">اكتب الاسم ورقم الواتساب يدوياً. الربط بحساب موظف يُظهر له تبويب «البوفيهات» ليحدّث الجرد بنفسه.</div>`:""}
-     ${admin?`<div class="acts" style="margin-top:8px"><button class="btn wa sm" type="button" id="bfInvGo">${kp&&kp._linked?"دعوة جديدة للمسؤول":"دعوة المسؤول على الواتساب"}</button>${kp&&kp._linked?'<span class="pill p-done">الحساب مفعّل</span>':""}<label class="st-wrap">الحد الأدنى يكفي<select id="bfDays">${[3,5,10].map(d=>`<option value="${d}" ${bfDays(b.id)===d?"selected":""}>${bfDaysTxt(d)}</option>`).join("")}</select></label></div>${bfInvHTML(b)}`:""}</section>
+     ${admin?`<div class="acts" style="margin-top:8px"><button class="btn wa sm" type="button" id="bfInvGo">${kp&&kp._linked?"دعوة جديدة للمسؤول":"دعوة المسؤول على الواتساب"}</button>${kp&&kp._linked?'<span class="pill p-done">الحساب مفعّل</span>':""}<label class="st-wrap">بداية قفل التعديل<input type="date" id="bfLock" value="${esc(bfLockFrom(b))}" style="width:auto"></label><label class="st-wrap">الحد الأدنى يكفي<select id="bfDays">${[5,10].map(d=>`<option value="${d}" ${bfDays(b.id)===d?"selected":""}>${bfDaysTxt(d)}</option>`).join("")}</select></label></div>${bfInvHTML(b)}`:""}</section>
    ${low.length?`<section class="dcard bflow"><h3>وصلت للحد الأدنى</h3><div class="rlist">${low.map(i=>{const op=bfReorderOpen(i);const wa=op?bfBuyerWa(i,b):"";return `<div class="rtrow no"><span><b>${esc(i.name)}</b> <span class="hint">الرصيد ${num(Number(i.qty)||0)} ${esc(i.unit||"")} · الحد ${num(bfMinOf(i))}</span></span>
        <span class="rtbtns">${op?`<span class="pill p-req">طُلب ${num(bfOrderQty(i))} ${esc(i.unit||"")} تلقائياً</span>${wa?`<a class="linkbtn" target="_blank" rel="noopener" href="${wa}">تنبيه المشتريات</a>`:""}`:edit?`<button type="button" class="btn sm" data-reo="${esc(i.id)}">إعادة الطلب الآن</button>`:""}</span></div>`}).join("")}</div></section>`:""}
    <section class="dcard"><div class="row1" style="flex-wrap:wrap;gap:8px"><h3 style="flex:1">الجرد</h3><input type="search" id="bfq" placeholder="ابحث عن صنف" aria-label="بحث في أصناف البوفيه" value="${esc(state.bfQ||"")}" style="max-width:220px"></div>
+     ${lk&&edit?`<div class="note">بدأت فترة التشغيل من ${fmtDate(bfLockFrom(b))}: تقدر تحدّث المخزون فقط. إضافة صنف جديد أو تعديل الاستهلاك الشهري يُرسل لمدير المنصة للاعتماد، والحد الأدنى وكمية الطلب ثابتة.</div>`:edit&&!admin2?`<div class="note">فترة الإعداد حتى ${fmtDate(bfLockFrom(b))}: أدخل الأصناف والمخزون والاستهلاك الشهري، وبعدها يقتصر التعديل على المخزون.</div>`:""}
+     ${admin2&&pend.length?`<div class="note">بانتظار اعتمادك: ${num(pend.length)} (أصناف جديدة أو تعديل استهلاك شهري)</div>`:""}
      <div class="hint" style="margin:4px 0 8px">${edit?`عدّل الرصيد بالأزرار أو اكتب العدد بعد الجرد. «الاحتياج الشهري»: الكمية التي يستهلكها البوفيه في الشهر. «الحد الأدنى» يُحسب تلقائياً = احتياج ${bfDaysTxt(bfDays(b.id))}، ويمكن كتابته يدوياً، وإذا وصل له الرصيد يُطلب تلقائياً. «كمية الطلب»: إن تُركت فارغة تُحسب احتياج شهر.`:"للاطلاع فقط."}</div>
      <div class="bflist">${list.map(i=>{const lw=bfLow(i);return `<div class="bfrow ${lw?"low":""}" data-bi="${esc(i.id)}">
         <div class="bfname"><b>${esc(i.name)}</b><span class="hint">${esc(i.unit||"")}${i.countedAt?` · جُرد ${fmtTs(i.countedAt)}`:""}</span></div>
         <div class="bfqty">${edit?`<button type="button" class="bfstep" data-d="-1" aria-label="إنقاص ${esc(i.name)}">−</button><input type="number" min="0" inputmode="numeric" data-q value="${esc(Number(i.qty)||0)}" aria-label="رصيد ${esc(i.name)}"><button type="button" class="bfstep" data-d="1" aria-label="زيادة ${esc(i.name)}">+</button>`:`<b>${num(Number(i.qty)||0)}</b>`}</div>
-        <label class="bfmin">الاحتياج الشهري${edit?`<input type="number" min="0" inputmode="numeric" data-mo value="${esc(i.monthly??"")}">`:`<b>${i.monthly?num(Number(i.monthly)):"—"}</b>`}</label>
-        <label class="bfmin">الحد الأدنى${edit?`<input type="number" min="0" inputmode="numeric" data-min value="${esc(i.min??"")}" placeholder="${bfAutoMin(i)!=null?"تلقائي "+bfAutoMin(i):""}">`:`<b>${bfMinOf(i)!=null?num(bfMinOf(i)):"—"}</b>`}</label>
-        <label class="bfmin">كمية الطلب${edit?`<input type="number" min="0" inputmode="numeric" data-rq value="${esc(i.reorderQty??"")}" placeholder="تلقائي">`:`<b>${i.reorderQty?num(Number(i.reorderQty)):"—"}</b>`}</label>
-        ${edit?`<span class="bfdel">${state.confirm==="bfi:"+i.id?`<button class="btn danger sm" type="button" data-dy>حذف</button><button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del aria-label="حذف ${esc(i.name)}">حذف</button>`}</span>`:""}
+        <label class="bfmin">الاحتياج الشهري${edit?`<input type="number" min="0" inputmode="numeric" data-mo value="${esc(i.monthly??"")}">`:`<b>${i.monthly?num(Number(i.monthly)):"—"}</b>`}${i.pendingMonthly!=null?`<span class="pill p-req">مطلوب ${num(i.pendingMonthly)} بانتظار الاعتماد</span>`:""}</label>
+        <label class="bfmin">الحد الأدنى${em?`<input type="number" min="0" inputmode="numeric" data-min value="${esc(i.min??"")}" placeholder="${bfAutoMin(i)!=null?"تلقائي "+bfAutoMin(i):""}">`:`<b>${bfMinOf(i)!=null?num(bfMinOf(i)):"—"}</b>`}</label>
+        <label class="bfmin">كمية الطلب${em?`<input type="number" min="0" inputmode="numeric" data-rq value="${esc(i.reorderQty??"")}" placeholder="تلقائي">`:`<b>${i.reorderQty?num(Number(i.reorderQty)):"—"}</b>`}</label>
+        ${i.pending?`<span class="bfdel"><span class="pill p-req">صنف جديد بانتظار الاعتماد</span>${admin2?`<button class="btn sm" type="button" data-bfok>اعتماد</button><button class="linkbtn mute" type="button" data-bfno>رفض</button>`:""}</span>`:i.pendingMonthly!=null&&admin2?`<span class="bfdel"><button class="btn sm" type="button" data-bfmok>اعتماد الاستهلاك ${num(i.pendingMonthly)}</button><button class="linkbtn mute" type="button" data-bfmno>رفض</button></span>`:""}
+        ${em&&!i.pending?`<span class="bfdel">${state.confirm==="bfi:"+i.id?`<button class="btn danger sm" type="button" data-dy>حذف</button><button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del aria-label="حذف ${esc(i.name)}">حذف</button>`}</span>`:""}
        </div>`}).join("")||`<div class="empty"><strong>${q?"لا يوجد صنف بهذا الاسم":"لا توجد أصناف في هذا البوفيه بعد"}</strong>${edit&&!q?"أضف الأصناف من الأسفل، أو أضف الأصناف المعتادة ثم اكتب رصيد كل صنف.":""}</div>`}</div></section>
    ${edit?`<details class="newreq" ${state.bfAddOpen?"open":""}><summary>+ إضافة أصناف</summary>
      <form id="bfadd" class="fgrid" style="margin-top:10px"><label class="full">كل صنف في سطر: الاسم، الكمية الموجودة الآن، الوحدة، الاحتياج الشهري (والحد الأدنى اختياري)<textarea id="bf-text" rows="5" placeholder="قهوة عربية، 6، كيس، 12&#10;شاي أحمر، 4، علبة، 8"></textarea></label><div class="full hint">الحد الأدنى يُحسب تلقائياً من الاحتياج الشهري (احتياج ${bfDaysTxt(bfDays(b.id))}) إذا لم تكتبه.</div>
@@ -2822,22 +2831,29 @@ function renderBuffets(){
     const qi=row.querySelector("[data-q]");
     row.querySelectorAll(".bfstep").forEach(st=>st.onclick=()=>{const n=Math.max(0,(Number(i.qty)||0)+Number(st.dataset.d));qi.value=n;bfSaveQty(i,b,{qty:n})});
     qi.onchange=()=>{const n=Math.max(0,Number(qi.value)||0);if(n!==(Number(i.qty)||0))bfSaveQty(i,b,{qty:n})};
-    const mo=row.querySelector("[data-mo]");mo.onchange=()=>bfSaveQty(i,b,{monthly:mo.value===""?null:Math.max(0,Number(mo.value)||0)});
-    const mi=row.querySelector("[data-min]");mi.onchange=()=>bfSaveQty(i,b,{min:mi.value===""?null:Math.max(0,Number(mi.value)||0)});
-    const ri=row.querySelector("[data-rq]");ri.onchange=()=>bfSaveQty(i,b,{reorderQty:ri.value===""?null:Math.max(0,Number(ri.value)||0)});
+    const mo=row.querySelector("[data-mo]");if(mo)mo.onchange=async()=>{const v=mo.value===""?null:Math.max(0,Number(mo.value)||0);
+      if(lk&&!i.pending){if(v===(i.monthly??null))return;try{await db.doc("stock/"+i.id).update({pendingMonthly:v==null?0:v,pendingBy:myName(),pendingAt:Date.now(),updatedAt:Date.now()});toast("أُرسل تعديل الاستهلاك الشهري للاعتماد")}catch(e){toast("تعذر الإرسال")}render();return}
+      bfSaveQty(i,b,{monthly:v})};
+    const mi=row.querySelector("[data-min]");if(mi)mi.onchange=()=>bfSaveQty(i,b,{min:mi.value===""?null:Math.max(0,Number(mi.value)||0)});
+    const ri=row.querySelector("[data-rq]");if(ri)ri.onchange=()=>bfSaveQty(i,b,{reorderQty:ri.value===""?null:Math.max(0,Number(ri.value)||0)});
+    const ok=row.querySelector("[data-bfok]");if(ok)ok.onclick=async()=>{try{await db.doc("stock/"+i.id).update({pending:false,approvedBy:myName(),approvedAt:Date.now(),updatedAt:Date.now()});toast("اعتُمد الصنف")}catch(e){toast("تعذر الاعتماد")}render()};
+    const no=row.querySelector("[data-bfno]");if(no)no.onclick=async()=>{if(!confirm("رفض الصنف وحذفه؟"))return;try{await db.doc("stock/"+i.id).delete();toast("رُفض الصنف")}catch(e){toast("تعذر الحذف")}render()};
+    const mok=row.querySelector("[data-bfmok]");if(mok)mok.onclick=async()=>{try{await db.doc("stock/"+i.id).update({monthly:i.pendingMonthly||null,pendingMonthly:null,updatedAt:Date.now()});toast("اعتُمد الاستهلاك الشهري")}catch(e){toast("تعذر الاعتماد")}render()};
+    const mno=row.querySelector("[data-bfmno]");if(mno)mno.onclick=async()=>{try{await db.doc("stock/"+i.id).update({pendingMonthly:null,updatedAt:Date.now()});toast("رُفض التعديل")}catch(e){toast("تعذر الحفظ")}render()};
     wireDel(row,"bfi:"+i.id,()=>db.doc("stock/"+i.id).delete())});
   {const g=Bd.querySelector("#bfInvGo");if(g)g.onclick=()=>{g.disabled=true;bfInvite(b)};
+   const lki=Bd.querySelector("#bfLock");if(lki)lki.onchange=async()=>{try{await db.doc("warehouses/"+b.id).update({lockFrom:lki.value||BF_LOCK,updatedAt:Date.now()});toast("قفل التعديل يبدأ "+fmtDate(lki.value||BF_LOCK))}catch(e){toast("تعذر الحفظ")}};
    const ds=Bd.querySelector("#bfDays");if(ds)ds.onchange=async()=>{try{await db.doc("warehouses/"+b.id).update({minDays:Number(ds.value),updatedAt:Date.now()});toast("الحد الأدنى الآن يكفي "+bfDaysTxt(Number(ds.value)))}catch(e){toast("تعذر الحفظ")}};
    const cp=Bd.querySelector("#bfInvCp");if(cp)cp.onclick=()=>copy(Bd.querySelector("#bfInvText").value,"نُسخت رسالة الدعوة");
    const ix=Bd.querySelector("#bfInvX");if(ix)ix.onclick=()=>{state.bfInv=null;render()}}
   const det=Bd.querySelector("details.newreq");if(det)det.ontoggle=()=>{state.bfAddOpen=det.open};
   const add=async rows=>{const have=new Set(all.map(i=>i.name));let n=0;
     for(const r of rows){if(!r.name||have.has(r.name))continue;have.add(r.name);
-      await db.collection("stock").doc().set({warehouseId:b.id,name:r.name,qty:r.qty||0,unit:r.unit||"",monthly:r.mo>0?r.mo:null,min:r.min>0?r.min:null,reorderQty:r.rq>0?r.rq:null,category:"ضيافة",condition:"سليم",out:0,createdAt:Date.now(),updatedAt:Date.now(),countedAt:r.qty!=null?Date.now():null,countedBy:myName()});n++}
+      await db.collection("stock").doc().set({...(lk?{pending:true,pendingBy:myName(),pendingAt:Date.now()}:{}),warehouseId:b.id,name:r.name,qty:r.qty||0,unit:r.unit||"",monthly:r.mo>0?r.mo:null,min:r.min>0?r.min:null,reorderQty:r.rq>0?r.rq:null,category:"ضيافة",condition:"سليم",out:0,createdAt:Date.now(),updatedAt:Date.now(),countedAt:r.qty!=null?Date.now():null,countedBy:myName()});n++}
     return n};
   const f=Bd.querySelector("#bfadd");if(f){f.onsubmit=async e=>{e.preventDefault();const rows=f.querySelector("#bf-text").value.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(ln=>{const [name,qty,unit,mo,min]=ln.split(/[،,\t]/).map(x=>(x||"").trim());return{name,qty:Number(qty)||0,unit,mo:Number(mo)||0,min:Number(min)||0,rq:0}});
       if(!rows.length){toast("اكتب صنفاً واحداً على الأقل");return}
-      try{const n=await add(rows);toast(n?`أُضيف ${num(n)} صنف`:"الأصناف موجودة مسبقاً");state.bfAddOpen=false;render()}catch(err){toast("ليست لديك صلاحية أو تعذر الإضافة")}};
+      try{const n=await add(rows);toast(n?(lk?`أُرسل ${num(n)} صنف جديد للاعتماد`:`أُضيف ${num(n)} صنف`):"الأصناف موجودة مسبقاً");state.bfAddOpen=false;render()}catch(err){toast("ليست لديك صلاحية أو تعذر الإضافة")}};
     f.querySelector("[data-common]").onclick=async()=>{try{const n=await add(BF_COMMON.map(([name,unit])=>({name,unit,qty:0})));toast(n?`أُضيف ${num(n)} صنف — اكتب لكل صنف الكمية والاحتياج الشهري`:"الأصناف المعتادة موجودة مسبقاً");state.bfAddOpen=false;render()}catch(err){toast("ليست لديك صلاحية أو تعذر الإضافة")}}}
 }
 /* الإصدار 22: ألوان الأقسام + متابعة الطلبات حسب القسم في لوحة البيانات */
