@@ -2177,7 +2177,9 @@ function defaultTabs0(p){
   const buyer=!!(r&&r.purchasing),tr=!!(r&&r.transport),keeper=state.warehouses.some(w=>w.keeperId===p.id),vs=state.vehicles.some(v=>(v.supervisorIds||[]).includes(p.id));
   if(buyer||tr||keeper){const t=["tasks"];if(buyer)t.push("purchases");if(tr||vs)t.push("transport");if(keeper)t.push("stores");return t}
   const t=["tasks","requests","events"];if(vs)t.push("transport");if(acc!=="staff")t.push("safety","feed");return t}
-function tabsFor(p){if(!p)return[];if(Array.isArray(p.tabs)&&!(p.selfReg&&p.tabs.join()==="events"))return p.tabs;const r=roleOf(p.roleId);if(r&&Array.isArray(r.tabs))return r.tabs;return defaultTabs(p)}
+/* الإصدار 30: من له أعمال دورية أو بوفيه يظهر له تبويبه حتى لو حُددت أقسامه يدوياً */
+function tabsOwn(p,t){t=t.slice();if(state.routine.some(x=>x.ownerId===p.id&&x.kind!=="site")&&!t.includes("routine"))t.push("routine");if(state.buffets.some(b=>b.keeperId===p.id)&&!t.includes("buffets"))t.push("buffets");return t}
+function tabsFor(p){if(!p)return[];if(Array.isArray(p.tabs)&&!(p.selfReg&&p.tabs.join()==="events"))return tabsOwn(p,p.tabs);const r=roleOf(p.roleId);if(r&&Array.isArray(r.tabs))return r.tabs;return defaultTabs(p)}
 function myTabs(){if(state.role==="admin")return TAB_DEFS.map(x=>x[0]).concat("settings");if(myScope())return ["send"].concat(TAB_DEFS.map(x=>x[0]));return ["send"].concat(tabsFor(person(state.me)).filter(x=>x!=="send"))}
 function canTab(k){return myTabs().includes(k)}
 
