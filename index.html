@@ -1,4 +1,4 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset=utf8><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset=utf8><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>/* الإصدار 32: الوضع الفاتح/الداكن */(function(){var K="manar-theme",L={auto:"تلقائي",light:"فاتح",dark:"داكن"},I={auto:"◐",light:"☀︎",dark:"☾"};function g(){try{return localStorage.getItem(K)||"auto"}catch(e){return "auto"}}function a(t){var d=document.documentElement;if(t==="light"||t==="dark")d.dataset.theme=t;else delete d.dataset.theme;var b=document.getElementById("themeBtn");if(b){b.textContent=I[t]+" "+L[t];b.title="المظهر: "+L[t]+" (اضغط للتغيير)"}}a(g());document.addEventListener("DOMContentLoaded",function(){a(g());var b=document.getElementById("themeBtn");if(b)b.onclick=function(){var o=["auto","light","dark"],t=o[(o.indexOf(g())+1)%3];try{localStorage.setItem(K,t)}catch(e){}a(t);if(typeof toast==="function")toast("المظهر: "+L[t])}})})();</script><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <title>متابعات المنار اليومية</title>
 <meta name="theme-color" content="#1C5B4A">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -334,7 +334,7 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
 
 <div class="auth" id="auth" hidden>
   <form class="authcard" id="authform" novalidate>
-    <img data-logo hidden class="alogo" alt="شركة الأندلس التعليمية"><div class="brand"><h1>متابعات المنار اليومية</h1><p class="sub">الدعم اللوجستي · فرع المنار</p></div>
+    <img data-logo hidden class="alogo" alt="شركة الأندلس التعليمية"><div class="brand"><h1>متابعات المنار اليومية</h1><p class="sub">الدعم اللوجستي ـ فرع المنار</p></div>
     <div id="a-tabs" role="group" aria-label="نوع الدخول"><button type="button" data-m="in" aria-pressed="true">تسجيل الدخول</button><button type="button" data-m="up" aria-pressed="false">حساب جديد</button></div>
     <p id="a-title">تسجيل الدخول</p>
     <p class="welcome" id="a-welcome" hidden></p>
@@ -353,9 +353,9 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
   <header>
     <div class="hbrand"><img data-logo hidden class="hlogo" alt="شركة الأندلس التعليمية"><div>
       <h1>متابعات المنار اليومية</h1>
-      <p class="sub" id="hsub">الدعم اللوجستي · فرع المنار — اختر المسؤول، أضف المهمة، وأرسل له الإشعار بضغطة</p>
+      <p class="sub" id="hsub">الدعم اللوجستي ـ فرع المنار</p>
     </div></div>
-    <div class="hright"><div class="today" id="today"></div><div class="me"><span class="ltr" id="me-email"></span><button class="instbtn" type="button" data-install hidden>📲 تثبيت التطبيق</button><button class="linkbtn" type="button" id="logout">تسجيل الخروج</button></div></div>
+    <div class="hright"><div class="today" id="today"></div><div class="me"><span class="ltr" id="me-email"></span><button class="instbtn" type="button" id="themeBtn" aria-label="تغيير المظهر">◐ تلقائي</button><button class="instbtn" type="button" data-install hidden>📲 تثبيت التطبيق</button><button class="linkbtn" type="button" id="logout">تسجيل الخروج</button></div></div>
   </header>
 
   <div class="insthelp" id="installHelp" hidden>لتثبيت «متابعات المنار» على الآيفون: افتح الرابط في <b>Safari</b> ← اضغط زر <b>المشاركة</b> (المربع والسهم) ← اختر <b>«إضافة إلى الشاشة الرئيسية»</b> ← <b>إضافة</b>. بعدها يفتح من أيقونته مثل أي تطبيق.</div>
@@ -1184,7 +1184,7 @@ function renderTabs(){
   const allow=myTabs();const tmp=allow.includes("send")&&SEND_VIEWS.includes(state.view)&&!allow.includes(state.view)&&(state.view!=="requests"||canReq())?state.view:"";
   for(let i=tabs.length-1;i>=0;i--)if((!allow.includes(tabs[i][0])&&tabs[i][0]!==tmp)||tabs[i][0]==="requests")tabs.splice(i,1);
   if(!state.v20init&&state.people.length){state.v20init=true;if(myScope()&&!(location.hash||"").slice(1))state.view="dash"}
-  const sc=myScope();if(sc)$("hsub").textContent="اطلاع على بيانات "+scopeName(sc)+" — الطلبات والمشتريات والنقل والمستودعات ولوحة البيانات";else if(state.role!=="admin"&&state.people.length&&allow.length===1)$("hsub").textContent="أرسل طلبك وتابع وين وصل، واكتب ملاحظاتك عليه";
+  const sc=myScope();if(sc)window.__hsub="اطلاع على بيانات "+scopeName(sc)+" — الطلبات والمشتريات والنقل والمستودعات ولوحة البيانات";else if(state.role!=="admin"&&state.people.length&&allow.length===1)window.__hsub="أرسل طلبك وتابع وين وصل، واكتب ملاحظاتك عليه";
   if((state.people.length||state.role==="admin")&&!tabs.some(x=>x[0]===state.view))state.view=tabs.length?tabs[0][0]:"tasks";
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
@@ -1494,7 +1494,7 @@ function ridersView2(B){
 
 /* ================= الإصدار 10: طلبات المناسبات والتسجيل الذاتي ================= */
 const EV_SECS=["قسم البنين","المنار 1 — قسم البنات","المنار 2 — قسم البنات","العالمي","الإدارة"];
-const EV_ST={new:"جديد",routed:"أُرسل للمستودعات",ready:"تم التجهيز",done:"انتهت المناسبة",cancelled:"ملغي",rejected:"معتذر عنه"};
+const EV_ST={new:"جديد",routed:"أُرسل للمستودعات",ready:"تم التجهيز",postponed:"مؤجلة",done:"انتهت المناسبة",cancelled:"ملغي",rejected:"معتذر عنه"};
 const EV_QUICK=["طاولات دائرية","طاولات مستطيلة","كراسي","مفارش","ديكورات مدخل","فازات","صحون تقديم","كاسات زجاجية"];
 const EV_GUESS=[["wh-tech",/شاش|بروجكتر|عرض|مايك|ميكروفون|سماع|صوت|لابتوب|كاميرا/],["wh-maint",/تمديد|كهرب|سلم|عدة|إضاءة|اضاءة|كشاف/],["wh-furn",/طاول|كرسي|كراسي|استيج|ستيج|منبر|بوديوم|سجاد|موكيت|كنب/],["wh-activity",/مفرش|مفارش|فاز|ديكور|زين|بالون|ستاند|علم|أعلام|ورد/],["wh-comms",/رول|بنر|لوحة|درع|شهاد/],["wh-clean",/ماء|موية|مناديل|أكواب|اكواب|صحن|صحون|كاس|زجاج|ضياف|قهوة/]];
 const EV_LEAD="رائد نشاط",EV_ADM="إداري";
@@ -1515,24 +1515,24 @@ function nextDay(d){const x=new Date(d+"T12:00:00");x.setDate(x.getDate()+1);ret
 function evMsgAdmin(e){return ["السلام عليكم ورحمة الله وبركاته","م. محمد نور عمر","",`رفعت طلب مناسبة على المنصة: «${e.title}»`,`• القسم: ${e.section||""}${e.place?"، "+e.place:""}`,`• الموعد: ${evWhen(e)}${e.readyBy?" — التجهيز قبل "+e.readyBy:""}`,...evLines(e),"",`*نرجو اعتماد الطلب وتوزيعه على المستودعات: ${here()}#events*`,"",e.requesterName||myName()].join("\n")}
 function evMsgKeeper(e,w,rows){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${w.keeperName||"أمين "+w.name}`,"",`لديكم طلب إعارة لمناسبة «${e.title}» من ${w.name}:`,`• القسم: ${e.section||""}${e.place?"، "+e.place:""}`,`• الموعد: ${evWhen(e)}`,...rows.map(r=>`• ${r.name} × ${r.qty}`),`• المستلم والمنسق: ${e.coordName||""}`,"",`*نرجو تجهيز الأصناف وتسليمها قبل الموعد وتحديث الطلب في المنصة: ${here()}#stores*`,"",state.role==="admin"?SIGN:myName()].join("\n")}
 function evMsgCoord(e){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${e.coordName||""}`,"",`أُسند إليكم تنسيق وتجهيز مناسبة «${e.title}»:`,`• القسم: ${e.section||""}${e.place?"، "+e.place:""}`,`• الموعد: ${evWhen(e)}${e.readyBy?" — التجهيز قبل "+e.readyBy:""}`,`• صاحب الطلب: ${e.requesterName||""}${e.requesterPhone?" "+e.requesterPhone:""}`,...evLines(e),"","أُرسلت طلبات الإعارة للمستودعات باسمكم للاستلام.","",`*نرجو استلام الأصناف وتجهيز المكان قبل الموعد، وتحديث الحالة في المنصة: ${here()}#events*`,"",SIGN].join("\n")}
-function evMsgReq(e){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${e.requesterName||""}`,"",`طلبكم لمناسبة «${e.title}» ${e.status==="ready"?"تم تجهيزه":e.status==="rejected"?"نعتذر عن تنفيذه":"تم اعتماده وإرساله للمستودعات"}.`,`• الموعد: ${evWhen(e)}`,e.coordName?`• المنسق: ${e.coordName}${(person(e.coordId)||{}).phone?" "+person(e.coordId).phone:""}`:"",e.adminNote?`• ملاحظة: ${e.adminNote}`:"","",`*للمتابعة: ${here()}#events*`,"",state.role==="admin"?SIGN:myName()].filter(x=>x!=="").join("\n")}
+function evMsgReq(e){return ["السلام عليكم ورحمة الله وبركاته",`أ. ${e.requesterName||""}`,"",`طلبكم لمناسبة «${e.title}» ${e.status==="ready"?"تم تجهيزه":e.status==="rejected"?"نعتذر عن تنفيذه":e.status==="postponed"?"مؤجل لموعد يُحدد لاحقاً":e.status==="cancelled"?"أُلغي":"تم اعتماده وإرساله للمستودعات"}.`,`• الموعد: ${evWhen(e)}`,e.coordName?`• المنسق: ${e.coordName}${(person(e.coordId)||{}).phone?" "+person(e.coordId).phone:""}`:"",e.adminNote?`• ملاحظة: ${e.adminNote}`:"","",`*للمتابعة: ${here()}#events*`,"",state.role==="admin"?SIGN:myName()].filter(x=>x!=="").join("\n")}
 function joinLink(){return here()+"?join=1"}
 function joinMsg(){return ["السلام عليكم ورحمة الله وبركاته","الزملاء رواد النشاط والإداريين","","لرفع طلبات المناسبات (طاولات، كراسي، مفارش، استيج، شاشات…) سجّلوا حساباً في منصة الدعم اللوجستي - فرع المنار من هذا الرابط:",joinLink(),"","سجّل بجوالك وكلمة مرور، ثم اختر صفتك (رائد نشاط أو إداري) وقسمك.","","*نرجو رفع الطلب قبل المناسبة بثلاثة أيام عمل على الأقل.*","",SIGN].join("\n")}
 
 function renderEvents(){
-  if(state.role!=="admin"&&!canTab("tasks")&&!canTab("send"))$("hsub").textContent="ارفع طلبات مناسباتك وتابع تجهيزها";
+  if(state.role!=="admin"&&!canTab("tasks")&&!canTab("send"))window.__hsub="ارفع طلبات مناسباتك وتابع تجهيزها";
   const v=$("evView");if(state.view!=="events"){v.innerHTML="";return}
   const me=state.me||null,admin=state.role==="admin",route=evCanRoute();
   let list=state.events.slice();
   if(state.evScope==="mine")list=list.filter(e=>e.requesterId===me);else if(state.evScope==="coord")list=list.filter(e=>e.coordId===me);
   const st=state.evStatus;
-  if(st==="open")list=list.filter(evOpen);else if(st==="new")list=list.filter(e=>e.status==="new");else if(st==="done")list=list.filter(e=>!evOpen(e));
+  if(st==="open")list=list.filter(evOpen);else if(st==="new")list=list.filter(e=>e.status==="new");else if(st==="postponed")list=list.filter(e=>e.status==="postponed");else if(st==="done")list=list.filter(e=>!evOpen(e));
   list.sort((a,b)=>(evOpen(b)-evOpen(a))||(String(a.date).localeCompare(String(b.date))));
   const scopes=evSeeAll()?[["all","كل الطلبات"],["coord","المسندة إليّ"],["mine","طلباتي"]]:state.events.some(e=>e.coordId===me)?[["coord","المسندة إليّ"],["mine","طلباتي"]]:[["mine","طلباتي"]];
   if(!scopes.some(s=>s[0]===state.evScope))state.evScope=scopes[0][0];
   v.innerHTML=`<div class="phead"><div><h2>طلبات المناسبات</h2><div class="prole">${route?"طلبات الطاولات والكراسي والمفارش والاستيج والشاشات: اعتمدها، وحدد المنسق، ووزعها على المستودعات":"اطلب تجهيز مناسبتك (طاولات، كراسي، مفارش، استيج، شاشات…) وتابع حالة الطلب"}</div></div></div>
    <div class="filters">${scopes.map(([k,l])=>`<button type="button" class="chip" data-es="${k}" aria-pressed="${state.evScope===k}">${l}</button>`).join("")}</div>
-   <div class="filters">${[["open","المفتوحة"],["new","الجديدة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-est="${k}" aria-pressed="${st===k}">${l}</button>`).join("")}</div>
+   <div class="filters">${[["open","المفتوحة"],["new","الجديدة"],["postponed","المؤجلة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-est="${k}" aria-pressed="${st===k}">${l}</button>`).join("")}</div>
    ${admin?`<details class="newreq"><summary>رابط تسجيل رواد النشاط والإداريين</summary><div class="acts" style="margin-top:8px"><span class="addr ltr" style="overflow-wrap:anywhere">${esc(joinLink())}</span><a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(joinMsg())}">مشاركة عبر واتساب</a><button class="linkbtn" type="button" data-jcopy>نسخ الرابط</button></div><div class="hint">من يسجّل من الرابط يدخل على «طلبات المناسبات» فقط، ويظهر اسمه في الإعدادات وتقدر تعدّل صلاحيته.</div></details>`:""}
    ${me?evFormHTML():""}
    <div class="list" id="evList"></div>`;
@@ -1584,8 +1584,8 @@ function wireEvForm(v){const f=v.querySelector("#evform");if(!f)return;const d=s
 function evCard(e){
   const el=document.createElement("article");const open=evOpen(e);const me=state.me||null,admin=state.role==="admin",route=evCanRoute();
   const isReq=e.requesterId===me,isCoord=e.coordId===me;const loans=evLoans(e);
-  const late=open&&e.date&&e.date<todayStr();
-  el.className="item "+(late?"s-late":"")+(!open?" s-done":"");
+  const late=open&&e.status!=="postponed"&&e.date&&e.date<todayStr();
+  el.className="item "+(late?"s-late":"")+(!open?" s-done":"");const canPost=(admin||isCoord||isReq)&&["new","routed","ready","postponed"].includes(e.status);const lastCh=(e.dateLog||[]).slice(-1)[0];
   const lst={requested:"بانتظار أمين المستودع",approved:"معتمد",issued:"سُلّمت",returned:"أُرجعت",cancelled:"ملغي",rejected:"معتذر عنه"};
   const byWh={};(e.lines||[]).forEach((r,i)=>{const k=r.warehouseId||"";(byWh[k]=byWh[k]||[]).push({...r,i})});
   const dist=state.evDist[e.id];
@@ -1597,12 +1597,19 @@ function evCard(e){
   const whBtns=e.status!=="new"?Object.entries(byWh).filter(([k])=>k).map(([k,rows])=>{const w=whOf(k);if(!w)return"";const ph=waNum(w.keeperPhone);
     return ph&&(admin||isCoord)?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(evMsgKeeper(e,w,rows))}">تنبيه أمين ${esc(w.name)}</a>`:(!w.keeperId&&admin?`<span class="hint">${esc(w.name)} بدون أمين — عيّنه من «المستودعات»</span>`:"")}).join(""):"";
   const cp=person(e.coordId);
-  el.innerHTML=`<div class="row1"><div class="ttl">${esc(e.title)}</div><span class="pill ${e.status==="new"?"p-req":open?"p-who":"p-done"}">${EV_ST[e.status]||""}</span></div>
-   <div class="dates"><div><span>الموعد</span><b class="${late?"l":""}">${esc(evWhen(e))}</b></div><div><span>القسم والمكان</span><b>${esc(e.section||"")}${e.place?" — "+esc(e.place):""}</b></div><div><span>صاحب الطلب</span><b>${esc(e.requesterName||"")}</b>${e.requesterRole?` <span class="hint">${esc(e.requesterRole)}</span>`:""}</div></div>
+  el.innerHTML=`<div class="row1"><div class="ttl">${esc(e.title)}</div><span class="pill ${e.status==="new"?"p-req":e.status==="postponed"?"p-late":open?"p-who":"p-done"}">${EV_ST[e.status]||""}</span>${e.status!=="postponed"&&lastCh?`<span class="pill p-req">تغيّر الموعد</span>`:""}</div>
+   <div class="dates"><div><span>الموعد</span><b class="${late?"l":""}">${e.status==="postponed"?"يُحدد لاحقاً":esc(evWhen(e))}</b>${lastCh&&lastCh.from?`<span class="hint" style="display:block">كان: ${esc(lastCh.from)}</span>`:""}</div><div><span>القسم والمكان</span><b>${esc(e.section||"")}${e.place?" — "+esc(e.place):""}</b></div><div><span>صاحب الطلب</span><b>${esc(e.requesterName||"")}</b>${e.requesterRole?` <span class="hint">${esc(e.requesterRole)}</span>`:""}</div></div>
    <div class="meta">${e.readyBy?`<span>التجهيز قبل: ${esc(e.readyBy)}</span>`:""}${e.guests?`<span>الحضور: ${num(e.guests)}</span>`:""}${e.coordName?`<span>المنسق: <b>${esc(e.coordName)}</b></span>`:""}</div>
    ${e.note?`<div class="note">${esc(e.note)}</div>`:""}
    ${linesTbl}
    ${e.adminNote?`<div class="note">ملاحظة الاعتماد: ${esc(e.adminNote)}</div>`:""}
+   ${lastCh&&lastCh.reason?`<div class="note">${e.status==="postponed"?"سبب التأجيل":"سبب تغيير الموعد"}: ${esc(lastCh.reason)} <span class="hint">(${esc(lastCh.by||"")}، ${esc(fmtDate(dateOf(lastCh.at)))})</span></div>`:""}
+   ${state.evPost===e.id?`<div class="req"><h3>${e.status==="postponed"?"تحديد الموعد الجديد":"تأجيل المناسبة أو تغيير موعدها"}</h3><div class="fgrid">
+     ${e.status!=="postponed"?`<label class="full"><span style="display:flex;gap:14px;flex-wrap:wrap"><label style="display:inline-flex;gap:6px;align-items:center"><input type="radio" name="pm-${esc(e.id)}" value="date" checked data-pm> موعد جديد</label><label style="display:inline-flex;gap:6px;align-items:center"><input type="radio" name="pm-${esc(e.id)}" value="tbd" data-pm> تأجيل لموعد يُحدد لاحقاً</label></span></label>`:""}
+     <label data-pd>التاريخ الجديد<input type="date" data-pdate value="${esc(e.status==="postponed"?"":e.date||"")}" min="${todayStr()}"></label><label data-pd>من الساعة<input type="time" data-pfrom value="${esc(e.from||"")}"></label><label data-pd>إلى الساعة<input type="time" data-pto value="${esc(e.to||"")}"></label>
+     <label class="wide">السبب<input data-preason placeholder="مثل: تأجيل الحفل بطلب الإدارة"></label>
+     <div class="full acts"><button class="btn sm" type="button" data-psave>حفظ</button><button class="linkbtn mute" type="button" data-px>إلغاء</button></div></div></div>`:""}
+   ${state.evCan===e.id?`<div class="req"><h3>إلغاء المناسبة</h3><div class="fgrid"><label class="wide">سبب الإلغاء<input data-creason placeholder="مثل: أُلغيت المناسبة من الإدارة"></label><div class="full acts"><button class="btn danger sm" type="button" data-cyes>تأكيد الإلغاء</button><button class="linkbtn mute" type="button" data-cx>تراجع</button></div></div></div>`:""}
    ${dist?`<div class="fgrid"><label>المنسق (يستلم من المستودعات ويجهّز)<select data-dc ${admin?"":"disabled"}><option value="">— اختر —</option>${evCoords().map(p=>`<option value="${esc(p.id)}" ${dist.coord===p.id?"selected":""}>${esc(p.name)} — ${esc(titleOf(p))}</option>`).join("")}</select></label>
       <label class="wide">ملاحظة لصاحب الطلب (اختياري)<input data-dn value="${esc(dist.note||"")}"></label>
       <div class="full acts"><button class="btn" type="button" data-dgo>اعتماد وإرسال للمستودعات</button><button class="linkbtn mute" type="button" data-dx>إلغاء</button></div></div>`:""}
@@ -1611,6 +1618,8 @@ function evCard(e){
     ${(admin||isCoord)&&e.status==="routed"?`<button class="btn sm" type="button" data-ready>تم التجهيز</button>`:""}
     ${(admin||isCoord)&&["routed","ready"].includes(e.status)?`<button class="linkbtn" type="button" data-done>انتهت المناسبة</button>`:""}
     ${!open&&e.status==="done"&&loans.some(loanOpenQ)&&loans.filter(loanOpenQ).every(l=>isKeeper(l.warehouseId))?`<button class="btn sm" type="button" data-evlc>إغلاق الإعارات (رجعت الأصناف)</button>`:""}
+    ${canPost&&state.evPost!==e.id?`<button class="linkbtn" type="button" data-post>${e.status==="postponed"?"تحديد الموعد الجديد":"تأجيل أو تغيير الموعد"}</button>`:""}
+    ${(admin||isCoord)&&["routed","ready","postponed"].includes(e.status)&&state.evCan!==e.id?`<button class="linkbtn mute" type="button" data-evcan>إلغاء المناسبة</button>`:""}
     ${isReq&&e.status==="new"?`<button class="linkbtn mute" type="button" data-cancel>إلغاء الطلب</button>`:""}
     ${isReq&&e.status==="new"&&!admin?`<a class="linkbtn" target="_blank" rel="noopener" href="https://wa.me/${waNum(ADMIN_PHONE)}?text=${encodeURIComponent(evMsgAdmin(e))}">تنبيه م. محمد نور عمر على الواتساب</a>`:""}
     ${admin&&e.status!=="new"&&e.coordName&&cp&&waNum(cp.phone)?`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${waNum(cp.phone)}?text=${encodeURIComponent(evMsgCoord(e))}">تنبيه المنسق</a>`:""}
@@ -1651,6 +1660,27 @@ function evCard(e){
     try{for(const l of open)await loanClose(l,"سليم","");toast("أُغلقت طلبات الإعارة")}catch(err){toast("تعذر إغلاق بعض الإعارات")}db.refreshAll();render()};
   if(q("[data-cancel]"))q("[data-cancel]").onclick=()=>{if(confirm("إلغاء طلب المناسبة؟"))upd({status:"cancelled"},"أُلغي الطلب")};
   if(q("[data-hn]"))q("[data-hn]").onclick=()=>{state.evNotify=null;render()};
+  if(q("[data-post]"))q("[data-post]").onclick=()=>{state.evPost=e.id;state.evCan=null;render()};
+  if(q("[data-px]"))q("[data-px]").onclick=()=>{state.evPost=null;render()};
+  el.querySelectorAll("[data-pm]").forEach(r=>r.onchange=()=>{const tbd=el.querySelector("[data-pm]:checked").value==="tbd";el.querySelectorAll("[data-pd]").forEach(x=>x.hidden=tbd)});
+  if(q("[data-psave]"))q("[data-psave]").onclick=async()=>{const pm=el.querySelector("[data-pm]:checked");const tbd=pm&&pm.value==="tbd";const reason=(q("[data-preason]").value||"").trim();
+    if(!reason){toast("اكتب سبب التأجيل أو التغيير");q("[data-preason]").focus();return}
+    const now=Date.now(),oldWhen=e.status==="postponed"?"":evWhen(e);const log=[...(e.dateLog||[])];
+    if(tbd){log.push({at:now,by:myName(),from:oldWhen,to:"",reason});
+      await upd({status:"postponed",prevStatus:e.status,dateLog:log},"سُجّلت المناسبة مؤجلة");
+      try{await addComment("event",e.id,"أُجّلت المناسبة لموعد يُحدد لاحقاً — "+reason,"status")}catch(x){}state.evPost=null;render();return}
+    const d=q("[data-pdate]").value;if(!d){toast("اختر التاريخ الجديد");return}const fr=q("[data-pfrom]").value,to=q("[data-pto]").value;
+    const ne={...e,date:d,from:fr,to};log.push({at:now,by:myName(),from:oldWhen,to:evWhen(ne),reason});
+    const p={date:d,from:fr,to,dateLog:log};if(e.status==="postponed")p.status=e.prevStatus&&e.prevStatus!=="postponed"?e.prevStatus:"new";
+    await upd(p,"حُفظ الموعد الجديد");
+    for(const l of loans.filter(x=>["requested","approved"].includes(x.status))){try{await db.doc("loans/"+l.id).update({neededBy:d,returnBy:nextDay(d),updatedAt:Date.now()})}catch(x){}}
+    try{await addComment("event",e.id,"تغيّر موعد المناسبة"+(oldWhen?" من "+oldWhen:"")+" إلى "+evWhen(ne)+" — "+reason,"status")}catch(x){}state.evPost=null;render()};
+  if(q("[data-evcan]"))q("[data-evcan]").onclick=()=>{state.evCan=e.id;state.evPost=null;render()};
+  if(q("[data-cx]"))q("[data-cx]").onclick=()=>{state.evCan=null;render()};
+  if(q("[data-cyes]"))q("[data-cyes]").onclick=async()=>{const reason=(q("[data-creason]").value||"").trim();if(!reason){toast("اكتب سبب الإلغاء");return}
+    await upd({status:"cancelled",cancelReason:reason,cancelledAt:Date.now()},"أُلغيت المناسبة");
+    for(const l of loans.filter(x=>["requested","approved"].includes(x.status))){try{await db.doc("loans/"+l.id).update({status:"cancelled",updatedAt:Date.now()})}catch(x){}}
+    try{await addComment("event",e.id,"أُلغيت المناسبة — "+reason,"status")}catch(x){}state.evCan=null;render()};
   if(q("[data-del]"))q("[data-del]").onclick=()=>{state.confirm="ev:"+e.id;render()};
   if(q("[data-dy]"))q("[data-dy]").onclick=async()=>{try{await db.doc("events/"+e.id).delete();toast("حُذف")}catch(err){toast("تعذر الحذف")}state.confirm=null;render()};
   if(q("[data-dn2]"))q("[data-dn2]").onclick=()=>{state.confirm=null;render()};
@@ -3328,9 +3358,9 @@ async function startApp(user){
   {const hv=(location.hash||"").slice(1);if(["send","tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"].includes(hv))state.view=hv;}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
-  if(mgr)$("hsub").textContent="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
-  else if(sup)$("hsub").textContent="متابعة مهام فريقك — أسند المهام وراسل مشرفي الأقسام الأخرى";
-  else if(!admin)$("hsub").textContent="مهامك المسندة إليك — حدّث حالتها وأضف ملاحظاتك";
+  if(mgr)window.__hsub="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
+  else if(sup)window.__hsub="متابعة مهام فريقك — أسند المهام وراسل مشرفي الأقسام الأخرى";
+  else if(!admin)window.__hsub="مهامك المسندة إليك — حدّث حالتها وأضف ملاحظاتك";
   if(!admin&&!me.person_id){wireSelfReg(user.email)}
   db=makeDb();
   const sortO=a=>a.sort((x,y)=>(x.order||0)-(y.order||0));
