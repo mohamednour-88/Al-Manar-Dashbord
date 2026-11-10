@@ -178,6 +178,11 @@ textarea{min-height:64px;resize:vertical}
 .sw[aria-checked="true"]::after{inset-inline-start:23px}
 footer.sig{font-size:11.5px;color:var(--muted);text-align:center;line-height:1.8;padding-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:8px}
 footer.sig img{height:34px;filter:var(--logo-filter);opacity:.85}
+html,body{overscroll-behavior-y:contain}
+.ptr{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;z-index:40;transform:translate(-50%,-70px);background:var(--surface);color:var(--accent);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.15);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;pointer-events:none;transition:transform .15s}
+.ptr .sp{width:18px;height:18px;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%}
+.ptr.go .sp{animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.updbar{position:fixed;top:calc(env(safe-area-inset-top) + 8px);inset-inline:16px;max-width:520px;margin:0 auto;z-index:41;background:var(--accent);color:var(--on-accent);border:0;border-radius:12px;padding:12px 14px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.2)}
 button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}}
 </style>
@@ -216,6 +221,8 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="ptr" id="ptr" aria-hidden="true"><span class="sp"></span><span id="ptrT">اسحب للتحديث</span></div>
+<button class="updbar" id="updBar" type="button" hidden>نسخة جديدة من التطبيق متاحة — اضغط للتحديث</button>
 
 <script>
 "use strict";
@@ -787,6 +794,32 @@ document.addEventListener("click",async e=>{
   else if(d.cinv){const {error}=await S.sb.from("zay_invites").delete().eq("token",d.cinv);toast(error?"تعذّر الإلغاء":"أُلغي الرابط");refresh()}
 });
 
+/* ============ التحديث بالسحب للأسفل + فحص النسخة ============ */
+const APP_VERSION="2026-11-10.3";
+function hardReload(){const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())}
+async function newVersion(){try{const t=await (await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"})).text();const m=t.match(/APP_VERSION="([^"]+)"/);return m&&m[1]!==APP_VERSION?m[1]:null}catch(e){return null}}
+$("#updBar").onclick=hardReload;
+(function(){
+  const ptr=$("#ptr"),txt=$("#ptrT");let y0=null,dy=0,busy=false;const TH=80;
+  const can=()=>!busy&&$("#sheetBack").hidden&&(window.scrollY||document.documentElement.scrollTop)<=0;
+  addEventListener("touchstart",e=>{if(can()&&e.touches.length===1){y0=e.touches[0].clientY;dy=0}else y0=null},{passive:true});
+  addEventListener("touchmove",e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(dy<=0){ptr.style.transform="translate(-50%,-70px)";return}
+    const d=Math.min(dy*.5,90);ptr.style.transition="none";ptr.style.transform=`translate(-50%,${d-60}px)`;
+    ptr.querySelector(".sp").style.transform=`rotate(${dy*2}deg)`;txt.textContent=dy>TH?"أفلت للتحديث":"اسحب للتحديث"},{passive:true});
+  addEventListener("touchend",async()=>{if(y0==null)return;const pulled=dy>TH;y0=null;ptr.style.transition="";
+    if(!pulled){ptr.style.transform="translate(-50%,-70px)";return}
+    busy=true;ptr.classList.add("go");ptr.style.transform="translate(-50%,10px)";txt.textContent="جارٍ التحديث…";
+    const nv=await newVersion();
+    if(nv){txt.textContent="جارٍ تحميل النسخة الجديدة…";setTimeout(hardReload,300);return}
+    await refresh();txt.textContent="تم التحديث";
+    setTimeout(()=>{ptr.classList.remove("go");ptr.style.transform="translate(-50%,-70px)";busy=false},600)});
+})();
+async function autoCheck(){const nv=await newVersion();if(!nv)return;
+  const a=document.activeElement;const typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  if($("#sheetBack").hidden&&!typing)hardReload();else $("#updBar").hidden=false}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")autoCheck()});
+setInterval(()=>{if(document.visibilityState==="visible")autoCheck()},5*60000);
+
 /* ============ التشغيل ============ */
 (async function boot(){
   route();
@@ -796,7 +829,7 @@ document.addEventListener("click",async e=>{
   await afterAuth();
   if(inviteToken&&!S.user)openAuth("in");
   setInterval(()=>{if(document.visibilityState==="visible"&&$("#sheetBack").hidden)refresh()},45000);
-  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").then(r=>r.update()).catch(()=>{});
 })();
 </script>
 </body>
