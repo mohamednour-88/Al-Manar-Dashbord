@@ -83,6 +83,17 @@ p{margin:0 0 8px}
 .pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.78rem;font-weight:700;white-space:nowrap}
 .p-new{background:var(--info-soft);color:var(--info)} .p-ok{background:var(--ok-soft);color:var(--ok)} .p-warn{background:var(--warn-soft);color:var(--warn)} .p-bad{background:var(--late-soft);color:var(--late)} .p-mute{background:var(--sunk);color:var(--muted)} .p-gold{background:var(--gold-soft);color:var(--gold)}
 .pool-rule{border:2px solid #C0392B !important;background:color-mix(in srgb,#C0392B 9%,var(--card,transparent)) !important}.pool-rule h2,.pool-rule b,b.red{color:#C0392B}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pool-rule h2,:root:not([data-theme="light"]) .pool-rule b,:root:not([data-theme="light"]) b.red{color:#FF6B5E}}:root[data-theme="dark"] .pool-rule h2,:root[data-theme="dark"] .pool-rule b,:root[data-theme="dark"] b.red{color:#FF6B5E}
+#docv{position:fixed;inset:0;z-index:80;overflow:auto;background:var(--sunk,#E8ECEA);padding:12px}
+body.docopen{overflow:hidden}
+#docv .dbar{position:sticky;top:0;display:flex;gap:8px;justify-content:flex-start;max-width:794px;margin:0 auto 10px;z-index:2}
+#docv .dpage{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff;color:#1d1d1d;max-width:794px;margin:0 auto;padding:36px 40px;border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,.12);font-size:14px;line-height:1.7}
+.dpage .dh{display:flex;align-items:center;gap:16px;border-bottom:2px solid #202E85;padding-bottom:12px}.dpage .dh img{height:62px}.dpage .co{font-weight:700;color:#202E85}.dpage .bt{font-weight:700;font-size:1.15rem}.dpage .vn{font-size:.85rem;color:#555}
+.dpage .dtitle{text-align:center;font-size:1.5rem;color:#202E85;margin:16px 0 6px}.dpage .dmeta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 20px;font-size:.9rem;color:#444;margin-bottom:12px}
+.dpage table{width:100%;border-collapse:collapse;margin:10px 0}.dpage th,.dpage td{border:1px solid #C9CEDB;padding:6px 9px;text-align:start;vertical-align:top}.dpage .dt2 th{background:#EEF0F7;width:18%;font-weight:600}
+.dpage .dl thead th{background:#202E85;color:#fff}.dpage .n{text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums;direction:ltr}.dpage .disc td{color:#2E6B3A}.dpage tfoot td{font-weight:600}.dpage .tot td{background:#EEF0F7;font-weight:800}
+.dpage .dnote{font-size:.85rem;color:#555;margin:6px 0}.dpage .dp{font-weight:600;margin:14px 0 4px}.dpage .dol li{margin-bottom:6px}.dpage .dol b{color:#B3261E}
+@media (max-width:600px){#docv .dpage{padding:18px 14px;font-size:12.5px}.dpage .dh img{height:44px}}
+@media print{body.docopen>*:not(#docv){display:none!important}#docv{position:static;padding:0;background:#fff;overflow:visible}#docv .dbar{display:none}#docv .dpage{box-shadow:none;max-width:none;padding:0}@page{size:A4;margin:14mm}}
 .price{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
 table.t{width:100%;border-collapse:collapse;font-size:.92rem}
 table.t th{text-align:right;font-weight:700;color:var(--muted);font-size:.8rem;border-bottom:1px solid var(--line);padding:7px 8px}
@@ -307,7 +318,7 @@ if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch
 
 /* ===================== الحالة ===================== */
 const S={view:"facility",cfg:structuredClone(DEFAULTS),blocks:[],mine:[],all:[],isAdmin:false,user:null,sb:null,adminFilter:"new",calMonth:null,online:false,
-  form:{from:addDays(today(),14),to:addDays(today(),17),mode:"rooms",roomIds:[1,5],areas:[],students:20,supervisors:2,guests:"",addons:{},org:"school",orgName:"",empNo:"",contact:"",phone:"",email:"",gender:"بنين",age:"",purpose:"",promo:"",notes:"",agree:false},sent:null};
+  form:{from:addDays(today(),14),to:addDays(today(),17),mode:"rooms",roomIds:[1,5],areas:[],students:10,supervisors:1,guests:"",addons:{},org:"school",orgName:"",empNo:"",contact:"",phone:"",email:"",gender:"بنين",age:"",purpose:"",promo:"",notes:"",agree:false},sent:null};
 const cfg=()=>S.cfg;
 
 /* ===================== التسعير ===================== */
@@ -408,7 +419,12 @@ const PRESETS_=()=>(Array.isArray(cfg().presets)?cfg().presets:[]).filter(p=>p.a
 window.__pickPkg=function(k){const p=(cfg().presets||[]).find(x=>x.key===k);if(!p)return;const f=S.form;f.mode=p.mode;f.to=addDays(f.from,p.nights);const ppl=(+f.students||0)+(+f.supervisors||0);
   f.addons={...p.addons};if(p.meals)f.addons.meals=ppl*3*p.nights;if(p.hosp)f.addons.hosp=p.nights;if(p.classPerDay)f.addons.class=p.classPerDay*p.nights;
   if(location.hash==="#book")setView("book");else location.hash="book";toast("أُضيفت «"+p.t+"» إلى نموذج الحجز")};
-const ROLE={owner:"مدير المنصة",manager:"مدير بيت الطالب",staff:"مشرف حجوزات"};
+const ROLE={owner:"مدير المنصة",manager:"مدير بيت الطالب",staff:"مشرف حجوزات",finance:"المالية",viewer:"اطلاع"};
+const ROLE_DESC={manager:"مدير بيت الطالب: الطلبات والأسعار والدفعات",staff:"مشرف حجوزات: الطلبات فقط",finance:"المالية: الاطلاع وتسجيل الدفعات والفواتير",viewer:"اطلاع: يشوف كل الطلبات والتفاصيل بدون تعديل"};
+const canAct=()=>["owner","manager","staff"].includes(S.role),canPay=()=>["owner","manager","finance"].includes(S.role);
+const PAYK={deposit:"عربون",balance:"باقي المبلغ",insurance:"تأمين مسترد (استلام)",refund:"إرجاع التأمين"};
+const paidOf=b=>(b.payments||[]).filter(x=>x.kind==="deposit"||x.kind==="balance").reduce((a,x)=>a+(+x.amount||0),0);
+const poolHours=b=>+(((b.form||{}).addons||{}).pool)||0;
 function setView(v){const ok=["facility","prices","book","mine","policies","admin","join"];if(/^join-[a-f0-9]{16,}$/.test(v)){S.joinToken=v.slice(5);S.joinInfo=null;v="join"}if(!ok.includes(v))v="facility";S.view=v;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.v===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});render();window.scrollTo({top:0})}
 window.addEventListener("hashchange",()=>setView(location.hash.slice(1)));
@@ -568,10 +584,26 @@ function bookingCard(b,admin){const s=ST[b.status]||["—","p-mute"];const q=b.q
    ${b.status==="approved"&&!admin?`<div class="note">اعتُمد طلبك مبدئياً. ادفع العربون ${sar(q.deposit)} لتأكيد الحجز، وتواصل مع الإدارة على <b dir="ltr">${esc(cfg().contact.phone)}</b>.</div>`:""}
    ${chk}
    <details class="more"><summary>تفاصيل السعر</summary><div class="q" style="margin-top:8px">${quoteHTML(q)}</div></details>
+   ${docBtns(b)}
+   ${admin?payBox(b):(b.payments||[]).length?`<div class="note info">المدفوع: ${sar(paidOf(b))} من ${sar(q.total)}${b.invoiceNo?` · رقم الفاتورة الضريبية: <b dir="ltr">${esc(b.invoiceNo)}</b>`:""}</div>`:""}
    ${!admin?`<div class="btns">${waAdminBtn(b,"sm ghost")}</div>`:""}${admin?adminActions(b):canCancel?`<div class="btns">${S.confirmCancel===b.id?`<span>تأكيد إلغاء الطلب؟</span><button class="btn danger sm" data-act="cancelYes">نعم، ألغِ الطلب</button><button class="btn ghost sm" data-act="cancelNo">تراجع</button>`:`<button class="btn ghost sm" data-act="cancel">إلغاء الطلب</button>`}</div>`:""}
   </article>`}
 
-function adminActions(b){const A=[];const btn=(a,t,cls)=>`<button class="btn sm ${cls||""}" data-act="${a}">${t}</button>`;
+function docBtns(b){const ok=!["rejected","cancelled"].includes(b.status);if(!ok)return "";
+  return `<div class="btns docbtns"><button type="button" class="btn sm ghost" data-doc="invoice" data-docid="${esc(b.id)}">${b.status==="new"?"عرض السعر":"الفاتورة المبدئية"}</button>${poolHours(b)?`<button type="button" class="btn sm ghost danger-ghost" data-doc="pledge" data-docid="${esc(b.id)}">تعهد استخدام المسبح</button>`:""}</div>`}
+function payBox(b){const q=b.quote||{},P=b.payments||[],paid=paidOf(b),rem=Math.max(0,(q.total||0)-paid);if(["rejected","cancelled"].includes(b.status)&&!P.length)return "";
+  return `<details class="more paybox" ${S.payOpen===b.id?"open":""} data-payd="${esc(b.id)}"><summary>المالية: المدفوع ${sar(paid)} · المتبقي ${sar(rem)}${b.invoiceNo?` · فاتورة ${esc(b.invoiceNo)}`:""}</summary>
+   <div class="grid" style="gap:8px;margin-top:8px">
+    ${P.length?`<div class="tbl"><table class="t"><thead><tr><th>النوع</th><th>المبلغ</th><th>الطريقة</th><th>المرجع</th><th>التاريخ</th></tr></thead><tbody>${P.map(x=>`<tr><td>${PAYK[x.kind]||x.kind}</td><td class="num">${sar(x.amount)}</td><td>${esc(x.method||"")}</td><td dir="ltr">${esc(x.ref||"")}</td><td>${dfmt(new Date(x.at).toISOString().slice(0,10))}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">لا توجد دفعات مسجلة.</p>`}
+    ${canPay()?`<div class="fg"><label class="f">نوع الدفعة<select data-pk>${Object.entries(PAYK).map(([k,t])=>`<option value="${k}" ${k===(paid?"balance":"deposit")?"selected":""}>${t}</option>`).join("")}</select></label>
+     <label class="f">المبلغ (ر.س)<input type="number" min="0" step="0.01" data-pa value="${paid?rem.toFixed(2):(q.deposit||0).toFixed(2)}"></label>
+     <label class="f">الطريقة<select data-pm><option>تحويل بنكي</option><option>شبكة (مدى)</option><option>نقداً</option></select></label>
+     <label class="f">رقم المرجع أو الإيصال<input type="text" data-pr dir="ltr"></label></div>
+     <div class="btns"><button type="button" class="btn sm" data-pay="add">تسجيل الدفعة</button></div>
+     <div class="fg"><label class="f">رقم الفاتورة الضريبية <small>من النظام المحاسبي بعد إصدارها</small><input type="text" data-pinv dir="ltr" value="${esc(b.invoiceNo||"")}"></label></div>
+     <div class="btns"><button type="button" class="btn sm ghost" data-pay="inv">حفظ رقم الفاتورة</button></div>`:""}
+   </div></details>`}
+function adminActions(b){const A=[];if(S.role==="viewer")return "";if(S.role==="finance"){if(b.status==="approved")A.push(`<button class="btn sm" data-act="confirm">تم استلام العربون: تأكيد الحجز</button>`);return A.length?`<div class="btns">${A.join("")}</div>`:""}const btn=(a,t,cls)=>`<button class="btn sm ${cls||""}" data-act="${a}">${t}</button>`;
   if(b.status==="new"){A.push(btn("approve","اعتماد مبدئي"));A.push(btn("reject","اعتذار","ghost"))}
   if(b.status==="approved"){A.push(btn("confirm","تم دفع العربون: تأكيد"));A.push(btn("reject","إلغاء الاعتماد","ghost"))}
   if(b.status==="confirmed")A.push(btn("checkin","تسجيل الدخول"));
@@ -664,15 +696,58 @@ const TST={active:["مفعّل","p-ok"],invited:["بانتظار قبول الد
 function inviteLink(tok){return location.origin+location.pathname+"#join-"+tok}
 function inviteMsg(m,tok){return ["السلام عليكم ورحمة الله وبركاته",/^(أ|د|م)\.?\s/.test(m.name)?m.name:"أ. "+m.name,"","تمت دعوتكم للانضمام إلى إدارة بيت الطالب الأندلسي بصلاحية «"+ROLE[m.role]+"».","افتح الرابط وأنشئ كلمة مرور برقم جوالك "+m.phone+"، أو ادخل بحسابك في منصة متابعات المنار إن وُجد:",inviteLink(tok),"","الدعوة صالحة لمدة 7 أيام.","","*نرجو تأكيد الاستلام بعد تفعيل الحساب.*","",cfg().contact.name].join("\n")}
 function vTeam(){const T=S.team||[];const inv=S.lastInvite;
-  return `<section class="sec"><h2>فريق إدارة بيت الطالب</h2><p class="muted" style="margin:0">أنت تدعو الأعضاء وتفعّلهم أو توقفهم. «مدير بيت الطالب» يدير الطلبات والأسعار، و«مشرف حجوزات» يدير الطلبات فقط. المستأجرون لا يحتاجون حساباً.</p>
+  return `<section class="sec"><h2>فريق إدارة بيت الطالب</h2><p class="muted" style="margin:0">أنت تدعو الأعضاء وتفعّلهم أو توقفهم. المستأجرون لا يحتاجون حساباً.</p><ul class="muted" style="margin:0;font-size:.9rem">${Object.values(ROLE_DESC).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
    <div class="grid">${T.length?T.map(m=>{const s=TST[m.status]||["—","p-mute"];return `<article class="card bk" data-mid="${m.id}"><div class="head"><b>${esc(m.name)}</b><span class="pill ${s[1]}">${s[0]}</span><span class="pill p-gold">${esc(ROLE[m.role])}</span><span class="muted" dir="ltr" style="margin-inline-start:auto">${esc(m.phone)}</span></div>
      <div class="btns">${m.status==="active"?`<button class="btn ghost sm" data-ta="disable">إيقاف</button>`:""}${m.status==="disabled"&&m.joined_at?`<button class="btn sm" data-ta="enable">تفعيل</button>`:""}${m.status!=="active"?`<button class="btn ghost sm" data-ta="reinvite">${m.status==="disabled"&&m.joined_at?"دعوة جديدة":"تجديد الدعوة"}</button>`:""}
-     <button class="btn ghost sm" data-ta="role">تغيير إلى «${ROLE[m.role==="manager"?"staff":"manager"]}»</button>${S.confirmDel===m.id?`<span>حذف العضو نهائياً؟</span><button class="btn danger sm" data-ta="delYes">نعم، احذف</button><button class="btn ghost sm" data-ta="delNo">تراجع</button>`:`<button class="linkbtn" data-ta="del">حذف</button>`}</div></article>`}).join(""):`<div class="card empty"><b>لا يوجد أعضاء بعد</b><p>أرسل أول دعوة من النموذج أدناه.</p></div>`}</div>
-   <form class="card grid" id="invForm" novalidate><h3>دعوة عضو جديد</h3><div class="fg"><label class="f">الاسم<input type="text" id="invName" placeholder="مثال: أ. سارة أحمد"></label><label class="f">رقم الجوال<input type="tel" id="invPhone" dir="ltr" placeholder="05xxxxxxxx"></label>
-     <label class="f">الصلاحية<select id="invRole"><option value="staff">مشرف حجوزات (الطلبات فقط)</option><option value="manager">مدير بيت الطالب (الطلبات والأسعار)</option></select></label></div>
+     <select data-trole aria-label="الصلاحية" style="width:auto">${Object.keys(ROLE_DESC).map(k=>`<option value="${k}" ${m.role===k?"selected":""}>${ROLE[k]}</option>`).join("")}</select><button class="btn ghost sm" data-ta="role">تغيير الصلاحية</button>${S.confirmDel===m.id?`<span>حذف العضو نهائياً؟</span><button class="btn danger sm" data-ta="delYes">نعم، احذف</button><button class="btn ghost sm" data-ta="delNo">تراجع</button>`:`<button class="linkbtn" data-ta="del">حذف</button>`}</div></article>`}).join(""):`<div class="card empty"><b>لا يوجد أعضاء بعد</b><p>أرسل أول دعوة من النموذج أدناه.</p></div>`}</div>
+   <form class="card grid" id="invForm" novalidate><h3>دعوة عضو جديد</h3><div class="fg"><label class="f">الاسم<input type="text" id="invName" placeholder="مثال: أ. يحيى الأحمري"></label><label class="f">رقم الجوال<input type="tel" id="invPhone" dir="ltr" placeholder="05xxxxxxxx"></label>
+     <label class="f">الصلاحية<select id="invRole">${Object.entries(ROLE_DESC).map(([k,t])=>`<option value="${k}" ${k==="viewer"?"selected":""}>${esc(t)}</option>`).join("")}</select></label></div>
      <div class="btns"><button class="btn" type="submit">إنشاء الدعوة</button></div></form>
    ${inv?`<div class="card grid" id="invOut"><h3>دعوة ${esc(inv.m.name)} جاهزة</h3><p class="muted" style="margin:0">أرسلها له على الواتساب. الرابط يعمل مرة واحدة ولمدة 7 أيام.</p><textarea class="copybox" readonly id="invMsg">${esc(inviteMsg(inv.m,inv.tok))}</textarea>
      <div class="btns"><button class="btn sm" type="button" id="invCopy">نسخ الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/966${normPhone(inv.m.phone).replace(/^0/,"")}?text=${encodeURIComponent(inviteMsg(inv.m,inv.tok))}">فتح الواتساب</a></div></div>`:""}</section>`}
+
+/* ===================== المستندات: الفاتورة المبدئية وتعهد المسبح ===================== */
+function findBk(id){return (S.all||[]).find(x=>x.id===id)||(S.mine||[]).find(x=>x.id===id)}
+function docHead(title,b){const c=cfg();return `<div class="dh"><img src="logo.png" alt=""><div class="dt"><div class="co">شركة الأندلس التعليمية ـ فرع المنار</div><div class="bt">بيت الطالب الأندلسي</div>${c.vatNo?`<div class="vn">الرقم الضريبي: <span dir="ltr">${esc(c.vatNo)}</span></div>`:""}</div></div>
+  <h1 class="dtitle">${title}</h1><div class="dmeta"><span>رقم الطلب: <b dir="ltr">${esc(b.ref)}</b></span><span>تاريخ الإصدار: <b>${dfmt(today())}</b></span><span>حالة الطلب: <b>${(ST[b.status]||["—"])[0]}</b></span></div>`}
+function docInvoice(b){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf(b),P=b.payments||[];const day=dayMode(f);
+  return docHead(b.status==="new"?"عرض سعر":"فاتورة مبدئية",b)+`
+  <table class="dt2"><tr><th>الجهة</th><td>${esc(f.orgName||"")}</td><th>المسؤول</th><td>${esc(f.contact||"")}</td></tr><tr><th>الجوال</th><td dir="ltr">${esc(f.phone||"")}</td><th>البريد</th><td dir="ltr">${esc(f.email||"—")}</td></tr>
+   <tr><th>${day?"تاريخ اللقاء":"الوصول"}</th><td>${dfmt(f.from)}</td><th>${day?"الأيام":"المغادرة"}</th><td>${day?fmt(q.n):dfmt(f.to)}</td></tr>
+   <tr><th>طريقة التأجير</th><td>${esc(modeLabel(f.mode))}</td><th>${day?"الحضور":"العدد"}</th><td>${day?fmt(f.guests||0):`${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين`}</td></tr></table>
+  <table class="dl"><thead><tr><th>البيان</th><th>المبلغ (ر.س)</th></tr></thead><tbody>
+   ${(q.L||[]).map(([t,v])=>`<tr><td>${esc(t)}</td><td class="n">${fmt(v,2)}</td></tr>`).join("")}
+   ${(q.D||[]).map(([t,v])=>`<tr class="disc"><td>${esc(t)}</td><td class="n">− ${fmt(v,2)}</td></tr>`).join("")}</tbody>
+   <tfoot><tr><td>المجموع قبل الضريبة</td><td class="n">${fmt(q.sub,2)}</td></tr><tr><td>${q.vatOn===false?"ضريبة القيمة المضافة (غير مطبقة)":`ضريبة القيمة المضافة ${fmt(c.vat)}%`}</td><td class="n">${fmt(q.vat,2)}</td></tr>
+   <tr class="tot"><td>الإجمالي</td><td class="n">${fmt(q.total,2)}</td></tr>
+   ${q.internal?"":`<tr><td>العربون المطلوب لتأكيد الحجز (${fmt(c.depositPct)}%)</td><td class="n">${fmt(q.deposit,2)}</td></tr>`}
+   ${P.length?`<tr><td>المدفوع حتى الآن</td><td class="n">${fmt(paid,2)}</td></tr><tr class="tot"><td>المتبقي</td><td class="n">${fmt(Math.max(0,(q.total||0)-paid),2)}</td></tr>`:""}
+   <tr><td>تأمين مسترد عند الدخول (خارج الإجمالي)</td><td class="n">${fmt(q.insurance??c.insurance,2)}</td></tr></tfoot></table>
+  ${b.invoiceNo?`<p class="dnote">رقم الفاتورة الضريبية الصادرة: <b dir="ltr">${esc(b.invoiceNo)}</b></p>`:""}
+  <p class="dnote">${b.status==="new"?"هذا عرض سعر تقديري، ويُعتمد بعد مراجعة الإدارة وتوفر الغرف.":"هذه فاتورة مبدئية بتفاصيل الحجز والمبالغ المستحقة، وليست فاتورة ضريبية. تصدر الفاتورة الضريبية من النظام المحاسبي للشركة بعد السداد."}</p>
+  <p class="dnote">للتواصل: ${esc(c.contact.name)} · <span dir="ltr">${esc(c.contact.phone)}</span></p>`}
+function docPledge(b){const f=b.form||{},h=poolHours(b);
+  return docHead("تعهد استخدام المسبح",b)+`
+  <table class="dt2"><tr><th>الجهة المستأجرة</th><td>${esc(f.orgName||"")}</td><th>رقم الطلب</th><td dir="ltr">${esc(b.ref)}</td></tr>
+   <tr><th>فترة الحجز</th><td>${dfmt(f.from)} – ${dfmt(f.to)}</td><th>ساعات المسبح المحجوزة</th><td>${fmt(h)} ساعة</td></tr></table>
+  <p class="dp">أتعهد أنا الموقّع أدناه، بصفتي ممثل الجهة المستأجرة، بما يلي:</p>
+  <ol class="dol"><li>لا يُستخدم المسبح إلا بوجود <b>منقذ معتمد</b> طوال وقت السباحة، أو أتولى بنفسي (أو من أكلّفه كتابياً) <b>مسؤولية السلامة</b> طوال وقت الاستخدام.</li>
+   <li>الالتزام بالأوقات المحجوزة فقط، وعدم السماح لأي شخص بالسباحة قبلها أو بعدها.</li>
+   <li>وجود مشرف من الجهة عند المسبح طوال وقت الاستخدام، ومنع غير القادرين على السباحة من النزول في الأعماق.</li>
+   <li>الالتزام بتعليمات السلامة المعلنة عند المسبح، والإبلاغ الفوري عن أي ملاحظة أو حادث.</li>
+   <li><b>أتحمل المسؤولية الكاملة عن أي حادث أو ضرر يقع أثناء استخدام المسبح، لا سمح الله.</b></li></ol>
+  <table class="dt2 sig"><tr><th>اسم المنقذ أو مسؤول السلامة</th><td></td><th>رقم جواله</th><td></td></tr>
+   <tr><th>اسم الموقّع</th><td>${esc(f.contact||"")}</td><th>رقم الجوال</th><td dir="ltr">${esc(f.phone||"")}</td></tr>
+   <tr><th>التوقيع</th><td style="height:46px"></td><th>التاريخ</th><td></td></tr></table>
+  <p class="dnote">يُسلَّم هذا التعهد موقّعاً للإدارة قبل أول استخدام للمسبح.</p>`}
+function openDoc(id,kind){const b=findBk(id);if(!b)return;const D=document.createElement("div");D.id="docv";D.setAttribute("role","dialog");D.setAttribute("aria-label",kind==="pledge"?"تعهد استخدام المسبح":"الفاتورة المبدئية");
+  D.innerHTML=`<div class="dbar"><button type="button" class="btn sm" id="docPrint">طباعة أو حفظ PDF</button><button type="button" class="btn sm ghost" id="docClose">رجوع</button></div><div class="dpage">${kind==="pledge"?docPledge(b):docInvoice(b)}</div>`;
+  document.body.appendChild(D);document.body.classList.add("docopen");D.querySelector("#docPrint").onclick=()=>print();D.querySelector("#docClose").onclick=()=>{D.remove();document.body.classList.remove("docopen")};window.scrollTo(0,0)}
+document.addEventListener("click",async e=>{const d=e.target.closest("[data-doc]");if(d){openDoc(d.dataset.docid,d.dataset.doc);return}
+  const pb=e.target.closest("[data-pay]");if(!pb)return;const card=pb.closest("article.bk");const b=(S.all||[]).find(x=>x.id===card.dataset.bid);if(!b)return;S.payOpen=b.id;
+  const pdata=pb.dataset.pay==="inv"?{kind:"invoice",invoiceNo:card.querySelector("[data-pinv]").value.trim()}:{kind:card.querySelector("[data-pk]").value,amount:+card.querySelector("[data-pa]").value,method:card.querySelector("[data-pm]").value,ref:card.querySelector("[data-pr]").value.trim()};
+  pb.disabled=true;const {data:res,error}=await S.sb.rpc("bait_set_payment",{p_id:b.id,p_data:pdata});pb.disabled=false;
+  if(error||!res||!res.ok){toast((res&&res.error)||"تعذر الحفظ");return}toast(pdata.kind==="invoice"?"حُفظ رقم الفاتورة":"سُجلت الدفعة");await loadAdmin();keepScroll(render)});
 
 /* ===================== صفحة قبول الدعوة ===================== */
 function vJoin(){const I=S.joinInfo;
@@ -702,6 +777,7 @@ function settingsForm(){const c=cfg(),P=c.prices;const n=(id,l,v)=>`<label class
    <fieldset><legend>التواصل والإطلاق</legend><div class="fg">
      <label class="f">جوال الإدارة<input type="tel" id="s-phone" dir="ltr" value="${esc(c.contact.phone)}"></label>
      <label class="f">اسم الموقِّع في الرسائل<input type="text" id="s-cname" value="${esc(c.contact.name)}"></label>
+     <label class="f">الرقم الضريبي للشركة <small>يظهر في الفاتورة المبدئية</small><input type="text" id="s-vatno" dir="ltr" value="${esc(c.vatNo||"")}"></label>
      <label class="check" style="align-self:end"><input type="checkbox" id="s-demo" ${c.demo?"checked":""}><span>إظهار شارة «نسخة تجريبية»</span></label></div></fieldset>
    <div class="btns"><button class="btn" type="submit">حفظ الإعدادات</button><span class="muted" style="font-size:.85rem">تُطبّق على الطلبات الجديدة فقط.</span></div></form>`}
 
@@ -769,7 +845,7 @@ function wire(v){
     document.querySelectorAll("[data-mid]").forEach(el=>{const m=(S.team||[]).find(x=>String(x.id)===el.dataset.mid);if(!m)return;el.querySelectorAll("[data-ta]").forEach(b=>b.onclick=async()=>{const a=b.dataset.ta;
       if(a==="del"){S.confirmDel=m.id;render();return}if(a==="delNo"){S.confirmDel=null;render();return}
       if(a==="reinvite"){const {data,error}=await S.sb.rpc("bait_team_invite",{p_name:m.name,p_phone:m.phone,p_role:m.role});if(error||!data||!data.ok){toast((data&&data.error)||"تعذر تجديد الدعوة");return}S.lastInvite={m,tok:data.token};await loadTeam();render();const o=$("#invOut");if(o)o.scrollIntoView({behavior:"smooth",block:"center"});return}
-      const act=a==="delYes"?"delete":a;const {data,error}=await S.sb.rpc("bait_team_set",{p_id:m.id,p_action:act,p_role:a==="role"?(m.role==="manager"?"staff":"manager"):null});
+      const act=a==="delYes"?"delete":a;const {data,error}=await S.sb.rpc("bait_team_set",{p_id:m.id,p_action:act,p_role:a==="role"?el.querySelector("[data-trole]").value:null});
       if(error||!data||!data.ok){toast((data&&data.error)||"تعذر التنفيذ");return}S.confirmDel=null;toast({disable:"أُوقف العضو",enable:"فُعّل العضو",role:"تغيّرت الصلاحية",delete:"حُذف العضو"}[act]||"تم");await loadTeam();render()})})}
   if(v==="join"){if(!S.sb)return;if(S.joinInfo===null){S.sb.rpc("bait_invite_info",{p_token:S.joinToken}).then(({data})=>{S.joinInfo=data||{ok:false};if(S.view==="join")render()},()=>{S.joinInfo={ok:false};render()});return}
     const JF=$("#joinForm");if(JF)JF.onsubmit=async e=>{e.preventDefault();const pass=$("#jPass").value;if(pass.length<8){toast("كلمة المرور 8 أحرف على الأقل");return}
@@ -796,7 +872,7 @@ async function saveSettings(e){e.preventDefault();const c=structuredClone(cfg())
   c.addons.forEach(a=>a.price=g("s-ad-"+a.key));c.durationTiers.forEach((t,i)=>t.pct=g("s-tier"+i));Object.keys(ORG).forEach(k=>c.orgDisc[k]=g("s-org-"+k));
   c.internal={...c.internal,insurance:g("s-int-ins"),facilitiesFree:$("#s-int-fac").checked,ops:c.internal.ops.map(o=>({...o,price:g("s-int-"+o.key)}))};c.staffAddons=$("#s-staffAdd").checked;c.staffVat=$("#s-staffVat").checked;c.earlyPct=g("s-early");c.wholeAddonDisc=g("s-wad");c.maxDisc=g("s-max");c.depositPct=g("s-dep");c.vat=g("s-vat");c.insurance=g("s-ins");c.ratio=Math.max(1,g("s-ratio"));
   c.promos={};String($("#s-promos").value||"").split(/\n+/).forEach(l=>{const [k,v]=l.split("=");if(k&&k.trim()&&+v>0)c.promos[k.trim().toUpperCase()]=+v});
-  c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.demo=$("#s-demo").checked;
+  c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.vatNo=$("#s-vatno").value.trim().slice(0,20);c.demo=$("#s-demo").checked;
   const {data:res,error}=await S.sb.rpc("bait_save_config",{p_cfg:c});if(error||!res||!res.ok){toast((res&&res.error)||"تعذر حفظ الإعدادات");return}S.cfg=mergeCfg(res.config);toast("حُفظت الإعدادات");keepScroll(render)}
 
 /* ===================== البيانات ===================== */
