@@ -29,18 +29,19 @@ const SUPABASE_ANON_KEY = "sb_publishable_4KHvoUKfTJ-0J5OWmVRP-A_PPMFXpjQ";
   --brand:#202E85; --gold:#9A6410; --gold-soft:#F7ECD8;
   --f-display:"SF Mada","Readex Pro","IBM Plex Sans Arabic",Tahoma,sans-serif;
   --f-body:"SF Mada","IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  --cat:#6A3FA0; --cat-soft:#EFE7F8; --cat-bg:#FBF8FE;
   --logo-filter:none; color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111816; --surface:#18211E; --sunk:#202B27; --line:#2E3B37;
   --fg:#E6EDEA; --muted:#97A6A0; --accent:#6FC2A6; --accent-soft:#1D3A31; --on-accent:#0D1A16;
   --bad:#FF8A80; --bad-soft:#3A1F1D; --warn:#F2B661; --warn-soft:#382B16; --ok:#86C996; --ok-soft:#1C3121;
-  --brand:#9FB0FF; --gold:#E3AE55; --gold-soft:#372A14; --logo-filter:brightness(0) invert(1); color-scheme:dark}}
+  --brand:#9FB0FF; --gold:#E3AE55; --gold-soft:#372A14; --cat:#C7A6F2; --cat-soft:#2C2240; --cat-bg:#1C1826; --logo-filter:brightness(0) invert(1); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111816; --surface:#18211E; --sunk:#202B27; --line:#2E3B37;
   --fg:#E6EDEA; --muted:#97A6A0; --accent:#6FC2A6; --accent-soft:#1D3A31; --on-accent:#0D1A16;
   --bad:#FF8A80; --bad-soft:#3A1F1D; --warn:#F2B661; --warn-soft:#382B16; --ok:#86C996; --ok-soft:#1C3121;
-  --brand:#9FB0FF; --gold:#E3AE55; --gold-soft:#372A14; --logo-filter:brightness(0) invert(1); color-scheme:dark}
+  --brand:#9FB0FF; --gold:#E3AE55; --gold-soft:#372A14; --cat:#C7A6F2; --cat-soft:#2C2240; --cat-bg:#1C1826; --logo-filter:brightness(0) invert(1); color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-tap-highlight-color:transparent}
@@ -93,6 +94,11 @@ main{padding:14px 16px calc(98px + env(safe-area-inset-bottom));max-width:720px;
 .pill.ok{background:var(--ok-soft);color:var(--ok)}
 .pill.mute{background:var(--sunk);color:var(--muted)}
 .pill.gold{background:var(--gold-soft);color:var(--gold)}
+.pill.cat{background:var(--cat-soft);color:var(--cat);border:1px dashed var(--cat)}
+.catlist{border:1.5px dashed var(--cat);background:var(--cat-bg)}
+.catrow .t{color:var(--cat)}
+.catnote{background:var(--cat-soft);color:var(--cat);border:1px dashed var(--cat);border-radius:12px;padding:10px 12px;font-size:13px}
+.prog{height:8px;background:var(--sunk);border-radius:6px;overflow:hidden}.prog>div{height:100%;background:var(--accent);width:0;transition:width .2s}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:14px;cursor:pointer}
 .chip.sm{padding:4px 10px;font-size:12px}
@@ -215,9 +221,13 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 "use strict";
 /* ============ ثوابت ============ */
 const SIZES=[];for(let s=18;s<=64;s+=2)SIZES.push(s);
+const SIZESETS={num:SIZES,letters:["XS","S","M","L","XL","2XL","3XL","4XL"],one:["موحد"]};
+const sizesFor=code=>{const it=S.items[code];return SIZESETS[(it&&it.size_set)||"num"]||SIZES};
+const SYSTEMS=["أهلي","عالمي","الأندلس الصغيرة","الموظفون"];
+const TYPES=["مدرسي","رياضي","جاكيت","سديري","زي موظفين","إكسسوار"];
 const SUPPLIERS=[{k:"safwa",n:"الصفوة",y:"العام السابق"},{k:"hat",n:"هاتريك",y:"العام السابق"},{k:"tila",n:"تيلا",y:"العام الحالي"},{k:"fursan",n:"الفرسان",y:"العام الحالي"}];
 const SUPN=Object.fromEntries(SUPPLIERS.map(s=>[s.k,s.n]));
-const SECTIONS=["رياض أطفال أهلي","رياض أطفال عالمي","ابتدائي أهلي بنات","متوسط أهلي بنات","ثانوي أهلي بنات","ابتدائي عالمي بنات","متوسط عالمي بنات","ابتدائي أهلي بنين","ابتدائي عالمي بنين","متوسط أهلي بنين","متوسط عالمي بنين"];
+const SECTIONS=["رياض أطفال أهلي","رياض أطفال عالمي","ابتدائي أهلي بنات","متوسط أهلي بنات","ثانوي أهلي بنات","ابتدائي عالمي بنات","متوسط عالمي بنات","ثانوي عالمي بنات","ابتدائي أهلي بنين","ابتدائي عالمي بنين","متوسط أهلي بنين","متوسط عالمي بنين","ثانوي عالمي بنين","الأندلس الصغيرة","العمال","العاملات","الفنيين","الأمن (الحراس)"];
 const KINDS={in:"استلام من مورد",out:"صرف لقسم",need:"طلب احتياج",adjust:"تعديل جرد",opening:"رصيد افتتاحي"};
 const OWNER_NAME="م. محمد نور عمر";
 const PHONE_DOMAIN="@phone.almanar.app";
@@ -266,7 +276,7 @@ function compute(){
   for(const code in C)for(const sz in C[code]){const c=C[code][sz];
     c.stock=Math.max(0,Object.values(c.sup).reduce((a,b)=>a+b,0));
     c.rem=Math.max(0,c.need-c.out);c.def=Math.max(0,c.rem-c.stock);c.sur=Math.max(0,c.stock-c.rem)}
-  S.calc=C;const tot={};
+  S.calc=C;const tot={};S.used={};for(const e of S.entries)S.used[e.code]=true;
   for(const code of Object.keys(S.items)){const t={stock:0,need:0,out:0,rem:0,def:0,sur:0,sup:{safwa:0,hat:0,tila:0,fursan:0}};
     for(const c of Object.values(C[code]||{})){t.stock+=c.stock;t.need+=c.need;t.out+=c.out;t.rem+=c.rem;t.def+=c.def;t.sur+=c.sur;for(const k in c.sup)t.sup[k]+=Math.max(0,c.sup[k])}
     tot[code]=t}
@@ -278,9 +288,10 @@ function itemStatus(t){
   if(t.def===t.rem)return["bad","غير متوفر"];
   return["warn","عجز بمقاسات"];
 }
+const isCat=c=>{const it=S.items[c];return !!(it&&it.catalog&&!(S.used&&S.used[c]))};
 const sortedItems=()=>Object.entries(S.items).sort((a,b)=>(a[1].sort??99)-(b[1].sort??99));
 const entryQty=e=>Object.values(e.sizes||{}).reduce((a,b)=>a+(Number(b)||0),0);
-function utypeFor(it){if(!it)return"";if(it.type==="رياضي")return"زي رياضي";if(it.type==="جاكيت")return"جاكيت";return it.gender==="بنات"?"زي مدرسي بنات":"زي مدرسي بنين"}
+function utypeFor(it){if(!it)return"";if(it.type==="رياضي")return"زي رياضي";if(it.type==="جاكيت")return"جاكيت";if(it.type&&it.type!=="مدرسي")return it.type;return it.gender==="بنات"?"زي مدرسي بنات":"زي مدرسي بنين"}
 function thumb(it,cls="thumb"){return it&&it.image_path?`<img class="${cls}" src="${esc(imgUrl(it.image_path))}" alt="شكل ${esc(it.name)}" loading="lazy">`:`<span class="${cls} ph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .6-2 1.5V10m0 0L3 16.5c-.8.6-.4 1.5.5 1.5h17c.9 0 1.3-.9.5-1.5z"/></svg></span>`}
 
 /* ============ قاعدة البيانات ============ */
@@ -292,7 +303,8 @@ async function fetchAll(table,order){
 }
 async function loadData(){
   try{
-    const [items,entries]=await Promise.all([fetchAll("zay_items","sort"),fetchAll("zay_entries","created_at")]);
+    const [items,entries,st]=await Promise.all([fetchAll("zay_items","sort"),fetchAll("zay_entries","created_at"),S.sb.from("zay_settings").select("*").eq("id",1).maybeSingle()]);
+    if(st&&st.data){S.me.catalog_path=st.data.catalog_path||null;if(st.data.public_view!=null)S.me.public_view=st.data.public_view}
     S.items=Object.fromEntries(items.filter(i=>i.active!==false).map(i=>[i.id,i]));
     S.entries=entries.map(r=>({id:r.id,kind:r.kind,code:r.item_id,supplier:r.supplier,section:r.section,utype:r.utype,sizes:r.sizes||{},date:r.entry_date,receiver:r.receiver,ref:r.ref,note:r.note,deduct:r.deduct,byName:r.created_by_name,at:r.created_at}));
     S.online=true;S.loaded=true;
@@ -356,22 +368,34 @@ function vHome(){
   <div>شركة الأندلس التعليمية · إدارة الخدمات المدرسية · إدارة المرافق<br>فرع المنار · الدعم اللوجستي · العام الدراسي 2026–2027<br>إعداد: ${OWNER_NAME}</div></footer>
   </div>`;
 }
-function itemRow(c,it){const t=S.tot[c]||{};const [cls,lab]=itemStatus(t);
+function itemRow(c,it){const t=S.tot[c]||{};
+  if(isCat(c))return `<button class="row catrow" type="button" data-item="${esc(c)}">${thumb(it)}<div class="grow"><div class="t">${esc(it.name)}</div>
+  <div class="s">${esc([it.codes,it.stage,it.type].filter(Boolean).join(" · "))}</div></div><span class="pill cat">كتالوج</span></button>`;
+  const [cls,lab]=itemStatus(t);
   return `<button class="row" type="button" data-item="${esc(c)}">${thumb(it)}<div class="grow"><div class="t">${esc(it.name)}</div>
   <div class="s num">مخزون ${fmt(t.stock)} · طلب متبقٍ ${fmt(t.rem)}${t.def?` · <b style="color:var(--bad)">عجز ${fmt(t.def)}</b>`:""}</div></div><span class="pill ${cls}">${lab}</span></button>`}
 function vItems(){
-  const opts=["الكل","أهلي","عالمي","فيها عجز"];
-  const list=sortedItems().filter(([c,it])=>{const t=S.tot[c]||{};
+  const opts=["الكل",...SYSTEMS,"فيها عجز","الكتالوج"];
+  const match=([c,it])=>{const t=S.tot[c]||{};
     if(filt.sys==="فيها عجز"&&!t.def)return false;
-    if((filt.sys==="أهلي"||filt.sys==="عالمي")&&it.system!==filt.sys)return false;
-    return !filt.q||it.name.includes(filt.q)});
+    if(filt.sys==="الكتالوج"&&!isCat(c))return false;
+    if(SYSTEMS.includes(filt.sys)&&it.system!==filt.sys)return false;
+    return !filt.q||it.name.includes(filt.q)||String(it.codes||"").toUpperCase().includes(filt.q.toUpperCase())};
+  const all=sortedItems().filter(match);const inv=all.filter(([c])=>!isCat(c)),cat=all.filter(([c])=>isCat(c));
+  const catUrl=S.me.catalog_path?imgUrl(S.me.catalog_path):"";
   $("#view").innerHTML=`<div class="stack">
-   <input type="text" id="q" placeholder="ابحث باسم الصنف…" value="${esc(filt.q)}" aria-label="بحث">
+   <input type="text" id="q" placeholder="ابحث باسم الصنف أو رمز الكتالوج (ANDS)…" value="${esc(filt.q)}" aria-label="بحث">
    <div class="chips">${opts.map(o=>`<button class="chip" type="button" data-sys="${o}" aria-pressed="${filt.sys===o}">${o}</button>`).join("")}</div>
-   <div class="card list">${list.length?list.map(([c,it])=>itemRow(c,it)).join(""):`<div class="empty">لا توجد أصناف مطابقة</div>`}</div>
-   <button class="btn ghost o-only" type="button" id="newItem">إضافة صنف جديد</button></div>`;
+   ${catUrl?`<a class="act wide" href="${esc(catUrl)}" target="_blank" rel="noopener"><span class="ic">▤</span><span style="flex:1"><b style="display:block;font-size:15px;color:var(--fg)">كتالوج الزي المدرسي 2026–2027</b><span>فتح ملف الكتالوج كاملاً</span></span><span aria-hidden="true">‹</span></a>`:""}
+   ${inv.length?`<div class="sec-title"><h2>أصناف المخزون</h2><small>${inv.length}</small></div><div class="card list">${inv.map(([c,it])=>itemRow(c,it)).join("")}</div>`:""}
+   ${cat.length?`<div class="sec-title"><h2>من الكتالوج — لم تُضف للمخزون بعد</h2><small>${cat.length}</small></div>
+     <div class="hint">أصناف موجودة في كتالوج الزي ولا يوجد لها رصيد أو طلب بعد. تتحول تلقائياً إلى أصناف مخزون عند أول استلام أو طلب.</div>
+     <div class="card list catlist">${cat.map(([c,it])=>itemRow(c,it)).join("")}</div>`:""}
+   ${!inv.length&&!cat.length?`<div class="card"><div class="empty">لا توجد أصناف مطابقة</div></div>`:""}
+   <div class="inline-btns o-only"><button class="btn ghost" type="button" id="newItem">إضافة صنف جديد</button><button class="btn ghost" type="button" id="impCat">استيراد صور الكتالوج (PDF)</button></div></div>`;
   const q=$("#q");q.oninput=()=>{filt.q=q.value.trim();const p=q.selectionStart;vItems();const n=$("#q");n.focus();n.setSelectionRange(p,p)};
   $("#newItem").onclick=()=>editItem(null);
+  $("#impCat").onclick=importCatalog;
 }
 function vSections(){
   const per={};for(const s of SECTIONS)per[s]={need:0,out:0,types:{}};
@@ -405,7 +429,7 @@ function vLog(){
    <div class="chips">${kinds.map(k=>`<button class="chip" type="button" data-logk="${k}" aria-pressed="${filt.logKind===k}">${k==="الكل"?"الكل":KINDS[k]}</button>`).join("")}</div>
    <div class="card list">${list.length?list.slice(0,400).map(entryCard).join(""):`<div class="empty">لا توجد حركات</div>`}</div></div>`;
 }
-function poRows(){return sortedItems().map(([c,it])=>{const cs=S.calc[c]||{};return{c,it,d:SIZES.filter(s=>cs[s]&&cs[s].def>0).map(s=>[s,cs[s].def]),su:SIZES.filter(s=>cs[s]&&cs[s].sur>0).map(s=>[s,cs[s].sur])}})}
+function poRows(){return sortedItems().map(([c,it])=>{const cs=S.calc[c]||{};const Z=sizesFor(c);return{c,it,d:Z.filter(s=>cs[s]&&cs[s].def>0).map(s=>[s,cs[s].def]),su:Z.filter(s=>cs[s]&&cs[s].sur>0).map(s=>[s,cs[s].sur])}})}
 function poText(){const rows=poRows().filter(r=>r.d.length);const tot=rows.reduce((a,r)=>a+r.d.reduce((x,y)=>x+y[1],0),0);
   return "شركة الأندلس التعليمية — فرع المنار\nالدعم اللوجستي\nأمر شراء الزي المدرسي المقترح\nالتاريخ: "+today()+"\n\n"+rows.map(r=>`• ${r.it.name}: `+r.d.map(([s,q])=>`مقاس ${s} = ${q}`).join("، ")).join("\n")+`\n\nالإجمالي: ${tot} قطعة\n\n${OWNER_NAME}`}
 function vReports(){
@@ -427,10 +451,11 @@ function vReports(){
 function openItem(code){
   const it=S.items[code];if(!it)return;const t=S.tot[code]||{sup:{}};const cs=S.calc[code]||{};let all=false;
   const draw=()=>{
-    const rows=SIZES.filter(s=>all||(cs[s]&&(cs[s].stock||cs[s].need||cs[s].out)));
+    const Z=sizesFor(code);const rows=Z.filter(s=>all||(cs[s]&&(cs[s].stock||cs[s].need||cs[s].out)));
     $("#sheetBody").innerHTML=`
     ${it.image_path?`<img class="hero-img" src="${esc(imgUrl(it.image_path))}" alt="شكل ${esc(it.name)}">`:`<div class="hint o-only">لا توجد صورة لهذا الصنف. أضفها من «تعديل الصنف».</div>`}
-    <div class="chips">${[it.system,it.stage,it.gender,it.type].filter(Boolean).map(x=>`<span class="pill mute">${esc(x)}</span>`).join("")}</div>
+    ${isCat(code)?`<div class="catnote"><b>صنف من الكتالوج</b> — لم يُسجَّل له رصيد أو طلب بعد. يصبح صنف مخزون تلقائياً عند أول استلام أو طلب.</div>`:""}
+    <div class="chips">${[it.codes,it.system,it.stage,it.gender,it.type,it.cat_page?"صفحة "+it.cat_page+" بالكتالوج":""].filter(Boolean).map(x=>`<span class="pill mute">${esc(x)}</span>`).join("")}</div>
     ${it.note?`<div class="hint">${esc(it.note)}</div>`:""}
     <div class="kv num"><div><small>المخزون</small><b>${fmt(t.stock)}</b></div><div><small>الطلب</small><b>${fmt(t.need)}</b></div><div><small>صُرف</small><b>${fmt(t.out)}</b></div><div class="bad"><small>العجز</small><b>${fmt(t.def)}</b></div></div>
     <div class="breakdown num">${SUPPLIERS.map(s=>`<span>${s.n}: <b>${fmt(t.sup[s.k])}</b></span>`).join("")}</div>
@@ -438,7 +463,7 @@ function openItem(code){
     ${rows.length?rows.map(s=>{const c=cs[s]||{stock:0,need:0,out:0,def:0,sur:0,sup:{}};const br=SUPPLIERS.filter(x=>c.sup[x.k]>0).map(x=>`${x.n} ${c.sup[x.k]}`).join(" · ");
       return `<tr class="${c.def?"def":""}"><td class="sz">${s}</td><td>${fmt(c.stock)}${br?`<small>${br}</small>`:""}</td><td>${fmt(c.need)}</td><td>${fmt(c.out)}</td><td class="d">${c.def?fmt(c.def):"-"}</td><td>${c.sur?fmt(c.sur):"-"}</td></tr>`}).join(""):`<tr><td colspan="6" class="empty">لا توجد حركة على هذا الصنف</td></tr>`}
     </tbody></table></div>
-    <button class="chip" type="button" id="allSz" aria-pressed="${all}" style="align-self:flex-start">${all?"إخفاء المقاسات الفارغة":"عرض كل المقاسات 18–64"}</button>
+    <button class="chip" type="button" id="allSz" aria-pressed="${all}" style="align-self:flex-start">${all?"إخفاء المقاسات الفارغة":"عرض كل المقاسات ("+Z[0]+"–"+Z[Z.length-1]+")"}</button>
     <button class="btn ghost o-only" type="button" id="editIt">تعديل الصنف وصورته</button>`;
     $("#allSz").onclick=()=>{all=!all;draw()};
     $("#editIt").onclick=()=>editItem(code);
@@ -467,7 +492,8 @@ async function shrink(file){
 }
 function editItem(code){
   if(!isOwner())return;
-  const it=code?{...S.items[code]}:{id:"",name:"",system:"أهلي",stage:"",gender:"بنين",type:"مدرسي",note:"",image_path:null,sort:Object.keys(S.items).length};
+  const it=code?{...S.items[code]}:{id:"",name:"",system:"أهلي",stage:"",gender:"بنين",type:"مدرسي",note:"",image_path:null,size_set:"num",catalog:false,codes:"",sort:Object.keys(S.items).length+20};
+  it.size_set=it.size_set||"num";
   let newFile=null,removeImg=false;
   openSheet(code?"تعديل الصنف":"صنف جديد",`
    <div class="field"><span class="lab">صورة شكل الزي</span>
@@ -477,14 +503,18 @@ function editItem(code){
     <input type="file" id="imFile" accept="image/*" hidden>
     <div class="hint">التقط صورة بالجوال أو اختر من المعرض. تُصغَّر الصورة تلقائياً قبل الرفع.</div></div>
    <div class="field"><label for="iName">اسم الصنف</label><input type="text" id="iName" value="${esc(it.name)}"></div>
-   <div class="field"><span class="lab">النظام</span><div class="chips">${["أهلي","عالمي"].map(v=>`<button class="chip" type="button" data-f="system" data-v="${v}" aria-pressed="${it.system===v}">${v}</button>`).join("")}</div></div>
+   <div class="field"><span class="lab">النظام</span><div class="chips">${SYSTEMS.map(v=>`<button class="chip" type="button" data-f="system" data-v="${v}" aria-pressed="${it.system===v}">${v}</button>`).join("")}</div></div>
    <div class="field"><label for="iStage">المرحلة</label><input type="text" id="iStage" value="${esc(it.stage||"")}" placeholder="مثال: ابتدائي"></div>
-   <div class="field"><span class="lab">الفئة</span><div class="chips">${["بنين","بنات","مشترك"].map(v=>`<button class="chip" type="button" data-f="gender" data-v="${v}" aria-pressed="${it.gender===v}">${v}</button>`).join("")}</div></div>
-   <div class="field"><span class="lab">نوع الزي</span><div class="chips">${["مدرسي","رياضي","جاكيت"].map(v=>`<button class="chip" type="button" data-f="type" data-v="${v}" aria-pressed="${it.type===v}">${v}</button>`).join("")}</div></div>
+   <div class="field"><span class="lab">الفئة</span><div class="chips">${["بنين","بنات","مشترك","رجال","نساء"].map(v=>`<button class="chip" type="button" data-f="gender" data-v="${v}" aria-pressed="${it.gender===v}">${v}</button>`).join("")}</div></div>
+   <div class="field"><span class="lab">نوع الزي</span><div class="chips">${TYPES.map(v=>`<button class="chip" type="button" data-f="type" data-v="${v}" aria-pressed="${it.type===v}">${v}</button>`).join("")}</div></div>
+   <div class="field"><span class="lab">المقاسات</span><div class="chips">${[["num","أرقام 18–64"],["letters","حروف XS–4XL"],["one","مقاس موحد"]].map(([v,n])=>`<button class="chip" type="button" data-f="size_set" data-v="${v}" aria-pressed="${it.size_set===v}">${n}</button>`).join("")}</div></div>
+   <div class="field"><label for="iCodes">رمز الكتالوج</label><input type="text" id="iCodes" dir="ltr" value="${esc(it.codes||"")}" placeholder="ANDS01–02"></div>
    <div class="field"><label for="iNote">ملاحظة</label><textarea id="iNote">${esc(it.note||"")}</textarea></div>
+   <div class="toggle"><div><b>صنف كتالوج</b><div class="hint">يظهر بتمييز خاص ما دام لا يوجد له رصيد أو طلب.</div></div><button class="sw" type="button" role="switch" id="iCat" aria-checked="${!!it.catalog}" aria-label="صنف كتالوج"></button></div>
    <div class="err" id="ierr"></div>`,
    `${code?`<button class="btn ghost" type="button" id="iHide">إخفاء الصنف</button>`:""}<span class="total"></span><button class="btn" type="button" id="iSave">حفظ</button>`);
   $("#sheetBody").querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{it[b.dataset.f]=b.dataset.v;$("#sheetBody").querySelectorAll(`[data-f="${b.dataset.f}"]`).forEach(x=>x.setAttribute("aria-pressed",x===b))});
+  $("#iCat").onclick=()=>{it.catalog=!it.catalog;$("#iCat").setAttribute("aria-checked",!!it.catalog)};
   $("#imFile").onchange=e=>{const f=e.target.files[0];if(!f)return;newFile=f;removeImg=false;const p=$("#imPrev");p.src=URL.createObjectURL(f);p.hidden=false;$("#imDel").hidden=false};
   $("#imDel").onclick=()=>{newFile=null;removeImg=true;$("#imPrev").hidden=true;$("#imDel").hidden=true};
   if(code)$("#iHide").onclick=()=>confirmBox("إخفاء هذا الصنف من القوائم؟ تبقى حركاته محفوظة في قاعدة البيانات.",async()=>{const {error}=await S.sb.from("zay_items").update({active:false,updated_at:new Date().toISOString()}).eq("id",code);toast(error?"تعذّر الإخفاء":"أُخفي الصنف");refresh()},"إخفاء");
@@ -497,10 +527,60 @@ function editItem(code){
         const {error}=await S.sb.storage.from("zay").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(error)throw error;
         if(it.image_path)S.sb.storage.from("zay").remove([it.image_path]).catch(()=>{});image_path=path}
       else if(removeImg&&it.image_path){S.sb.storage.from("zay").remove([it.image_path]).catch(()=>{})}
-      const row={id,name,system:it.system,stage:$("#iStage").value.trim(),gender:it.gender,type:it.type,note:$("#iNote").value.trim()||null,image_path,sort:it.sort??0,active:true,updated_at:new Date().toISOString()};
+      const row={id,name,system:it.system,stage:$("#iStage").value.trim(),gender:it.gender,type:it.type,note:$("#iNote").value.trim()||null,image_path,sort:it.sort??0,active:true,size_set:it.size_set,catalog:!!it.catalog,codes:$("#iCodes").value.trim()||null,cat_page:it.cat_page??null,updated_at:new Date().toISOString()};
       const {error}=await S.sb.from("zay_items").upsert(row);if(error)throw error;
       closeSheet();toast("تم حفظ الصنف");await refresh();
     }catch(e){b.disabled=false;b.textContent="حفظ";$("#ierr").textContent=e&&e.message==="type"?"الملف المختار ليس صورة.":"تعذّر الحفظ. تحقق من الاتصال وأعد المحاولة."}
+  };
+}
+
+/* ============ استيراد صور الكتالوج من ملف PDF (المالك) ============ */
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function importCatalog(){
+  if(!isOwner())return;
+  const items=sortedItems().filter(([,it])=>it.cat_page);
+  openSheet("استيراد صور الكتالوج",`
+   <div class="hint">اختر ملف كتالوج الزي (PDF). يقرأ التطبيق كل صفحة ويقصّها ويضعها صورةً للصنف المرتبط بها (${items.length} صنفاً)، ويحفظ ملف الكتالوج نفسه ليفتحه الجميع من صفحة الأصناف.</div>
+   <label class="btn ghost" for="pdfIn">اختيار ملف الكتالوج (PDF)</label><input type="file" id="pdfIn" accept="application/pdf" hidden>
+   <div class="toggle"><div><b>استبدال الصور الحالية</b><div class="hint">عند الإيقاف تُضاف الصور للأصناف التي ليس لها صورة فقط.</div></div><button class="sw" type="button" role="switch" id="repl" aria-checked="true" aria-label="استبدال الصور الحالية"></button></div>
+   <div class="prog" hidden id="pg"><div></div></div><div class="hint num" id="pgt"></div><div class="err" id="perr"></div>`,"");
+  let repl=true;$("#repl").onclick=()=>{repl=!repl;$("#repl").setAttribute("aria-checked",repl)};
+  $("#pdfIn").onchange=async e=>{
+    const file=e.target.files[0];if(!file)return;const t=$("#pgt"),er=$("#perr"),bar=$("#pg");bar.hidden=false;er.textContent="";
+    try{
+      t.textContent="جارٍ تحميل قارئ PDF…";
+      if(!window.pdfjsLib){await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js")}
+      pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      const buf=await file.arrayBuffer();
+      const pdf=await pdfjsLib.getDocument({data:buf.slice(0)}).promise;
+      const p3=await (await pdf.getPage(Math.min(3,pdf.numPages))).getTextContent();
+      if(!p3.items.map(x=>x.str).join("").replace(/\s/g,"").includes("ANDS01")){er.textContent="هذا الملف لا يطابق كتالوج الزي المعتمد (لم أجد ANDS01 في الصفحة 3). لم يُستورد شيء.";return}
+      t.textContent="جارٍ رفع ملف الكتالوج…";
+      const cpath="catalog/zay-catalog-"+Date.now()+".pdf";
+      const up=await S.sb.storage.from("zay").upload(cpath,new Blob([buf],{type:"application/pdf"}),{contentType:"application/pdf",upsert:true});
+      if(!up.error){const old=S.me.catalog_path;await S.sb.from("zay_settings").update({catalog_path:cpath}).eq("id",1);if(old)S.sb.storage.from("zay").remove([old]).catch(()=>{});S.me.catalog_path=cpath}
+      const todo=items.filter(([,it])=>repl||!it.image_path);const cache={};let done=0,fail=0;
+      for(const [code,it] of todo){
+        t.textContent=`صفحة ${it.cat_page} — ${it.name} (${done+1}/${todo.length})`;
+        try{
+          let blob=cache[it.cat_page];
+          if(!blob){const page=await pdf.getPage(it.cat_page);const vp=page.getViewport({scale:2.2});
+            const cv=document.createElement("canvas");cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);
+            const ctx=cv.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,cv.width,cv.height);
+            await page.render({canvasContext:ctx,viewport:vp}).promise;
+            const h=Math.round(cv.height*.87),out=document.createElement("canvas");out.width=cv.width;out.height=h;
+            out.getContext("2d").drawImage(cv,0,0,cv.width,h,0,0,cv.width,h);
+            blob=await new Promise(r=>out.toBlob(r,"image/jpeg",.82));cache[it.cat_page]=blob;page.cleanup()}
+          const path=`items/${code}/catalog-p${it.cat_page}-${Date.now()}.jpg`;
+          const {error}=await S.sb.storage.from("zay").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(error)throw error;
+          const {error:e2}=await S.sb.from("zay_items").update({image_path:path,updated_at:new Date().toISOString()}).eq("id",code);if(e2)throw e2;
+          if(it.image_path)S.sb.storage.from("zay").remove([it.image_path]).catch(()=>{});
+        }catch(x){fail++}
+        done++;bar.firstElementChild.style.width=Math.round(done/todo.length*100)+"%";
+      }
+      t.textContent=`تم: ${done-fail} صورة${fail?` · تعذّر ${fail}`:""}${up.error?" · لم يُحفظ ملف الكتالوج":""}`;
+      toast("اكتمل استيراد صور الكتالوج");await refresh();
+    }catch(x){er.textContent="تعذّر قراءة الملف أو تحميل قارئ PDF. تحقق من الاتصال وأعد المحاولة."}
   };
 }
 
@@ -509,21 +589,21 @@ function openEntry(kind,pre={}){
   if(!canWrite()){toast(S.user?"وضع الاطلاع فقط. للإدخال تواصل مع "+OWNER_NAME:"سجّل الدخول أولاً");if(!S.user)openAuth();return}
   const f={kind,code:pre.code||"",supplier:"",section:pre.section||"",sizes:{},date:today(),receiver:"",ref:"",note:""};
   openSheet("إدخال جديد","",`<div class="total">الإجمالي <b class="num" id="tot">0</b> قطعة</div><button class="btn" type="button" id="save">حفظ</button>`);
-  const autoSup=()=>{const cs=S.calc[f.code]||{};for(const s of SUPPLIERS){if(SIZES.some(z=>cs[z]&&cs[z].sup[s.k]>0)){f.supplier=s.k;return}}};
+  const autoSup=()=>{const cs=S.calc[f.code]||{};for(const s of SUPPLIERS){if(sizesFor(f.code).some(z=>cs[z]&&cs[z].sup[s.k]>0)){f.supplier=s.k;return}}};
   const sumUp=()=>{$("#tot").textContent=fmt(Object.values(f.sizes).reduce((a,b)=>a+b,0))};
   const draw=()=>{
     const it=S.items[f.code];const cs=S.calc[f.code]||{};
     const needSup=f.kind!=="need",needSec=f.kind==="out"||f.kind==="need";
-    const groups={};for(const [c,i] of sortedItems())(groups[(i.system||"")+" — "+(i.type||"")]??=[]).push([c,i]);
+    const groups={};for(const [c,i] of sortedItems())(groups[isCat(c)?"من الكتالوج (غير مسجّل بالمخزون)":(i.system||"")+" — "+(i.type||"")]??=[]).push([c,i]);
     $("#sheetBody").innerHTML=`
     <div class="kinds" role="group" aria-label="نوع الحركة">${["in","out","need","adjust"].map(k=>`<button type="button" data-kind="${k}" aria-pressed="${f.kind===k}">${KINDS[k]}</button>`).join("")}</div>
-    <div class="field"><label for="fCode">الصنف</label><select id="fCode"><option value="">اختر الصنف…</option>${Object.entries(groups).map(([g,arr])=>`<optgroup label="${esc(g)}">${arr.map(([c,i])=>`<option value="${esc(c)}" ${c===f.code?"selected":""}>${esc(i.name)}</option>`).join("")}</optgroup>`).join("")}</select>
+    <div class="field"><label for="fCode">الصنف</label><select id="fCode"><option value="">اختر الصنف…</option>${Object.entries(groups).map(([g,arr])=>`<optgroup label="${esc(g)}">${arr.map(([c,i])=>`<option value="${esc(c)}" ${c===f.code?"selected":""}>${esc(i.name)}${isCat(c)?" ◇":""}</option>`).join("")}</optgroup>`).join("")}</select>
       ${it&&it.image_path?`<img src="${esc(imgUrl(it.image_path))}" alt="شكل ${esc(it.name)}" style="width:100%;max-height:150px;object-fit:contain;background:var(--sunk);border-radius:12px">`:""}</div>
     ${needSec?`<div class="field"><label for="fSec">${f.kind==="out"?"القسم المستلم":"القسم الطالب"}</label><select id="fSec"><option value="">اختر القسم…</option>${SECTIONS.map(s=>`<option ${s===f.section?"selected":""}>${s}</option>`).join("")}</select></div>`:""}
     ${needSup?`<div class="field"><span class="lab">${f.kind==="out"?"يُصرف من مخزون المورد":"المورد"}</span><div class="chips">${SUPPLIERS.map(s=>`<button type="button" class="chip" data-sup="${s.k}" aria-pressed="${f.supplier===s.k}">${s.n}<small style="opacity:.75"> · ${s.y}</small></button>`).join("")}</div>
       ${f.kind==="out"?`<div class="hint">يُنصح بالصرف من مخزون العام السابق أولاً (الصفوة، هاتريك).</div>`:""}</div>`:""}
     <div class="field"><span class="lab">الكميات حسب المقاس ${f.kind==="adjust"?"(اكتب − للنقص)":""}</span>
-      ${f.code?`<div class="sizes num">${SIZES.map(s=>{const c=cs[s];let h="";
+      ${f.code?`<div class="sizes num">${sizesFor(f.code).map(s=>{const c=cs[s];let h="";
         if(f.kind==="out"){const av=f.supplier?(c?Math.max(0,c.sup[f.supplier]):0):(c?c.stock:0);h=av?"متاح "+av:"—";if(c&&c.rem)h+=" · طلب "+c.rem}
         else if(f.kind==="need")h=c&&c.stock?"مخزون "+c.stock:"";
         else h=c&&c.stock?"حالياً "+c.stock:"";
@@ -674,7 +754,7 @@ async function copy(txt,ok){try{await navigator.clipboard.writeText(txt);toast(o
 function exportCsv(){
   compute();const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
   const L=["﻿"+["الصنف","النظام","المرحلة","المقاس","الصفوة","هاتريك","تيلا","الفرسان","المخزون","الطلب","صُرف","المتبقي","العجز","الفائض"].map(q).join(",")];
-  for(const [c,it] of sortedItems())for(const s of SIZES){const x=S.calc[c]&&S.calc[c][s];if(!x||!(x.stock||x.need||x.out))continue;
+  for(const [c,it] of sortedItems())for(const s of sizesFor(c)){const x=S.calc[c]&&S.calc[c][s];if(!x||!(x.stock||x.need||x.out))continue;
     L.push([it.name,it.system,it.stage,s,...SUPPLIERS.map(p=>Math.max(0,x.sup[p.k])),x.stock,x.need,x.out,x.rem,x.def,x.sur].map(q).join(","))}
   L.push("");L.push(q("سجل الحركات"));L.push(["التاريخ","النوع","الصنف","المورد","القسم","المقاسات","الإجمالي","المستلم","المرجع","ملاحظة","أدخله"].map(q).join(","));
   for(const e of S.entries.slice().sort((a,b)=>String(a.date||"").localeCompare(String(b.date||""))))
