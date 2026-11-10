@@ -566,7 +566,7 @@ async function importCatalog(){
       const cpath="catalog/zay-catalog-"+Date.now()+".pdf";
       const up=await S.sb.storage.from("zay").upload(cpath,new Blob([buf],{type:"application/pdf"}),{contentType:"application/pdf",upsert:true});
       if(!up.error){const old=S.me.catalog_path;await S.sb.from("zay_settings").update({catalog_path:cpath}).eq("id",1);if(old)S.sb.storage.from("zay").remove([old]).catch(()=>{});S.me.catalog_path=cpath}
-      const todo=items.filter(([,it])=>repl||!it.image_path);const cache={};let done=0,fail=0;
+      const todo=items.filter(([,it])=>repl||!it.image_path);const cache={};let done=0,fail=0,lastErr=up.error?(up.error.message||String(up.error)):"";
       for(const [code,it] of todo){
         t.textContent=`صفحة ${it.cat_page} — ${it.name} (${done+1}/${todo.length})`;
         try{
@@ -582,10 +582,10 @@ async function importCatalog(){
           const {error}=await S.sb.storage.from("zay").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(error)throw error;
           const {error:e2}=await S.sb.from("zay_items").update({image_path:path,updated_at:new Date().toISOString()}).eq("id",code);if(e2)throw e2;
           if(it.image_path)S.sb.storage.from("zay").remove([it.image_path]).catch(()=>{});
-        }catch(x){fail++}
+        }catch(x){fail++;lastErr=(x&&(x.message||x.error))||String(x)}
         done++;bar.firstElementChild.style.width=Math.round(done/todo.length*100)+"%";
       }
-      t.textContent=`تم: ${done-fail} صورة${fail?` · تعذّر ${fail}`:""}${up.error?" · لم يُحفظ ملف الكتالوج":""}`;
+      t.textContent=`تم: ${done-fail} صورة${fail?` · تعذّر ${fail}`:""}${up.error?" · لم يُحفظ ملف الكتالوج":""}`;if(lastErr&&(fail||up.error))er.textContent="سبب الخطأ: "+lastErr;
       toast("اكتمل استيراد صور الكتالوج");await refresh();
     }catch(x){er.textContent="تعذّر قراءة الملف أو تحميل قارئ PDF. تحقق من الاتصال وأعد المحاولة."}
   };
@@ -795,7 +795,7 @@ document.addEventListener("click",async e=>{
 });
 
 /* ============ التحديث بالسحب للأسفل + فحص النسخة ============ */
-const APP_VERSION="2026-11-10.3";
+const APP_VERSION="2026-11-10.4";
 function hardReload(){const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())}
 async function newVersion(){try{const t=await (await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"})).text();const m=t.match(/APP_VERSION="([^"]+)"/);return m&&m[1]!==APP_VERSION?m[1]:null}catch(e){return null}}
 $("#updBar").onclick=hardReload;
