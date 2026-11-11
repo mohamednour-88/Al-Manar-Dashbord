@@ -685,7 +685,7 @@ async function importCatalog(){
 function openEntry(kind,pre={}){
   if(!canWrite()){toast(S.user?"وضع الاطلاع فقط. للإدخال تواصل مع "+OWNER_NAME:"سجّل الدخول أولاً");if(!S.user)openAuth();return}
   if(kind==="out")return openIssue(pre);
-  const f={kind,code:pre.code||"",supplier:"",section:pre.section||"",sizes:{},date:today(),receiver:"",ref:"",note:"",reason:"",neg:false};
+  const f={kind,code:pre.code||"",supplier:"",section:pre.section||"",sizes:{},cnt:{},actual:true,date:today(),receiver:"",ref:"",note:"",reason:"",neg:false};
   openSheet("إدخال جديد","",`<div class="total">الإجمالي <b class="num" id="tot">0</b> قطعة</div><button class="btn" type="button" id="save">حفظ</button>`);
   const autoSup=()=>{const cs=S.calc[f.code]||{};for(const s of SUPPLIERS){if(sizesFor(f.code).some(z=>cs[z]&&cs[z].sup[s.k]>0)){f.supplier=s.k;return}}};
   const sumUp=()=>{$("#tot").textContent=fmt(Object.values(f.sizes).reduce((a,b)=>a+b,0))};
@@ -704,8 +704,13 @@ function openEntry(kind,pre={}){
     ${needSup?`<div class="field"><span class="lab">${f.kind==="in"?"مصدر الإضافة":"المورد"}</span><div class="chips">${SUPX.map(s=>`<button type="button" class="chip" data-sup="${s.k}" aria-pressed="${f.supplier===s.k}">${s.n}<small style="opacity:.75"> · ${s.y}</small></button>`).join("")}</div>
       ${f.supplier==="other"&&f.kind==="in"?`<input type="text" id="fSrc" value="${esc(f.section)}" placeholder="اسم الجهة، مثل: فرع الروضة" style="margin-top:8px">`:""}
       ${f.kind==="in"?`<div class="hint">الكمية المضافة تُخصم تلقائياً من احتياج نفس المقاس.</div>`:""}</div>`:""}
-    <div class="field"><span class="lab">الكميات حسب المقاس ${f.kind==="adjust"?"(اكتب − للنقص)":""}</span>
+    ${f.kind==="adjust"?`<div class="field"><span class="lab">طريقة التصحيح</span><div class="chips"><button type="button" class="chip" data-act="1" aria-pressed="${f.actual}">أكتب العدد الفعلي بعد الجرد</button><button type="button" class="chip" data-act="0" aria-pressed="${!f.actual}">أكتب الفرق (+ أو −)</button></div>
+      ${f.actual?`<div class="hint">اكتب العدد الموجود فعلاً في المستودع لكل مقاس، والتطبيق يصحّح الرقم المسجّل تلقائياً. اترك المقاس فارغاً إذا لم تعدّه، واكتب 0 إذا لم تجد منه شيئاً.</div>`:""}</div>`:""}
+    ${f.kind==="adjust"&&f.actual&&!f.supplier?`<div class="hint" style="color:var(--warn)">اختر المورد أولاً لتظهر الأرقام المسجّلة لكل مقاس.</div>`:""}
+    <div class="field"><span class="lab">${f.kind==="adjust"&&f.actual?"العدد الفعلي حسب المقاس":"الكميات حسب المقاس"} ${f.kind==="adjust"&&!f.actual?"(اكتب − للنقص)":""}</span>
       ${f.code?`<div class="sizes num">${sizesFor(f.code).map(s=>{const c=cs[s];let h="";
+        if(f.kind==="adjust"&&f.actual){const cur=c?Math.max(0,c.sup[f.supplier]||0):0;const v=f.cnt[s]??"";const d=v===""?0:v-cur;
+          return `<div class="szc ${v!==""?"on":""}"><span class="n">${s}</span><span class="h">مسجّل ${cur}${v!==""&&d?` · <b dir="ltr" style="color:${d>0?"var(--ok)":"var(--bad)"}">${d>0?"+":""}${d}</b>`:""}</span><input type="number" inputmode="numeric" min="0" value="${v}" data-cnt="${s}" aria-label="العدد الفعلي مقاس ${s}"></div>`}
         if(f.kind==="need")h=c&&c.need?"احتياج "+c.need:(c&&c.stock?"مخزون "+c.stock:"");
         else if(f.kind==="in")h=c&&c.need?"احتياج "+c.need:(c&&c.stock?"حالياً "+c.stock:"");
         else h=c&&c.stock?"حالياً "+c.stock:"";
@@ -720,11 +725,15 @@ function openEntry(kind,pre={}){
     $("#sheetBody").querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{if(b.dataset.kind==="out"){openIssue({code:f.code});return}f.kind=b.dataset.kind;if(f.kind==="need")f.supplier="";draw()});
     $("#sheetBody").querySelectorAll("[data-rsn]").forEach(b=>b.onclick=()=>{f.reason=b.dataset.rsn;draw()});
     $("#sheetBody").querySelectorAll("[data-neg]").forEach(b=>b.onclick=()=>{f.neg=b.dataset.neg==="1";draw()});
+    $("#sheetBody").querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>{f.actual=b.dataset.act==="1";f.sizes={};f.cnt={};draw()});
+    $("#sheetBody").querySelectorAll("[data-cnt]").forEach(inp=>inp.oninput=()=>{const k=inp.dataset.cnt,v=inp.value.trim();if(v==="")delete f.cnt[k];else f.cnt[k]=Math.max(0,Math.floor(Number(v)||0));
+      const c=(S.calc[f.code]||{})[k];const cur=c?Math.max(0,c.sup[f.supplier]||0):0;const d=f.cnt[k]===undefined?0:f.cnt[k]-cur;
+      inp.parentElement.classList.toggle("on",f.cnt[k]!==undefined);inp.parentElement.querySelector(".h").innerHTML="مسجّل "+cur+(d?` · <b dir="ltr" style="color:${d>0?"var(--ok)":"var(--bad)"}">${d>0?"+":""}${d}</b>`:"")});
     if($("#fRsn"))$("#fRsn").oninput=e=>f.reason=e.target.value.trim()||"أخرى";
     if($("#fSrc"))$("#fSrc").oninput=e=>f.section=e.target.value;
     $("#fCode").onchange=e=>{f.code=e.target.value;f.sizes={};draw()};
     if($("#fSec"))$("#fSec").onchange=e=>f.section=e.target.value;
-    $("#sheetBody").querySelectorAll("[data-sup]").forEach(b=>b.onclick=()=>{f.supplier=b.dataset.sup;if(f.supplier!=="other"&&f.kind==="in")f.section="";draw()});
+    $("#sheetBody").querySelectorAll("[data-sup]").forEach(b=>b.onclick=()=>{f.supplier=b.dataset.sup;f.cnt={};if(f.supplier!=="other"&&f.kind==="in")f.section="";draw()});
     $("#sheetBody").querySelectorAll("[data-sz]").forEach(inp=>inp.oninput=()=>{const v=inp.value.trim().replace("−","-");const n=Number(v);
       if(v===""||!n)delete f.sizes[inp.dataset.sz];else f.sizes[inp.dataset.sz]=n;inp.parentElement.classList.toggle("on",!!f.sizes[inp.dataset.sz]);sumUp()});
     $("#fDate").onchange=e=>f.date=e.target.value;
@@ -740,6 +749,10 @@ function openEntry(kind,pre={}){
     if(f.kind==="need"&&(!f.reason||f.reason==="أخرى"&&!$("#fRsn")?.value.trim()))return err("اختر سبب الاحتياج.");
     if(f.kind!=="need"&&!f.supplier)return err("اختر المصدر أو المورد.");
     if(f.kind==="in"&&f.supplier==="other"&&!f.section.trim())return err("اكتب اسم الجهة.");
+    if(f.kind==="adjust"&&f.actual){const cs=S.calc[f.code]||{};if(!Object.keys(f.cnt).length)return err("اكتب العدد الفعلي لمقاس واحد على الأقل.");
+      f.sizes={};for(const [s0,v] of Object.entries(f.cnt)){const d=v-((cs[s0]&&cs[s0].sup[f.supplier])||0);if(d)f.sizes[s0]=d}
+      if(!Object.keys(f.sizes).length){closeSheet();toast("الأرقام مطابقة للمسجّل، لا يحتاج تصحيح");return}
+      f.note=("جرد فعلي: "+Object.entries(f.cnt).map(([a,b])=>a+"="+b).join("، ")+(f.note.trim()?" — "+f.note.trim():""))}
     const sz=Object.fromEntries(Object.entries(f.sizes).filter(([,q])=>q));
     if(!Object.keys(sz).length)return err("أدخل كمية لمقاس واحد على الأقل.");
     if(Object.values(sz).some(q=>!Number.isInteger(q)))return err("الكميات يجب أن تكون أعداداً صحيحة.");
@@ -1019,7 +1032,7 @@ document.addEventListener("click",async e=>{
 });
 
 /* ============ التحديث بالسحب للأسفل + فحص النسخة ============ */
-const APP_VERSION="2026-11-11.1";
+const APP_VERSION="2026-11-11.2";
 function hardReload(){const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())}
 async function newVersion(){try{const t=await (await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"})).text();const m=t.match(/APP_VERSION="([^"]+)"/);return m&&m[1]!==APP_VERSION?m[1]:null}catch(e){return null}}
 $("#updBar").onclick=hardReload;
