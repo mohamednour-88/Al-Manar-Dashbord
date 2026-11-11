@@ -51,12 +51,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{font-family:var(--f-display);text-wrap:balance}
 
 header.top{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:3px solid var(--accent);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px}
-.brand{display:flex;align-items:center;gap:12px;max-width:720px;margin:0 auto}
-.brand img{height:42px;width:auto;filter:var(--logo-filter)}
-.brand-t{flex:1;min-width:0;border-inline-start:1px solid var(--line);padding-inline-start:10px;line-height:1.35}
-.brand-t .org{font-size:12px;color:var(--muted);white-space:nowrap}
+.brand{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;max-width:720px;margin:0 auto}
+.brand img{height:44px;width:auto;filter:var(--logo-filter);justify-self:start}
+.brand-t{text-align:center;line-height:1.35;min-width:0}
+.brand-t .app{font-family:var(--f-display);font-weight:700;font-size:19px;color:var(--brand);white-space:nowrap}
+.brand-t .org{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.brand .hbtns{justify-self:end}
+@media (max-width:560px){.brand{grid-template-columns:auto 1fr;gap:6px 8px}.brand img{grid-column:1;grid-row:1;height:38px}.brand .hbtns{grid-column:2;grid-row:1}.brand-t{grid-column:1/-1;grid-row:2}.brand-t .app{font-size:19px}}
 .titlebar{max-width:720px;margin:8px auto 0;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.titlebar h1{margin:0;font-size:19px;color:var(--brand)}
+.titlebar h2{margin:0;font-size:16px;color:var(--fg)}
 .hbtns{display:flex;gap:6px}
 .hbtn{min-width:36px;height:36px;border-radius:18px;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;cursor:pointer;font-size:16px;text-decoration:none;padding:0 8px}
 .hbtn svg{width:19px;height:19px}
@@ -216,14 +219,14 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 <header class="top">
   <div class="brand">
     <img src="../bait/logo.png" alt="شركة الأندلس التعليمية">
-    <div class="brand-t"><div class="org">فرع المنار</div><div class="org">الدعم اللوجستي</div></div>
+    <div class="brand-t"><div class="app">مخزون الزي المدرسي</div><div class="org">الدعم اللوجستي ـ فرع المنار</div></div>
     <div class="hbtns">
       <a class="hbtn o-only" href="#access" aria-label="الصلاحيات" title="الصلاحيات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/></svg></a>
       <button class="hbtn" id="themeBtn" type="button"></button>
       <button class="hbtn txt" id="authBtn" type="button">دخول</button>
     </div>
   </div>
-  <div class="titlebar"><h1 id="pageTitle">مخزون الزي المدرسي</h1><div class="mode ro" id="modeBadge" hidden></div></div>
+  <div class="titlebar"><h2 id="pageTitle">الرئيسية</h2><div class="mode ro" id="modeBadge" hidden></div></div>
 </header>
 <main>
   <div class="status" id="status">جارٍ تحميل البيانات…</div>
@@ -394,12 +397,12 @@ async function loadMe(){
 async function refresh(){await loadData();if(isOwner())await loadAdmin();softRender()}
 
 /* ============ التنقل ============ */
-const ROUTES={home:"مخزون الزي المدرسي",items:"الأصناف",docs:"نماذج التسليم",log:"سجل الحركات",reports:"الاحتياج والفائض",access:"الصلاحيات"};
+const ROUTES={home:"الرئيسية",items:"الأصناف",docs:"نماذج التسليم",log:"سجل الحركات",reports:"الاحتياج والفائض",access:"الصلاحيات"};
 let filt={sys:"الكل",q:"",logKind:"الكل"};
 function curRoute(){let r=(location.hash||"#home").slice(1);if(r==="sections")r="docs";return ROUTES[r]?r:"home"}
 function route(){
   let key=curRoute();if(key==="access"&&!isOwner())key="home";
-  $("#pageTitle").textContent=ROUTES[key];
+  $("#pageTitle").textContent=key==="home"?"":ROUTES[key];
   document.querySelectorAll("nav.tabs a").forEach(a=>a.setAttribute("aria-current",a.dataset.r===key||(key==="reports"&&a.dataset.r==="home")?"page":"false"));
   compute();({home:vHome,items:vItems,docs:vDocs,log:vLog,reports:vReports,access:vAccess})[key]();
 }
@@ -1032,7 +1035,7 @@ document.addEventListener("click",async e=>{
 });
 
 /* ============ التحديث بالسحب للأسفل + فحص النسخة ============ */
-const APP_VERSION="2026-11-11.2";
+const APP_VERSION="2026-11-11.3";
 function hardReload(){const u=new URL(location.href);u.searchParams.set("v",Date.now());location.replace(u.toString())}
 async function newVersion(){try{const t=await (await fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"})).text();const m=t.match(/APP_VERSION="([^"]+)"/);return m&&m[1]!==APP_VERSION?m[1]:null}catch(e){return null}}
 $("#updBar").onclick=hardReload;
