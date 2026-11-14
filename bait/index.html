@@ -199,6 +199,11 @@ dialog.lb button{position:absolute;top:8px;inset-inline-start:8px;width:36px;hei
 .prow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line)}.prow>b{min-width:110px;font-size:.92rem}.prow>div{display:flex;flex-wrap:wrap;gap:6px}
 .pchip{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--sunk);font-size:.85rem}.pchip.ok{background:var(--ok-soft,#E3F2EA);color:var(--ok,#1C7A4A)}.pchip.bad{background:var(--late-soft,#FBE9E7);color:var(--bad,#C0392B)}
 .polbox{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);margin-bottom:10px}.polbox .pol{display:grid;gap:8px}.polbox .card{box-shadow:none}
+.dpage .dhc{display:grid;grid-template-columns:1fr 2fr 1fr;align-items:center;gap:8px}.dpage .dhc img{height:54px;justify-self:start}.dpage .dhc .dt{text-align:center}.dpage .dhc .bt{font-size:1.35rem;color:#202E85}
+.dpol{break-before:page;page-break-before:always;padding-top:6px}.dpol .card{box-shadow:none;border:1px solid #DDE2EA;border-radius:8px;padding:10px 12px;margin:0 0 8px;background:#fff}.dpol .pol{display:block;columns:2;column-gap:10px}.dpol .pol>*{break-inside:avoid;display:inline-block;width:100%}.dpol{font-size:.86em}.dpol h2{font-size:1rem;margin:0 0 4px}.dpol ul,.dpol ol{margin:0;padding-inline-start:18px}.dpol li{margin:2px 0;font-size:.92em}.dpol .pool-rule{border:1.5px solid #C0392B;background:#FBEDEB}.dpol .pool-rule h2,.dpol .pool-rule p{color:#A93226}
+.dsign{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;margin-top:14px;font-size:.9em}
+.dpage .hv td.bx{text-align:center;font-size:1.1em}.dpage .hv td,.dpage .hv th{height:17px;padding-top:2px;padding-bottom:2px}.dpage .hv{font-size:.9em}
+.dsign3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.dsign3>div{border:1px solid #CFD6E3;border-radius:8px;padding:7px 9px;display:grid;gap:6px;font-size:.88em}.dsign3 b{color:#202E85}
 </style></head><body>
 <div class="wrap">
   <header class="top">
@@ -236,7 +241,7 @@ const SUPABASE_ANON_KEY="sb_publishable_4KHvoUKfTJ-0J5OWmVRP-A_PPMFXpjQ";
 const PHONE_DOMAIN="@phone.almanar.app";
 
 /* ===================== الإعدادات الافتراضية (تُستبدل بما تحفظه الإدارة) ===================== */
-const DEFAULTS={bank:{name:"البنك الأهلي السعودي (SNB)",acc:"شركة الأندلس التعليمية",no:"11849399000207",iban:"SA1210000011849399000207"},
+const DEFAULTS={vatNo:"3002197652100003",bank:{name:"البنك الأهلي السعودي (SNB)",acc:"شركة الأندلس التعليمية",no:"11849399000207",iban:"SA1210000011849399000207"},
   version:4, demo:false, pricingV3:true,
   capacity:{rooms:[{n:1,t:"st",beds:10},{n:2,t:"st",beds:10},{n:3,t:"st",beds:12},{n:4,t:"st",beds:8},{n:5,t:"sup",beds:3},{n:6,t:"st",beds:10},{n:7,t:"st",beds:10},{n:8,t:"sup",beds:1},{n:9,t:"sup",beds:4}]},
   packages:[{key:"main",label:"القسم الرئيسي",rooms:[1,2,3,4,5,6,9],areas:"الصالة الرئيسية ومنطقة الألعاب والمصلى",price:{wd:1550,we:1550},active:false},
@@ -367,15 +372,15 @@ function bestSet(list,need,prefer){if(need<=0)return[];let best=null;const n=lis
     if(!best||key[0]<best.k[0]||key[0]===best.k[0]&&(key[1]<best.k[1]||key[1]===best.k[1]&&(key[2]<best.k[2]||key[2]===best.k[2]&&key[3]<best.k[3])))best={set,k:key}}
   return best?best.set:null}
 function autoPlan(f){const st=+f.students||0,sup=+f.supervisors||0,R=ROOMS(),W=WING();
-  const ok=f.from&&f.to&&f.to>f.from;const free=ok?freeRooms(f):R;
-  const a=bestSet(free.filter(r=>r.t==="st"),st),b=bestSet(free.filter(r=>r.t==="sup"),sup,W);
-  const busy=new Set();if(ok)blocksOver(f).forEach(x=>{if(x.whole)AREAS.forEach(z=>busy.add(z.k));(x.areas||[]).forEach(k=>busy.add(k))});
+  const ok=f.from&&f.to&&f.to>f.from;const free=ok?freeRooms(f,S.editId):R;const sw=!!f.supWithSt;
+  const a=bestSet(free.filter(r=>r.t==="st"),sw?st+sup:st),b=sw?[]:bestSet(free.filter(r=>r.t==="sup"),sup,W);
+  const busy=new Set();if(ok)blocksOver(f,S.editId).forEach(x=>{if(x.whole)AREAS.forEach(z=>busy.add(z.k));(x.areas||[]).forEach(k=>busy.add(k))});
   const stIds=(a||[]).map(r=>r.n).sort((x,y)=>x-y),supIds=(b||[]).map(r=>r.n).sort((x,y)=>x-y),ids=[...stIds,...supIds];
   const allSt=R.filter(r=>r.t==="st").every(r=>stIds.includes(r.n)),wingN=W.filter(n=>supIds.includes(n)).length;
   const P={stIds,supIds,ids,okSt:!!a,okSup:!!b,main:"",small:""};
   if(st+sup>0){P.main=allSt?"inc":busy.has("main")?"busy":"pay";P.small=wingN===W.length?"inc":wingN===1?(busy.has("small")?"busy":"pay"):""}
   P.areas=[...(P.main==="pay"?["main"]:[]),...(P.small==="pay"?["small"]:[])];return P}
-function applyPlan(f){const P=autoPlan(f);f.mode="rooms";f.roomIds=P.ids;f.areas=P.ids.length?P.areas:[];f.addons=f.addons||{};return P}
+function applyPlan(f){const P=autoPlan(f);f.mode="rooms";f.auto=true;f.roomIds=P.ids;f.areas=P.ids.length?P.areas:[];f.addons=f.addons||{};return P}
 function roomsNeeded(f){const R=ROOMS();const ids=f.mode==="whole"?R.map(r=>r.n):(f.mode==="rooms"||isPkg(f.mode))?selIds(f):(allocate(f).ids||[]);const t=n=>(R.find(r=>r.n===n)||{}).t;return{ids,st:ids.filter(n=>t(n)==="st").length,sup:ids.filter(n=>t(n)==="sup").length}}
 function quote(f){const c=cfg(),P=c.prices;const {n,we,wd}=nightSplit(f);const L=[],D=[];
   if(n<=0)return{n,we,wd,L,D,acc:0,addons:0,disc:0,sub:0,vat:0,total:0,deposit:0,discPct:0};
@@ -385,6 +390,7 @@ function quote(f){const c=cfg(),P=c.prices;const {n,we,wd}=nightSplit(f);const L
   else if(f.mode==="rooms"){for(const r of ROOMS().filter(r=>selIds(f).includes(r.n))){const v=n*roomPrice(r);if(v){L.push([`غرفة ${r.n} (${r.t==="st"?"طلاب":"مشرفين"}): ${fmt(n)} ليلة`,v]);acc+=v}}}
   for(const a of AREAS.filter(a=>areasOf(f).includes(a.k))){const v=n*PR(a.p);if(v){L.push([`${a.label}${a.inc?" "+a.inc:""}: ${fmt(n)} ${u} × ${sar(PR(a.p))}`,v]);acc+=v}}
   let add=0;for(const a of c.addons){const q=+(f.addons||{})[a.key]||0;if(q>0){const v=q*a.price;add+=v;L.push([`${a.label}: ${fmt(q)} ${a.unit} × ${sar(a.price)}`,v])}}
+  for(const x of (Array.isArray(f.extras)?f.extras:[])){const qq=+x.qty||0,pp=+x.price||0,v=Math.round(qq*pp*100)/100;if(v>0&&String(x.label||"").trim()){add+=v;L.push([`خدمة إضافية - ${x.label}: ${fmt(qq)} × ${sar(pp)}`,v])}}
   const staff=f.org==="staff",internal=f.org==="internal";let addDisc=0,accDisc=0,pct=0,ops=0;
   /* رسوم الخدمة: سطر واحد واضح، لا يشملها خصم الإيجار، والبرامج الداخلية لها رسوم التشغيل بدلاً منها */
   let svc=0;const sv=SVC();if(!internal&&acc>0&&sv.price>0&&!(dayMode(f)&&!sv.onHallOnly)){svc=sv.basis==="booking"?sv.price:sv.price*n;L.push([`رسوم الخدمة (${svcTxt}): ${sv.basis==="booking"?"للحجز":fmt(n)+" "+u+" × "+sar(sv.price)}`,svc])}
@@ -415,17 +421,18 @@ function validate(f,{forSubmit}={}){const c=cfg(),cap=c.capacity,E=[],W=[];const
   if(!f.from||!f.to)E.push(hall?"حدّد تاريخ اللقاء وعدد الأيام.":"حدّد تاريخ الوصول وتاريخ المغادرة.");
   else if(n<c.minNights)E.push("تاريخ المغادرة يجب أن يكون بعد تاريخ الوصول.");
   else if(n>c.maxNights)E.push(`أقصى مدة للحجز الواحد ${fmt(c.maxNights)} ${hall?"يوماً":"ليلة"}. للمدد الأطول تواصل مع الإدارة.`);
-  if(f.from&&f.from<today())E.push(hall?"تاريخ اللقاء مضى. اختر تاريخاً قادماً.":"تاريخ الوصول مضى. اختر تاريخاً قادماً.");
+  if(f.from&&f.from<today()&&!(S.editId&&S.editFrom===f.from))E.push(hall?"تاريخ اللقاء مضى. اختر تاريخاً قادماً.":"تاريخ الوصول مضى. اختر تاريخاً قادماً.");
   if(!["whole","rooms"].includes(f.mode)&&!(isPkg(f.mode)&&pkgOf(f.mode).active!==false))E.push("اختر طريقة التأجير. الباقة المختارة غير متاحة حالياً.");
   const st=hall?0:+f.students||0,sup=hall?0:+f.supervisors||0;
   if(!hall&&st+sup<=0)E.push("اكتب عدد الطلاب والمشرفين.");
   const ci=capInfo(),sel=hall?[]:(f.mode==="rooms"||isPkg(f.mode))?ROOMS().filter(r=>selIds(f).includes(r.n)):null;if(!hall&&sel&&!sel.length)E.push("اختر الغرف أو الصالات المطلوبة.");
   const maxSt=sel?sel.filter(r=>r.t==="st").reduce((a,r)=>a+r.beds,0):ci.stBeds;
-  if(st>maxSt)E.push(sel?(isPkg(f.mode)?`عدد الطلاب (${fmt(st)}) أكبر من أسرّة ${modeLabel(f.mode)} (${fmt(maxSt)}).`:`عدد الطلاب (${fmt(st)}) أكبر من أسرّة غرف الطلاب المختارة (${fmt(maxSt)}). أضف غرفة.`):`السعة القصوى للطلاب ${fmt(maxSt)} طالب.`);
+  if(f.supWithSt){const all=sel?sel.reduce((a,r)=>a+r.beds,0):ci.stBeds+ci.supBeds;if(st+sup>all)E.push(`عدد الطلاب والمشرفين (${fmt(st+sup)}) أكبر من أسرّة الغرف (${fmt(all)}).`)}
+  else if(st>maxSt)E.push(sel?(isPkg(f.mode)?`عدد الطلاب (${fmt(st)}) أكبر من أسرّة ${modeLabel(f.mode)} (${fmt(maxSt)}).`:`عدد الطلاب (${fmt(st)}) أكبر من أسرّة غرف الطلاب المختارة (${fmt(maxSt)}). أضف غرفة.`):`السعة القصوى للطلاب ${fmt(maxSt)} طالب.`);
   const maxSup=sel?sel.filter(r=>r.t==="sup").reduce((a,r)=>a+r.beds,0):ci.supBeds;
-  if(sup>maxSup)E.push(sel?(isPkg(f.mode)?`عدد المشرفين (${fmt(sup)}) أكبر من أسرّة المشرفين في ${modeLabel(f.mode)} (${fmt(maxSup)}).`:`عدد المشرفين (${fmt(sup)}) أكبر من أسرّة غرف المشرفين المختارة (${fmt(maxSup)}). أضف غرفة مشرفين.`):`السعة القصوى للمشرفين ${fmt(maxSup)} مشرف.`);
+  if(!f.supWithSt&&sup>maxSup)E.push(sel?(isPkg(f.mode)?`عدد المشرفين (${fmt(sup)}) أكبر من أسرّة المشرفين في ${modeLabel(f.mode)} (${fmt(maxSup)}).`:`عدد المشرفين (${fmt(sup)}) أكبر من أسرّة غرف المشرفين المختارة (${fmt(maxSup)}). أضف غرفة مشرفين.`):`السعة القصوى للمشرفين ${fmt(maxSup)} مشرف.`);
   if(st>0&&sup<Math.ceil(st/c.ratio))E.push(`يلزم مشرف واحد على الأقل لكل ${fmt(c.ratio)} طالباً، أي ${fmt(Math.ceil(st/c.ratio))} مشرف لهذا العدد.`);
-  if(n>0&&!E.length){const bad=checkAvail(f);if(bad.length)E.push(allocate(f).area?`الصالة المختارة محجوزة في ${dfmt(bad[0])}. اختر تاريخاً آخر.`:`لا توجد سعة كافية في ${fmt(bad.length)} ليلة، أولها ${dfmt(bad[0])}. اختر تواريخ أو غرفاً أخرى.`)}
+  if(n>0&&!E.length){const bad=checkAvail(f,S.editId);if(bad.length)E.push(allocate(f,S.editId).area?`الصالة المختارة محجوزة في ${dfmt(bad[0])}. اختر تاريخاً آخر.`:`لا توجد سعة كافية في ${fmt(bad.length)} ليلة، أولها ${dfmt(bad[0])}. اختر تواريخ أو غرفاً أخرى.`)}
   const q=quote(f);if(q.codeBad)W.push("كود الخصم غير صحيح، ولم يُحتسب.");if(q.codeIgnored)W.push("خصم المنسوبين لا يُجمع مع أكواد الخصم.");
   if(f.org==="staff")W.push("خصم المنسوبين يُعتمد بعد تحقق الإدارة من الرقم الوظيفي.");if(f.org==="internal")W.push("البرامج الداخلية معفاة من الإيجار، وتُحسب رسوم التشغيل والخدمات وتأمين مسترد. يُعتمد بعد تحقق الإدارة من القسم.");
   if(forSubmit){if(!f.orgName.trim())E.push(f.org==="staff"?"اكتب جهة عملك في الشركة (المدرسة أو الإدارة).":f.org==="internal"?"اكتب اسم القسم المنظّم للبرنامج.":"اكتب اسم الجهة.");if(!f.contact.trim())E.push("اكتب اسم المسؤول.");
@@ -518,7 +525,8 @@ function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTim
     ${!(cfg().bank&&cfg().bank.iban)?`<div class="note bad">بيانات الحساب البنكي غير مسجلة. أضفها من «الإعدادات» لتظهر في الرسالة.</div>`:""}
     <p class="muted" style="margin:0">الرسالة المختصرة جاهزة، ويُرفق معها ملف عرض السعر PDF. من الجوال تفتح لك قائمة المشاركة: اختر واتساب ثم المستأجر.</p>
     <textarea class="copybox" readonly id="qMsg" rows="9">${esc(m)}</textarea>
-    <div class="btns"><button class="btn sm" type="button" data-share="${esc(b.id)}">إرسال العرض PDF مع الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(m)}">الرسالة فقط على واتساب</a><button class="btn sm ghost" type="button" id="qCopy">نسخ الرسالة</button><button class="btn sm ghost" type="button" data-doc="invoice" data-docid="${esc(b.id)}">عرض السعر PDF</button><button class="btn sm ghost" type="button" id="newReq">عرض سعر جديد</button></div>
+    <label class="check"><input type="checkbox" data-withpol ${S.withPol!==false?"checked":""}><span>إرفاق الشروط والسياسات مع عرض السعر</span></label>
+    <div class="btns"><button class="btn sm" type="button" data-share="${esc(b.id)}">إرسال العرض PDF مع الرسالة</button><button class="btn sm ghost" type="button" data-share="${esc(b.id)}" data-kind="policies">إرسال الشروط والسياسات وحدها</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(m)}">الرسالة فقط على واتساب</a><button class="btn sm ghost" type="button" id="qCopy">نسخ الرسالة</button><button class="btn sm ghost" type="button" data-doc="invoice" data-docid="${esc(b.id)}">عرض السعر PDF</button><button class="btn sm ghost" type="button" id="newReq">عرض سعر جديد</button></div>
     <div class="q">${quoteHTML(b.quote)}</div></div>`}
   if(S.sent)return `<div class="card" style="max-width:640px;margin:0 auto;display:grid;gap:10px">
     <div class="lbl">تم إرسال الطلب</div><h2 class="big">رقم طلبك ${esc(S.sent.ref)}</h2>
@@ -556,6 +564,7 @@ function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTim
       ${(f.addons||{}).pool?`<div class="note bad pool-rule"><b>${POOL_RULE}</b></div>`:""}
       ${f.mode==="whole"&&f.org!=="staff"?`<div class="note ok">المبنى كاملاً: خصم ${fmt(c.wholeAddonDisc)}% على المرافق والخدمات.</div>`:""}
     </fieldset>
+    ${S.isAdmin?extrasHTML(f)+(S.editId?`<div class="note">تعديل عرض السعر ${esc((findBk(S.editId)||{}).ref||"")}. <button class="btn sm ghost" type="button" id="cancelEdit">إلغاء التعديل</button></div>`:""):""}
     <fieldset><legend>4. بيانات الجهة</legend><div class="fg">
         <label class="f">نوع الجهة<select id="org">${Object.entries(ORG).map(([k,t])=>`<option value="${k}" ${f.org===k?"selected":""}>${t}${k==="internal"?" (معفى من الإيجار)":c.orgDisc[k]?` (خصم ${fmt(c.orgDisc[k])}%)`:""}</option>`).join("")}</select></label>
         <label class="f">${f.org==="staff"?"جهة العمل في الشركة":f.org==="internal"?"القسم المنظّم للبرنامج":"اسم الجهة"}<input type="text" id="orgName" value="${esc(f.orgName)}" autocomplete="organization" placeholder="${f.org==="staff"?"مثال: مدارس الأندلس - فرع المنار":""}"></label>
@@ -573,21 +582,31 @@ function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTim
    <aside class="summary card" aria-live="polite"><div class="lbl">عرض السعر التقديري (يُعتمد من الخادم عند الإرسال)</div>
      <div class="q" id="quote">${quoteHTML(q)}</div>
      <div class="errs" id="errs">${errsHTML(v)}</div>
-     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>إرسال طلب الحجز</button>
+     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>${S.editId?"حفظ التعديل وتحديث عرض السعر":S.isAdmin?"حفظ وإصدار عرض السعر":"إرسال طلب الحجز"}</button>
      <p class="muted" style="font-size:.8rem;margin:8px 0 0">السعر النهائي يُعتمد في عرض السعر الرسمي من الإدارة.</p></aside>
   </form>`}
+function extrasHTML(f){const X=Array.isArray(f.extras)?f.extras:[];
+  return `<fieldset><legend>خدمات إضافية <small>عند الطلب، وتُضاف للفاتورة</small></legend><div id="exBox" style="display:grid;gap:8px">
+   ${X.map((x,i)=>`<div class="exrow" style="display:grid;grid-template-columns:1fr 70px 90px auto;gap:6px;align-items:end">
+     <label class="f">الخدمة<input type="text" data-ex="label" data-i="${i}" value="${esc(x.label||"")}" placeholder="مثال: وجبة عشاء"></label>
+     <label class="f">الكمية<input type="number" min="0" step="any" inputmode="decimal" data-ex="qty" data-i="${i}" value="${esc(x.qty??"")}"></label>
+     <label class="f">السعر (ر.س)<input type="number" min="0" step="any" inputmode="decimal" data-ex="price" data-i="${i}" value="${esc(x.price??"")}"></label>
+     <button class="btn sm ghost" type="button" data-exdel="${i}" aria-label="حذف الخدمة">حذف</button></div>`).join("")}
+   <button class="btn sm ghost" type="button" id="exAdd" style="justify-self:start">+ إضافة خدمة</button>
+   <small class="muted">مثل: الوجبات، النقل، استخدام مرفق إضافي. السعر للوحدة قبل الضريبة.</small></div></fieldset>`}
 function planHTML(P){const R=ROOMS(),b=n=>(R.find(r=>r.n===n)||{}).beds||0;
   const li=(ids,t)=>ids.length?ids.map(n=>`<span class="pchip">غرفة ${n} · ${bedsTxt(b(n))}</span>`).join(""):`<span class="muted">—</span>`;
   const hl=(st,lbl)=>st==="inc"?`<span class="pchip ok">${lbl}: مشمولة في سعر الغرف</span>`:st==="pay"?`<span class="pchip">${lbl}: تُحسب تلقائياً</span>`:st==="busy"?`<span class="pchip bad">${lbl}: محجوزة لجهة أخرى في تواريخك</span>`:"";
   return `<div class="prow"><b>غرف الطلاب</b><div>${P.okSt?li(P.stIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
-   <div class="prow"><b>غرف المشرفين</b><div>${P.okSup?li(P.supIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
+   <div class="prow"><b>غرف المشرفين</b><div>${S.form.supWithSt?`<span class="pchip ok">المشرفون مع الطلاب في نفس الغرف</span>`:P.okSup?li(P.supIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
    <div class="prow"><b>الصالات</b><div>${hl(P.main,"الصالة الرئيسية")}${hl(P.small,"الصالة الصغيرة (صالة المشرفين)")}${!P.main&&!P.small?`<span class="muted">—</span>`:""}</div></div>`}
 function vBookSimple(){const f=S.form,c=cfg();
   if(S.sent)return vBook();
   const P=applyPlan(f);const v=validate(f),q=v.q;
   const num=(id,lbl,val,max,hint)=>`<label class="f">${lbl}<input type="number" id="${id}" inputmode="numeric" min="0" max="${max}" value="${esc(val)}">${hint?`<small>${hint}</small>`:""}</label>`;
   const A=S.isAdmin;if(A)f.agree=true;
-  return `<div class="grid">${A?`<div class="lbl">للإدارة ${demoTag()}</div><h2 class="big">عرض سعر جديد</h2><p class="muted" style="margin:0">أدخل بيانات المستأجر وعددهم ومواعيدهم، وبعد الحفظ تطلع لك رسالة عرض السعر جاهزة للإرسال على واتساب المستأجر مع بيانات التحويل.</p>
+  const ED=S.editId?findBk(S.editId):null;
+  return `<div class="grid">${A?`<div class="lbl">للإدارة ${demoTag()}</div><h2 class="big">${ED?`تعديل عرض السعر ${esc(ED.ref)}`:"عرض سعر جديد"}</h2>${ED?`<div class="btns"><button class="btn sm ghost" type="button" id="cancelEdit">إلغاء التعديل</button></div>`:""}<p class="muted" style="margin:0">أدخل بيانات المستأجر وعددهم ومواعيدهم، وبعد الحفظ تطلع لك رسالة عرض السعر جاهزة للإرسال على واتساب المستأجر مع بيانات التحويل.</p>
     <div class="btns"><button class="btn sm ghost" type="button" id="fullForm">النموذج التفصيلي (اختيار الغرف والمرافق يدوياً)</button></div>`
     :`<div class="lbl">طلب حجز ${demoTag()}</div><h2 class="big">احجز بيت الطالب</h2><p class="muted" style="margin:0">اكتب بياناتك وعدد الطلاب والمشرفين، ونخصص لك الغرف تلقائياً وتظهر الفاتورة مباشرة.</p>`}</div>
   ${!S.online?`<div class="note bad">تعذر الاتصال بالخادم الآن. تقدر تحسب السعر، وللإرسال تحقق من الاتصال وأعد فتح الصفحة.</div>`:""}
@@ -609,14 +628,16 @@ function vBookSimple(){const f=S.form,c=cfg();
      <label class="f">وقت الدخول<input type="time" id="inTime" value="${esc(f.inTime||c.checkIn)}"></label>
      <label class="f">تاريخ الخروج<input type="date" id="to" min="${esc(addDays(f.from||today(),1))}" value="${esc(f.to)}"><small>${hijri(f.to)}</small></label>
      <label class="f">وقت الخروج<input type="time" id="outTime" value="${esc(f.outTime||c.checkOut)}"></label>
+     <label class="check" style="grid-column:1/-1"><input type="checkbox" id="supWithSt" ${f.supWithSt?"checked":""}><span>المشرفون يقيمون مع الطلاب في نفس الغرف (بدون حجز غرف للمشرفين)</span></label>
      <div class="f"><span class="lbl">عدد الليالي</span><b class="num" style="font-size:1.5rem;color:var(--accent)">${fmt(q.n||0)}</b></div>
    </div></fieldset>
    <fieldset><legend>3. الغرف المخصصة لك تلقائياً</legend><div id="planBox">${planHTML(P)}</div>
      <small class="muted">الصالة الرئيسية مشمولة إذا حُجزت كل غرف الطلاب، والصالة الصغيرة (صالة المشرفين) مشمولة إذا حُجزت غرفتا المشرفين معاً.</small></fieldset>
    <fieldset><legend>4. الفاتورة</legend><div class="q" id="quote">${quoteHTML(q)}</div></fieldset>
-   ${A?`<fieldset><legend>5. ملاحظة للمستأجر <small>اختياري</small></legend><textarea id="notes" rows="2" placeholder="تظهر في الطلب">${esc(f.notes||"")}</textarea>
+   ${A?extrasHTML(f):""}
+   ${A?`<fieldset><legend>ملاحظة للمستأجر <small>اختياري</small></legend><textarea id="notes" rows="2" placeholder="تظهر في الطلب">${esc(f.notes||"")}</textarea>
      <div class="errs" id="errs">${errsHTML(v)}</div>
-     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>حفظ وإصدار عرض السعر</button></fieldset>`:`<fieldset><legend>5. الشروط والسياسات</legend>
+     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>${S.editId?"حفظ التعديل وتحديث عرض السعر":"حفظ وإصدار عرض السعر"}</button></fieldset>`:`<fieldset><legend>5. الشروط والسياسات</legend>
      <div class="polbox">${vPolicies().replace(/^\s*<div class="grid">[\s\S]*?<\/h2><\/div>/,"")}</div>
      <label class="check"><input type="checkbox" id="agree" ${f.agree?"checked":""}><span>قرأت الشروط والسياسات وأوافق عليها، ومنها سياسة الإلغاء والتأمين المسترد، و<b style="color:var(--bad,#C0392B)">شرط السلامة في المسبح ومسؤولية الموقّع على العقد</b>.</span></label>
      <div class="errs" id="errs">${errsHTML(v)}</div>
@@ -667,7 +688,7 @@ function bookingCard(b,admin){const s=ST[b.status]||["—","p-mute"];const q=b.q
   </article>`}
 
 function docBtns(b){const ok=!["rejected","cancelled"].includes(b.status);if(!ok)return "";
-  return `<div class="btns docbtns"><button type="button" class="btn sm ghost" data-doc="invoice" data-docid="${esc(b.id)}">${b.status==="new"?"عرض السعر":"الفاتورة المبدئية"}</button>${poolHours(b)?`<button type="button" class="btn sm ghost danger-ghost" data-doc="pledge" data-docid="${esc(b.id)}">تعهد استخدام المسبح</button>`:""}</div>`}
+  return `<div class="btns docbtns"><button type="button" class="btn sm ghost" data-doc="invoice" data-docid="${esc(b.id)}">${b.status==="new"?"عرض السعر":"الفاتورة المبدئية"}</button>${["confirmed","checkedin","done"].includes(b.status)?`<button type="button" class="btn sm ghost" data-doc="final" data-docid="${esc(b.id)}">الفاتورة النهائية</button>`:""}${["confirmed","checkedin","done"].includes(b.status)?`<button type="button" class="btn sm ghost" data-doc="hin" data-docid="${esc(b.id)}">محضر الاستلام</button>`:""}${["checkedin","done"].includes(b.status)?`<button type="button" class="btn sm ghost" data-doc="hout" data-docid="${esc(b.id)}">محضر التسليم</button>`:""}<button type="button" class="btn sm ghost" data-doc="policies" data-docid="${esc(b.id)}">الشروط والسياسات</button>${poolHours(b)?`<button type="button" class="btn sm ghost danger-ghost" data-doc="pledge" data-docid="${esc(b.id)}">تعهد استخدام المسبح</button>`:""}</div>`}
 function payBox(b){const q=b.quote||{},P=b.payments||[],paid=paidOf(b),rem=Math.max(0,(q.total||0)-paid);if(["rejected","cancelled"].includes(b.status)&&!P.length)return "";
   return `<details class="more paybox" ${S.payOpen===b.id?"open":""} data-payd="${esc(b.id)}"><summary>المالية: المدفوع ${sar(paid)} · المتبقي ${sar(rem)}${b.invoiceNo?` · فاتورة ${esc(b.invoiceNo)}`:""}</summary>
    <div class="grid" style="gap:8px;margin-top:8px">
@@ -687,8 +708,8 @@ function adminActions(b){const A=[];if(S.role==="viewer")return "";if(S.role==="
   if(b.status==="checkedin")A.push(btn("done","إنهاء الإقامة"));
   if(["approved","confirmed"].includes(b.status))A.push(btn("cancelAdmin","إلغاء الحجز","ghost"));
   return `<div class="grid" style="gap:8px"><label class="f">ملاحظة للمستأجر <small>تظهر له في «متابعة طلبي»</small><input type="text" data-note value="${esc(b.adminNote||"")}"></label>
-   <div class="btns">${A.join("")}<button class="btn ghost sm" data-act="msg">رسالة واتساب جاهزة</button></div>
-   ${S.msgFor===b.id?`<textarea class="copybox" readonly data-msgtxt>${esc(waMsg(b))}</textarea><div class="btns">${["new","approved"].includes(b.status)?`<button class="btn sm" type="button" data-share="${esc(b.id)}">إرسال العرض PDF مع الرسالة</button>`:""}<button class="btn sm ${["new","approved"].includes(b.status)?"ghost":""}" data-act="copy">نسخ الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/966${normPhone(b.form.phone).replace(/^0/,"")}?text=${encodeURIComponent(waMsg(b))}">فتح الواتساب</a></div>`:""}</div>`}
+   <div class="btns">${A.join("")}${["new","approved","confirmed","checkedin"].includes(b.status)&&["owner","manager","staff"].includes(S.role)?`<button class="btn ghost sm" data-act="edit">${["confirmed","checkedin"].includes(b.status)?"تعديل أو إضافة خدمات":"تعديل عرض السعر"}</button>`:""}<button class="btn ghost sm" data-act="msg">رسالة واتساب جاهزة</button></div>
+   ${S.msgFor===b.id?`<textarea class="copybox" readonly data-msgtxt>${esc(waMsg(b))}</textarea><div class="btns">${["new","approved"].includes(b.status)?`<label class="check"><input type="checkbox" data-withpol ${S.withPol!==false?"checked":""}><span>إرفاق الشروط والسياسات</span></label><button class="btn sm" type="button" data-share="${esc(b.id)}">إرسال العرض PDF مع الرسالة</button>`:""}<button class="btn sm ghost" type="button" data-share="${esc(b.id)}" data-kind="policies">إرسال الشروط والسياسات</button><button class="btn sm ${["new","approved"].includes(b.status)?"ghost":""}" data-act="copy">نسخ الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/966${normPhone(b.form.phone).replace(/^0/,"")}?text=${encodeURIComponent(waMsg(b))}">فتح الواتساب</a></div>`:""}</div>`}
 
 function reqMsg(b){const f=b.form||{},q=b.quote||{};return ["السلام عليكم ورحمة الله وبركاته","إدارة بيت الطالب الأندلسي","",`طلب حجز رقم ${b.ref}`,`• الجهة: ${f.orgName||""} (${ORG[f.org]||""})`,`• المسؤول: ${f.contact||""}، جوال ${f.phone||""}`,
  `• المدة: من ${dfmt(f.from)} إلى ${dfmt(f.to)} (${fmt(q.n)} ليلة)`,`• طريقة التأجير: ${modeLabel(f.mode)}، ${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين، الفئة: ${f.gender||""}`,
@@ -721,15 +742,18 @@ function shortQuoteMsg(b){const q=b.quote||{},c=cfg(),f=b.form||{},bk=c.bank||{}
 /* ملف عرض السعر PDF ومشاركته على واتساب مع الرسالة */
 const PDFC={};
 function loadPdfLib(){if(window.html2pdf)return Promise.resolve();return new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
-async function quotePdf(b){if(PDFC[b.id+b.status])return PDFC[b.id+b.status];await loadPdfLib();
+const pdfKey=(b,kind)=>b.id+b.status+(b.updatedAt||"")+(kind||"q")+(S.withPol===false?"0":"1");
+async function quotePdf(b,kind){const K=pdfKey(b,kind);if(PDFC[K])return PDFC[K];await loadPdfLib();
   const W=document.createElement("div");W.id="docv";W.style.cssText="position:absolute;left:-12000px;top:0;width:794px;padding:0;overflow:visible;background:#fff";
-  W.innerHTML=`<div class="dpage" style="box-shadow:none;border-radius:0;max-width:794px;padding:30px 34px;font-size:13.5px">${docInvoice(b)}</div>`;document.body.appendChild(W);
+  W.innerHTML=`<div class="dpage" style="box-shadow:none;border-radius:0;max-width:794px;padding:30px 34px;font-size:13.5px">${kind?docOf(b,kind):docInvoice(b)}</div>`;document.body.appendChild(W);
   try{await document.fonts.ready;const blob=await html2pdf().set({margin:[6,6,8,6],image:{type:"jpeg",quality:.92},html2canvas:{scale:2,useCORS:true,windowWidth:794,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}}).from(W.firstElementChild).outputPdf("blob");
-    const f=new File([blob],`عرض سعر بيت الطالب ${b.ref}.pdf`,{type:"application/pdf"});PDFC[b.id+b.status]=f;return f}finally{W.remove()}}
-async function shareQuote(b,btn){const msg=shortQuoteMsg(b),ph=normPhone(b.form.phone).replace(/^0/,"966");const t0=btn?btn.textContent:"";
-  let f=PDFC[b.id+b.status];
+    const f=new File([blob],`${kind==="policies"?"الشروط والسياسات":"عرض سعر"} بيت الطالب ${b.ref}.pdf`,{type:"application/pdf"});PDFC[K]=f;return f}finally{W.remove()}}
+function policiesMsg(b){const f=b.form||{},c=cfg();const nm=String(f.contact||"").trim(),hon=/^(أ|د|م|ا)\.?\s|^(الأستاذ|الدكتور|المهندس)/.test(nm)?nm:`أ. ${nm}`;
+  return ["السلام عليكم ورحمة الله وبركاته",hon,"",`مرفق لكم الشروط والسياسات الخاصة بحجز بيت الطالب الأندلسي رقم ${b.ref}${f.orgName?` لـ ${f.orgName}`:""}.`,"","*نرجو الاطلاع عليها وتوقيعها وإعادتها قبل موعد الدخول.*","",c.contact.name].join("\n")}
+async function shareQuote(b,btn,kind){const msg=kind==="policies"?policiesMsg(b):shortQuoteMsg(b),ph=normPhone(b.form.phone).replace(/^0/,"966");const t0=btn?btn.textContent:"";
+  let f=PDFC[pdfKey(b,kind)];
   if(!f){if(btn){btn.disabled=true;btn.textContent="جارٍ تجهيز ملف العرض…"}
-    try{f=await quotePdf(b)}catch(e){console.error(e);if(btn){btn.disabled=false;btn.textContent=t0}toast("تعذر تجهيز ملف PDF. استخدم «عرض السعر PDF» ثم احفظه");return}
+    try{f=await quotePdf(b,kind)}catch(e){console.error(e);if(btn){btn.disabled=false;btn.textContent=t0}toast("تعذر تجهيز ملف PDF. استخدم «عرض السعر PDF» ثم احفظه");return}
     if(btn){btn.disabled=false;btn.textContent="الملف جاهز، اضغط للإرسال"}
     if(navigator.canShare&&navigator.canShare({files:[f]}))return}
   if(navigator.canShare&&navigator.canShare({files:[f]})){try{try{navigator.clipboard&&navigator.clipboard.writeText(msg)}catch(_){}await navigator.share({files:[f],text:msg});toast("نُسخت الرسالة أيضاً، الصقها إذا لم تظهر مع الملف");if(btn)btn.textContent=t0}catch(e){if(e.name!=="AbortError")toast("تعذرت المشاركة")}return}
@@ -826,10 +850,33 @@ function vTeam(){const T=S.team||[];const inv=S.lastInvite;
 
 /* ===================== المستندات: الفاتورة المبدئية وتعهد المسبح ===================== */
 function findBk(id){return (S.all||[]).find(x=>x.id===id)||(S.mine||[]).find(x=>x.id===id)}
-function docHead(title,b){const c=cfg();return `<div class="dh"><img src="logo.png" alt=""><div class="dt"><div class="co">شركة الأندلس التعليمية ـ فرع المنار</div><div class="bt">بيت الطالب الأندلسي</div>${c.vatNo?`<div class="vn">الرقم الضريبي: <span dir="ltr">${esc(c.vatNo)}</span></div>`:""}</div></div>
+function docHead(title,b){const c=cfg(),vn=c.vatNo||DEFAULTS.vatNo;return `<div class="dh dhc"><img src="logo.png" alt=""><div class="dt"><div class="bt">بيت الطالب الأندلسي</div>${vn?`<div class="vn">الرقم الضريبي: <span dir="ltr">${esc(vn)}</span></div>`:""}</div><span></span></div>
   <h1 class="dtitle">${title}</h1><div class="dmeta"><span>رقم الطلب: <b dir="ltr">${esc(b.ref)}</b></span><span>تاريخ الإصدار: <b>${dfmt(today())}</b></span><span>حالة الطلب: <b>${(ST[b.status]||["—"])[0]}</b></span></div>`}
-function docInvoice(b){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf(b),P=b.payments||[];const day=dayMode(f);
-  return docHead(b.status==="new"?"عرض سعر":"فاتورة مبدئية",b)+`
+function docPolicies(){return `<div class="dpol"><h2 class="dtitle" style="font-size:1.25rem">الشروط والسياسات</h2>${vPolicies().replace(/^\s*<div class="grid">[\s\S]*?<\/h2><\/div>/,"")}
+  <div class="dsign"><div>اسم المسؤول عن الجهة: ........................................</div><div>التوقيع: ............................</div><div>التاريخ: ......../......../ 20....م</div></div></div>`}
+function docPolicyPage(b){const f=b.form||{};return docHead("الشروط والسياسات",b)+`<table class="dt2"><tr><th>الجهة</th><td>${esc(f.orgName||"")}</td><th>المسؤول</th><td>${esc(f.contact||"")}</td></tr><tr><th>الوصول</th><td>${dfmt(f.from)}</td><th>المغادرة</th><td>${dfmt(f.to)}</td></tr></table>`+docPolicies().replace('<div class="dpol">','<div class="dpol" style="break-before:auto;page-break-before:auto">').replace(/<h2 class="dtitle"[^>]*>الشروط والسياسات<\/h2>/,"")}
+function docHandover(b,kind){const f=b.form||{},q=b.quote||{},c=cfg(),R=ROOMS(),out=kind==="hout";
+  const ids=(b.rooms&&b.rooms.ids)||f.roomIds||[];const rooms=R.filter(r=>ids.includes(r.n));const ar=areasOf(f);
+  const now=new Date(),tm=now.toLocaleTimeString("ar-SA-u-nu-latn",{hour:"2-digit",minute:"2-digit"});
+  const items=[["مفاتيح الغرف",fmt(rooms.length)+" مفتاح"],["الأسرّة والمراتب والوسائد",fmt(rooms.reduce((a,r)=>a+r.beds,0))+" سرير"],["المكيفات وأجهزة التحكم",""],["الإنارة والأفياش الكهربائية",""],["دورات المياه والمغاسل",""],["الأثاث (طاولات، كراسي، خزائن)",""],["الستائر والأبواب والنوافذ",""],
+    ...(ar.includes("main")?[["الصالة الرئيسية ومنطقة الترفيه والمصلى",""]]:[]),...(ar.includes("small")?[["الصالة الصغيرة (صالة المشرفين)",""]]:[]),["أدوات السلامة (الطفايات، مخارج الطوارئ)",""],["النظافة العامة",""]];
+  return docHead(out?"محضر تسليم (خروج)":"محضر استلام (دخول)",b)+`
+  <table class="dt2"><tr><th>الجهة</th><td>${esc(f.orgName||"")}</td><th>المسؤول</th><td>${esc(f.contact||"")}</td></tr>
+   <tr><th>الجوال</th><td dir="ltr">${esc(f.phone||"")}</td><th>العدد</th><td>${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين</td></tr>
+   <tr><th>${out?"تاريخ التسليم":"تاريخ الاستلام"}</th><td>${dfmt(today())}</td><th>الوقت</th><td>${esc(tm)}</td></tr>
+   <tr><th>${out?"مدة الإقامة":"المغادرة المتوقعة"}</th><td>${out?`من ${dfmt(f.from)} إلى ${dfmt(f.to)}`:dfmt(f.to)+(f.outTime?" · الساعة "+esc(f.outTime):"")}</td><th>الغرف</th><td>${rooms.map(r=>"غرفة "+r.n).join("، ")||"—"}</td></tr></table>
+  <table class="dl hv"><thead><tr><th>البند</th><th style="width:22%">العدد</th><th style="width:11%">سليم</th><th style="width:11%">يوجد ملاحظة</th><th style="width:26%">الملاحظات</th></tr></thead><tbody>
+   ${items.map(([t,n])=>`<tr><td>${esc(t)}</td><td>${esc(n)}</td><td class="bx">☐</td><td class="bx">☐</td><td></td></tr>`).join("")}</tbody></table>
+  ${out?`<table class="dt2"><tr><th style="width:28%">التلفيات أو النواقص</th><td style="height:56px"></td></tr><tr><th>التأمين المسترد (${sar(q.insurance??c.insurance)})</th><td>☐ يُرد كاملاً &nbsp;&nbsp; ☐ يُخصم منه ........................ ر.س، والسبب: ................................................</td></tr></table>`
+   :`<table class="dt2"><tr><th style="width:28%">التأمين المسترد</th><td>☐ استُلم ${sar(q.insurance??c.insurance)} &nbsp;&nbsp; طريقة الدفع: ................................</td></tr><tr><th>ملاحظات الاستلام</th><td style="height:46px"></td></tr></table>`}
+  <p class="dnote">${out?"تم تسليم المرفق للفرع بالحالة الموضحة أعلاه، ويتحمل المستأجر تكلفة أي تلفيات أو نواقص مذكورة في هذا المحضر.":"استلم المستأجر المرفق بالحالة الموضحة أعلاه، ويلتزم بإعادته بالحالة نفسها، وبالشروط والسياسات المتفق عليها، ومنها شرط السلامة في المسبح."}</p>
+  <div class="dsign3"><div><b>مندوب الجهة المستأجرة</b><span>الاسم: ................................</span><span>التوقيع: ..............................</span></div>
+   <div><b>مندوب الفرع</b><span>الاسم: ................................</span><span>التوقيع: ..............................</span></div>
+   <div><b>اعتماد الدعم اللوجستي</b><span>&nbsp;</span><span>التوقيع: ..............................</span></div></div>`}
+function docOf(b,kind){return kind==="pledge"?docPledge(b):kind==="policies"?docPolicyPage(b):kind==="hin"||kind==="hout"?docHandover(b,kind):docInvoice(b,kind)}
+function docInvoice(b,kind){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf(b),P=b.payments||[];const day=dayMode(f);
+  const fin=kind==="final",isQ=!fin&&["new","approved"].includes(b.status)&&S.withPol!==false;
+  return docHead(fin?"الفاتورة النهائية":b.status==="new"?"عرض سعر":"فاتورة مبدئية",b)+`
   <table class="dt2"><tr><th>الجهة</th><td>${esc(f.orgName||"")}</td><th>المسؤول</th><td>${esc(f.contact||"")}</td></tr><tr><th>الجوال</th><td dir="ltr">${esc(f.phone||"")}</td><th>البريد</th><td dir="ltr">${esc(f.email||"—")}</td></tr>
    <tr><th>${day?"تاريخ اللقاء":"الوصول"}</th><td>${dfmt(f.from)}${f.inTime?" · الساعة "+esc(f.inTime):""}</td><th>${day?"الأيام":"المغادرة"}</th><td>${day?fmt(q.n):dfmt(f.to)+(f.outTime?" · الساعة "+esc(f.outTime):"")}</td></tr>
    <tr><th>طريقة التأجير</th><td>${esc(modeLabel(f.mode))}</td><th>${day?"الحضور":"العدد"}</th><td>${day?fmt(f.guests||0):`${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين`}</td></tr></table>
@@ -844,7 +891,7 @@ function docInvoice(b){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf(b),P
   ${b.invoiceNo?`<p class="dnote">رقم الفاتورة الضريبية الصادرة: <b dir="ltr">${esc(b.invoiceNo)}</b></p>`:""}
   <p class="dnote">${b.status==="new"?"هذا عرض سعر تقديري، ويُعتمد بعد مراجعة الإدارة وتوفر الغرف.":"هذه فاتورة مبدئية بتفاصيل الحجز والمبالغ المستحقة، وليست فاتورة ضريبية. تصدر الفاتورة الضريبية من النظام المحاسبي للشركة بعد السداد."}</p>
   ${c.bank&&c.bank.iban&&!q.internal?`<p class="dnote"><b>بيانات التحويل:</b> ${esc(c.bank.name||"")} · اسم الحساب: ${esc(c.bank.acc||"")}${c.bank.no?` · رقم الحساب: <span dir="ltr">${esc(c.bank.no)}</span>`:""} · الآيبان: <b dir="ltr">${esc(c.bank.iban)}</b></p>`:""}
-  <p class="dnote">للتواصل: ${esc(c.contact.name)} · <span dir="ltr">${esc(c.contact.phone)}</span></p>`}
+  <p class="dnote">للتواصل: ${esc(c.contact.name)} · <span dir="ltr">${esc(c.contact.phone)}</span></p>${isQ?docPolicies():""}`}
 function docPledge(b){const f=b.form||{},h=poolHours(b);
   return docHead("تعهد استخدام المسبح",b)+`
   <table class="dt2"><tr><th>الجهة المستأجرة</th><td>${esc(f.orgName||"")}</td><th>رقم الطلب</th><td dir="ltr">${esc(b.ref)}</td></tr>
@@ -860,10 +907,12 @@ function docPledge(b){const f=b.form||{},h=poolHours(b);
    <tr><th>التوقيع</th><td style="height:46px"></td><th>التاريخ</th><td></td></tr></table>
   <p class="dnote">يُسلَّم هذا التعهد موقّعاً للإدارة قبل أول استخدام للمسبح.</p>`}
 function openDoc(id,kind){const b=findBk(id);if(!b)return;const D=document.createElement("div");D.id="docv";D.setAttribute("role","dialog");D.setAttribute("aria-label",kind==="pledge"?"تعهد استخدام المسبح":"الفاتورة المبدئية");
-  D.innerHTML=`<div class="dbar"><button type="button" class="btn sm" id="docPrint">طباعة أو حفظ PDF</button><button type="button" class="btn sm ghost" id="docClose">رجوع</button></div><div class="dpage">${kind==="pledge"?docPledge(b):docInvoice(b)}</div>`;
+  D.innerHTML=`<div class="dbar"><button type="button" class="btn sm" id="docPrint">طباعة أو حفظ PDF</button><button type="button" class="btn sm ghost" id="docClose">رجوع</button></div><div class="dpage">${docOf(b,kind)}</div>`;
   document.body.appendChild(D);document.body.classList.add("docopen");D.querySelector("#docPrint").onclick=()=>print();D.querySelector("#docClose").onclick=()=>{D.remove();document.body.classList.remove("docopen")};window.scrollTo(0,0)}
 document.addEventListener("click",async e=>{const d=e.target.closest("[data-doc]");if(d){openDoc(d.dataset.docid,d.dataset.doc);return}
-  const sh=e.target.closest("[data-share]");if(sh){const b=findBk(sh.dataset.share);if(b)shareQuote(b,sh);return}
+  const sh=e.target.closest("[data-share]");if(sh){const b=findBk(sh.dataset.share);if(b)shareQuote(b,sh,sh.dataset.kind||"");return}
+  const wp=e.target.closest("[data-withpol]");if(wp){S.withPol=wp.checked;return}
+  if(e.target.closest("#polReset")){const t=$("#s-pol");if(t){t.value=defaultPolicyText();toast("رجع النص الافتراضي. اضغط «حفظ الإعدادات» لاعتماده")}return}
   const pb=e.target.closest("[data-pay]");if(!pb)return;const card=pb.closest("article.bk");const b=(S.all||[]).find(x=>x.id===card.dataset.bid);if(!b)return;S.payOpen=b.id;
   const pdata=pb.dataset.pay==="inv"?{kind:"invoice",invoiceNo:card.querySelector("[data-pinv]").value.trim()}:{kind:card.querySelector("[data-pk]").value,amount:+card.querySelector("[data-pa]").value,method:card.querySelector("[data-pm]").value,ref:card.querySelector("[data-pr]").value.trim()};
   pb.disabled=true;const {data:res,error}=await S.sb.rpc("bait_set_payment",{p_id:b.id,p_data:pdata});pb.disabled=false;
@@ -897,17 +946,30 @@ function settingsForm(){const c=cfg(),P=c.prices;const n=(id,l,v)=>`<label class
    <fieldset><legend>التواصل والإطلاق</legend><div class="fg">
      <label class="f">جوال الإدارة<input type="tel" id="s-phone" dir="ltr" value="${esc(c.contact.phone)}"></label>
      <label class="f">اسم الموقِّع في الرسائل<input type="text" id="s-cname" value="${esc(c.contact.name)}"></label>
-     <label class="f">الرقم الضريبي للشركة <small>يظهر في الفاتورة المبدئية</small><input type="text" id="s-vatno" dir="ltr" value="${esc(c.vatNo||"")}"></label>
+     <label class="f">الرقم الضريبي للشركة <small>${/^3\d{13}3$/.test(String(c.vatNo||"").replace(/\s/g,""))?"يظهر في عرض السعر والفواتير":`<b style="color:var(--bad,#C0392B)">تأكد منه: الرقم الضريبي السعودي 15 رقماً يبدأ وينتهي بـ 3</b>`}</small><input type="text" id="s-vatno" dir="ltr" value="${esc(c.vatNo||"")}"></label>
      <label class="f">اسم البنك <small>يظهر في رسالة عرض السعر</small><input type="text" id="s-bank" value="${esc((c.bank||{}).name||"")}"></label>
      <label class="f">اسم الحساب<input type="text" id="s-bacc" value="${esc((c.bank||{}).acc||"")}" placeholder="شركة الأندلس التعليمية"></label>
      <label class="f">رقم الحساب <small>اختياري</small><input type="text" id="s-bno" dir="ltr" value="${esc((c.bank||{}).no||"")}"></label>
      <label class="f">رقم الآيبان<input type="text" id="s-iban" dir="ltr" value="${esc((c.bank||{}).iban||"")}" placeholder="SA00 0000 0000 0000 0000 0000"></label>
      <label class="check" style="align-self:end"><input type="checkbox" id="s-demo" ${c.demo?"checked":""}><span>إظهار شارة «نسخة تجريبية»</span></label></div></fieldset>
+   <fieldset><legend>الشروط والسياسات</legend>
+     <p class="muted" style="margin:0 0 6px;font-size:.85rem">كل قسم يبدأ بـ <b>#</b> ثم عنوانه، وكل سطر بعده بند. ابدأ السطر بـ <b>!</b> ليظهر بالأحمر. تنبيه المسبح ثابت أعلى السياسات.</p>
+     <textarea id="s-pol" rows="18" style="width:100%;font-family:inherit;line-height:1.7">${esc(c.policyText||defaultPolicyText())}</textarea>
+     <div class="btns"><button class="btn sm ghost" type="button" id="polReset">استرجاع النص الافتراضي</button></div></fieldset>
    <div class="btns"><button class="btn" type="submit">حفظ الإعدادات</button><span class="muted" style="font-size:.85rem">تُطبّق على الطلبات الجديدة فقط.</span></div></form>`}
 
 function vPolicies(){const c=cfg();
   return `<div class="grid"><div class="lbl">تُقرأ قبل إرسال طلب الحجز ${demoTag()}</div><h2 class="big">الشروط والسياسات</h2></div>
   <div class="card pool-rule" role="note"><h2>تنبيه مهم: السلامة في المسبح</h2><p><b>${POOL_RULE}</b></p></div>
+  ${policyBody()}`}
+/* نص السياسات قابل للتعديل من الإعدادات: كل قسم يبدأ بـ # ثم العنوان، وكل سطر بند، والسطر الذي يبدأ بـ ! يظهر بالأحمر */
+function defaultPolicyText(){const d=document.createElement("div");d.innerHTML=defaultPolicyHTML();
+  return [...d.querySelectorAll(".card")].map(cd=>"# "+cd.querySelector("h2").textContent.trim()+"\n"+[...cd.querySelectorAll("li")].map(li=>(li.querySelector("b.red")?"! ":"")+li.textContent.trim()).join("\n")).join("\n\n")}
+function policyBody(){const t=String(cfg().policyText||"").trim();if(!t)return defaultPolicyHTML();
+  const secs=t.split(/\n(?=#)/).map(x=>x.trim()).filter(Boolean);
+  return `<div class="pol">${secs.map(sec=>{const L=sec.split("\n").map(x=>x.trim()).filter(Boolean);const h=L[0].startsWith("#")?L.shift().replace(/^#+\s*/,""):"";
+    return `<div class="card">${h?`<h2>${esc(h)}</h2>`:""}<ul>${L.map(x=>x.startsWith("!")?`<li><b class="red">${esc(x.replace(/^!\s*/,""))}</b></li>`:`<li>${esc(x.replace(/^[-•]\s*/,""))}</li>`).join("")}</ul></div>`}).join("")}</div>`}
+function defaultPolicyHTML(){const c=cfg();return `
   <div class="pol">
    <div class="card"><h2>الحجز والتأكيد</h2><ol><li>يُعد الطلب مبدئياً حتى تعتمده الإدارة كتابياً.</li><li>يتأكد الحجز بعد سداد عربون ${fmt(c.depositPct)}% من الإجمالي خلال 3 أيام عمل من الاعتماد، وإلا يُلغى الاعتماد.</li><li>يُسدد المبلغ المتبقي قبل الدخول بـ 3 أيام على الأقل.</li><li>يُقدَّم كشف بأسماء النزلاء وأرقام هويات المشرفين قبل الوصول بيومين.</li><li>البرامج الداخلية لأقسام الفرع معفاة من الإيجار، ويُدفع لها تأمين مسترد ورسوم التشغيل والخدمات، ويُعتمد الطلب بعد تحقق الإدارة من القسم المنظّم.</li><li>خصم المنسوبين للموظفين على رأس العمل، ويُطلب ما يثبت ذلك.</li><li>أقصى مدة للحجز الواحد ${fmt(c.maxNights)} ليلة، والمدد الأطول باتفاق خاص.</li></ol></div>
    <div class="card"><h2>الدخول والخروج</h2><ul><li>الدخول من الساعة ${esc(c.checkIn)}، والخروج حتى الساعة ${esc(c.checkOut)}.</li><li>يُسلَّم المبنى بمحضر استلام يوقعه مسؤول الجهة، ويُسترد بمحضر تسليم.</li><li>يُدفع تأمين مسترد ${sar(c.insurance)} عند الدخول، ويُعاد خلال 7 أيام عمل بعد التأكد من سلامة المرفق.</li><li>التأخير في الخروج بدون تنسيق يُحتسب نصف ليلة.</li><li>حجز الصالات بدون غرف يُحسب باليوم، وتُسلَّم نظيفة كما استُلمت.</li><li>رسوم الخدمة تشمل ${svcTxt}.</li></ul></div>
@@ -928,6 +990,8 @@ function readForm(){const f=S.form;const v=id=>{const e=document.getElementById(
   const ab=document.querySelectorAll("[data-area]");if(ab.length)f.areas=[...ab].filter(x=>x.checked).map(x=>x.dataset.area);
   document.querySelectorAll("[data-ad]").forEach(e=>{const q=Math.max(0,Math.floor(+e.value||0));if(q)f.addons[e.dataset.ad]=q;else delete f.addons[e.dataset.ad]});
   const a=document.getElementById("agree");if(a)f.agree=a.checked;
+  const sw=document.getElementById("supWithSt");if(sw)f.supWithSt=sw.checked;
+  const exs=document.querySelectorAll("[data-ex]");if(exs.length||document.getElementById("exAdd")){const X=[];exs.forEach(e=>{const i=+e.dataset.i;X[i]=X[i]||{};X[i][e.dataset.ex]=e.dataset.ex==="label"?e.value:(e.value===""?"":+e.value)});f.extras=X.filter(Boolean)}
   if(f.org==="staff"||f.org==="internal")f.promo="";
   if(!S.fullForm&&S.view==="book")applyPlan(f);if(S.isAdmin&&!S.fullForm)f.agree=true}
 function refreshQuote(){readForm();const v=validate(S.form);$("#quote").innerHTML=quoteHTML(v.q);$("#errs").innerHTML=errsHTML(v)}
@@ -937,7 +1001,12 @@ function wire(v){
   if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const qc=$("#qCopy");if(qc)qc.onclick=()=>copyText($("#qMsg").value);if(S.sent&&S.isAdmin)quotePdf(S.sent).catch(()=>{});const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
     const F=$("#bookForm");if(!F)return;
     const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area]'+(S.fullForm?',#students,#supervisors':''));
-    const ff=$("#fullForm");if(ff)ff.onclick=()=>{S.fullForm=!S.fullForm;render()};
+    const ff=$("#fullForm");if(ff)ff.onclick=()=>{readForm();S.fullForm=!S.fullForm;render()};
+    const ce=$("#cancelEdit");if(ce)ce.onclick=()=>{S.editId=null;S.editFrom=null;S.fullForm=false;S.form={...S.form,extras:[],notes:"",orgName:"",contact:"",phone:"",email:"",purpose:"",supWithSt:false};location.hash="admin"};
+    const sw=$("#supWithSt");if(sw)sw.onchange=()=>{readForm();keepScroll(render)};
+    const xa=$("#exAdd");if(xa)xa.onclick=()=>{readForm();(S.form.extras=S.form.extras||[]).push({label:"",qty:1,price:""});keepScroll(render)};
+    document.querySelectorAll("[data-exdel]").forEach(bt=>bt.onclick=()=>{readForm();S.form.extras.splice(+bt.dataset.exdel,1);keepScroll(render)});
+    document.querySelectorAll("[data-ex=qty],[data-ex=price],[data-ex=label]").forEach(inp=>inp.onchange=()=>{readForm();const qd=$("#quote");if(qd)qd.innerHTML=quoteHTML(validate(S.form).q)});
     if(!S.fullForm){const pl=$("#planBox");F.addEventListener("input",e=>{if(e.target.matches("#students,#supervisors")&&pl){readForm();pl.innerHTML=planHTML(autoPlan(S.form))}})}
     F.addEventListener("input",e=>{if(!structural(e))refreshQuote()});
     F.addEventListener("change",e=>{if(structural(e)){readForm();if(e.target.id==="from"){const d=parse(S.form.from);if(d)S.calMonth=ymd(new Date(d.getFullYear(),d.getMonth(),1,12));if(S.form.to<=S.form.from)S.form.to=addDays(S.form.from,1)}keepScroll(render)}else refreshQuote()});
@@ -947,11 +1016,12 @@ function wire(v){
       if(vv.E.length){$("#errs").innerHTML=errsHTML(vv);$("#errs").scrollIntoView({behavior:"smooth",block:"center"});return}
       const btn=$("#send");btn.disabled=true;btn.textContent="جارٍ الإرسال…";
       const form=structuredClone(S.form);form.phone=normPhone(form.phone);
-      try{/* الخادم يتحقق ويحسب السعر النهائي ويولّد رقم الطلب */const {data:res,error}=await S.sb.rpc("bait_submit",{p_form:form});if(error)throw error;
+      try{/* الخادم يتحقق ويحسب السعر النهائي ويولّد رقم الطلب */const {data:res,error}=S.editId?await S.sb.rpc("bait_update",{p_id:S.editId,p_form:form}):await S.sb.rpc("bait_submit",{p_form:form});if(error)throw error;
         if(!res||!res.ok){btn.disabled=false;btn.textContent="إرسال طلب الحجز";$("#errs").innerHTML=errsHTML({E:(res&&res.errors)||["تعذر الإرسال"],W:[]});$("#errs").scrollIntoView({behavior:"smooth",block:"center"});return}
         const rec=res.booking;
+        if(S.editId){S.editId=null;S.editFrom=null;S.fullForm=false;S.sent=rec;S.form={...S.form,extras:[],notes:"",orgName:"",contact:"",phone:"",email:"",purpose:"",supWithSt:false};await loadAdmin();render();window.scrollTo({top:0});toast("حُفظ التعديل وتحدّث عرض السعر");return}
         const mine=lsGet("bait-mine",[]);mine.push({ref:rec.ref,phone:rec.form.phone});lsSet("bait-mine",mine);S.mine.push(rec);
-        S.sent=rec;S.form={...S.form,addons:{},notes:"",agree:false,promo:""};if(S.isAdmin){await loadAdmin();S.form={...S.form,orgName:"",contact:"",phone:"",email:"",purpose:""}}render();window.scrollTo({top:0});toast(S.isAdmin?"تم حفظ عرض السعر":"أُرسل طلب الحجز")}
+        S.sent=rec;S.form={...S.form,addons:{},notes:"",agree:false,promo:"",extras:[],supWithSt:false};if(S.isAdmin){await loadAdmin();S.form={...S.form,orgName:"",contact:"",phone:"",email:"",purpose:""}}render();window.scrollTo({top:0});toast(S.isAdmin?"تم حفظ عرض السعر":"أُرسل طلب الحجز")}
       catch(err){console.error("bait_submit",err);btn.disabled=false;btn.textContent="إرسال طلب الحجز";toast("تعذر الإرسال. تحقق من الاتصال وأعد المحاولة")}}}
   if(v==="mine"){const T=$("#trackForm");T.onsubmit=async e=>{e.preventDefault();const ref=$("#tRef").value.trim().toUpperCase(),ph=normPhone($("#tPhone").value);if(!ref||!ph){toast("اكتب رقم الطلب ورقم الجوال");return}
       const r=await track(ref,ph);if(!r){toast("لم نجد طلباً بهذا الرقم والجوال");return}const mine=lsGet("bait-mine",[]);if(!mine.some(m=>m.ref===ref))mine.push({ref,phone:ph});lsSet("bait-mine",mine);mergeMine(r);render()};
@@ -986,20 +1056,22 @@ function wire(v){
 
 async function adminAct(b,a,el){const note=(el.querySelector("[data-note]")||{}).value?.trim()||"";
   if(a==="msg"){S.msgFor=S.msgFor===b.id?null:b.id;keepScroll(render);return}
+  if(a==="edit"){S.editId=b.id;S.editFrom=b.form.from;S.sent=null;S.form={...structuredClone(b.form),addons:b.form.addons||{},extras:b.form.extras||[],agree:true};S.fullForm=!b.form.auto;location.hash="book";if(S.view==="book")render();window.scrollTo({top:0});return}
   if(a==="copy"){const t=el.querySelector("[data-msgtxt]");copyText(t.value,t);return}
   const next={approve:"approved",reject:"rejected",confirm:"confirmed",checkin:"checkedin",done:"done",cancelAdmin:"cancelled"}[a];if(!next)return;
   if(a==="reject"&&!note){toast("اكتب سبب الاعتذار في خانة الملاحظة أولاً");el.querySelector("[data-note]").focus();return}
   /* الخادم يتحقق من الصلاحية ومسار الحالة والسعة ويسجل العملية */
   const {data:res,error}=await S.sb.rpc("bait_set_status",{p_id:b.id,p_status:next,p_note:note});
   if(error||!res||!res.ok){toast((res&&res.error)||"تعذر الحفظ. تحقق من صلاحيتك");return}
-  toast("حُدّثت حالة الطلب: "+ST[next][0]);S.msgFor=b.id;await loadAdmin();await loadBlocks();keepScroll(render)}
+  toast("حُدّثت حالة الطلب: "+ST[next][0]);S.msgFor=b.id;await loadAdmin();await loadBlocks();keepScroll(render);
+  if(next==="checkedin")openDoc(b.id,"hin");else if(next==="done")openDoc(b.id,"hout")}
 
 async function saveSettings(e){e.preventDefault();const c=structuredClone(cfg());const g=id=>{const el=document.getElementById(id);return el?Math.max(0,+el.value||0):0};
   Object.keys(c.prices).forEach(k=>{if(document.getElementById("s-"+k+"-wd")){const v=g("s-"+k+"-wd");c.prices[k]={wd:v,we:v}}});c.service={price:g("s-svc"),basis:$("#s-svcb").value,onHallOnly:$("#s-svch").checked};
   c.addons.forEach(a=>a.price=g("s-ad-"+a.key));c.durationTiers.forEach((t,i)=>t.pct=g("s-tier"+i));Object.keys(ORG).forEach(k=>c.orgDisc[k]=g("s-org-"+k));
   c.internal={...c.internal,insurance:g("s-int-ins"),facilitiesFree:$("#s-int-fac").checked,ops:c.internal.ops.map(o=>({...o,price:g("s-int-"+o.key)}))};c.staffAddons=$("#s-staffAdd").checked;c.staffVat=$("#s-staffVat").checked;c.earlyPct=g("s-early");c.wholeAddonDisc=g("s-wad");c.maxDisc=g("s-max");c.depositPct=g("s-dep");c.vat=g("s-vat");c.insurance=g("s-ins");c.ratio=Math.max(1,g("s-ratio"));
   c.promos={};String($("#s-promos").value||"").split(/\n+/).forEach(l=>{const [k,v]=l.split("=");if(k&&k.trim()&&+v>0)c.promos[k.trim().toUpperCase()]=+v});
-  c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.vatNo=$("#s-vatno").value.trim().slice(0,20);c.bank={name:$("#s-bank").value.trim().slice(0,60),acc:$("#s-bacc").value.trim().slice(0,80),no:$("#s-bno").value.trim().slice(0,30),iban:$("#s-iban").value.trim().toUpperCase().slice(0,40)};c.demo=$("#s-demo").checked;
+  c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.vatNo=$("#s-vatno").value.trim().slice(0,20);{const pt=($("#s-pol")||{}).value;if(pt!==undefined){const d0=defaultPolicyText().trim();c.policyText=pt.trim()===d0?"":pt.trim().slice(0,12000)}}c.bank={name:$("#s-bank").value.trim().slice(0,60),acc:$("#s-bacc").value.trim().slice(0,80),no:$("#s-bno").value.trim().slice(0,30),iban:$("#s-iban").value.trim().toUpperCase().slice(0,40)};c.demo=$("#s-demo").checked;
   const {data:res,error}=await S.sb.rpc("bait_save_config",{p_cfg:c});if(error||!res||!res.ok){toast((res&&res.error)||"تعذر حفظ الإعدادات");return}S.cfg=mergeCfg(res.config);toast("حُفظت الإعدادات");keepScroll(render)}
 
 /* ===================== البيانات ===================== */
