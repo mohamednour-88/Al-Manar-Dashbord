@@ -236,7 +236,7 @@ const SUPABASE_ANON_KEY="sb_publishable_4KHvoUKfTJ-0J5OWmVRP-A_PPMFXpjQ";
 const PHONE_DOMAIN="@phone.almanar.app";
 
 /* ===================== الإعدادات الافتراضية (تُستبدل بما تحفظه الإدارة) ===================== */
-const DEFAULTS={
+const DEFAULTS={bank:{name:"البنك الأهلي السعودي (SNB)",acc:"شركة الأندلس التعليمية",no:"11849399000207",iban:"SA1210000011849399000207"},
   version:4, demo:false, pricingV3:true,
   capacity:{rooms:[{n:1,t:"st",beds:10},{n:2,t:"st",beds:10},{n:3,t:"st",beds:12},{n:4,t:"st",beds:8},{n:5,t:"sup",beds:3},{n:6,t:"st",beds:10},{n:7,t:"st",beds:10},{n:8,t:"sup",beds:1},{n:9,t:"sup",beds:4}]},
   packages:[{key:"main",label:"القسم الرئيسي",rooms:[1,2,3,4,5,6,9],areas:"الصالة الرئيسية ومنطقة الألعاب والمصلى",price:{wd:1550,we:1550},active:false},
@@ -433,8 +433,8 @@ function validate(f,{forSubmit}={}){const c=cfg(),cap=c.capacity,E=[],W=[];const
     if(!/^05\d{8}$/.test(normPhone(f.phone)))E.push("اكتب رقم جوال سعودي صحيح يبدأ بـ 05 ومن 10 أرقام.");
     if(f.email&&!/^\S+@\S+\.\S+$/.test(f.email))E.push("البريد الإلكتروني غير صحيح.");
     if(!f.agree)E.push("وافق على الشروط والسياسات لإرسال الطلب.");
-    if(!S.isAdmin&&(!f.inTime||!f.outTime))E.push("حدّد وقت الدخول ووقت الخروج.")}
-  if(!S.isAdmin&&!dayMode(f)&&f.from&&f.to>f.from){const P=autoPlan(f);if((+f.students||0)>0&&!P.okSt)E.unshift("لا توجد غرف طلاب كافية لهذا العدد في التواريخ المختارة. غيّر التواريخ أو تواصل مع الإدارة.");if((+f.supervisors||0)>0&&!P.okSup)E.unshift("لا توجد غرف مشرفين كافية لهذا العدد في التواريخ المختارة.")}
+    if(!S.fullForm&&(!f.inTime||!f.outTime))E.push("حدّد وقت الدخول ووقت الخروج.")}
+  if(!S.fullForm&&!dayMode(f)&&f.from&&f.to>f.from){const P=autoPlan(f);if((+f.students||0)>0&&!P.okSt)E.unshift("لا توجد غرف طلاب كافية لهذا العدد في التواريخ المختارة. غيّر التواريخ أو تواصل مع الإدارة.");if((+f.supervisors||0)>0&&!P.okSup)E.unshift("لا توجد غرف مشرفين كافية لهذا العدد في التواريخ المختارة.")}
   return{E,W,q}}
 
 /* ===================== الواجهات ===================== */
@@ -451,7 +451,7 @@ const poolHours=b=>+(((b.form||{}).addons||{}).pool)||0;
 function setView(v){const ok=["facility","prices","book","mine","policies","admin","join"];if(/^join-[a-f0-9]{16,}$/.test(v)){S.joinToken=v.slice(5);S.joinInfo=null;v="join"}if(!ok.includes(v))v="facility";S.view=v;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.v===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});render();window.scrollTo({top:0})}
 window.addEventListener("hashchange",()=>setView(location.hash.slice(1)));
-function render(){const A=$("#app"),v=S.view;A.innerHTML=({facility:vFacility,prices:vPrices,book:()=>S.isAdmin?vBook():vBookSimple(),mine:vMine,policies:vPolicies,admin:vAdmin,join:vJoin})[v]();wire(v)}
+function render(){const A=$("#app"),v=S.view;A.innerHTML=({facility:vFacility,prices:vPrices,book:()=>S.isAdmin&&S.fullForm?vBook():vBookSimple(),mine:vMine,policies:vPolicies,admin:vAdmin,join:vJoin})[v]();wire(v)}
 const demoTag=()=>cfg().demo?`<span class="demo">نسخة تجريبية</span>`:"";
 
 function planSVG(){const R=(x,y,w,h,t,s,cls)=>`<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" class="${cls}"/><text x="${x+w/2}" y="${y+h/2-(s?6:0)}" text-anchor="middle" dominant-baseline="middle" class="pt">${t}</text>${s?`<text x="${x+w/2}" y="${y+h/2+12}" text-anchor="middle" dominant-baseline="middle" class="ps">${s}</text>`:""}</g>`;
@@ -512,7 +512,14 @@ function vPrices(){const c=cfg(),P=c.prices;const g=k=>c.addons.filter(a=>a.grou
     <div class="card"><h3>حسب نوع الجهة</h3><table class="t">${Object.entries(c.orgDisc).filter(([k,p])=>p>0&&k!=="staff").map(([k,p])=>`<tr><td>${ORG[k]}</td><td class="price">${fmt(p)}%</td></tr>`).join("")}<tr><td>الحجز قبل ${fmt(c.earlyDays)} يوماً</td><td class="price">${fmt(c.earlyPct)}%</td></tr></table></div>
   </div><div class="note info">تُجمع خصومات الإقامة (غير المنسوبين) بحد أعلى ${fmt(c.maxDisc)}%. يُدفع عربون ${fmt(c.depositPct)}% لتأكيد الحجز، وتأمين مسترد ${sar(c.insurance)} عند الدخول.</div></section>`}
 
-function vBook(){const f=S.form,c=cfg();
+function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTimeout(()=>{const g=document.querySelector("#app .grid");if(g&&!$("#fullForm"))g.insertAdjacentHTML("beforeend",`<div class="btns"><button class="btn sm ghost" type="button" id="fullForm">رجوع لعرض السعر التلقائي</button></div>`),$("#fullForm").onclick=()=>{S.fullForm=false;render()}},0);
+  if(S.sent&&S.isAdmin){const b=S.sent,m=waMsg(b),ph=normPhone(b.form.phone).replace(/^0/,"966");return `<div class="card" style="max-width:680px;margin:0 auto;display:grid;gap:10px">
+    <div class="lbl">تم حفظ عرض السعر</div><h2 class="big">${esc(b.ref)} · ${esc(b.form.orgName||"")}</h2>
+    ${!(cfg().bank&&cfg().bank.iban)?`<div class="note bad">بيانات الحساب البنكي غير مسجلة. أضفها من «الإعدادات» لتظهر في الرسالة.</div>`:""}
+    <p class="muted" style="margin:0">رسالة عرض السعر جاهزة. راجعها ثم أرسلها على واتساب المستأجر.</p>
+    <textarea class="copybox" readonly id="qMsg" rows="16">${esc(m)}</textarea>
+    <div class="btns"><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(m)}">إرسال على واتساب المستأجر</a><button class="btn sm ghost" type="button" id="qCopy">نسخ الرسالة</button><button class="btn sm ghost" type="button" data-doc="invoice" data-docid="${esc(b.id)}">عرض السعر PDF</button><button class="btn sm ghost" type="button" id="newReq">عرض سعر جديد</button></div>
+    <div class="q">${quoteHTML(b.quote)}</div></div>`}
   if(S.sent)return `<div class="card" style="max-width:640px;margin:0 auto;display:grid;gap:10px">
     <div class="lbl">تم إرسال الطلب</div><h2 class="big">رقم طلبك ${esc(S.sent.ref)}</h2>
     ${window.BAIT_PREVIEW?`<div class="note bad"><b>هذه نسخة معاينة:</b> الطلب محفوظ على جهازك فقط ولم يصل للإدارة. اضغط «إرسال الطلب للإدارة على واتساب» ليصلهم.</div>`:`<p>وصل طلبك إلى إدارة بيت الطالب، وتصلك الإفادة خلال يومي عمل. احتفظ برقم الطلب، وتابع حالته من <a href="#mine">متابعة طلبي</a> برقم الطلب ورقم جوالك.</p>`}
@@ -579,7 +586,10 @@ function vBookSimple(){const f=S.form,c=cfg();
   if(S.sent)return vBook();
   const P=applyPlan(f);const v=validate(f),q=v.q;
   const num=(id,lbl,val,max,hint)=>`<label class="f">${lbl}<input type="number" id="${id}" inputmode="numeric" min="0" max="${max}" value="${esc(val)}">${hint?`<small>${hint}</small>`:""}</label>`;
-  return `<div class="grid"><div class="lbl">طلب حجز ${demoTag()}</div><h2 class="big">احجز بيت الطالب</h2><p class="muted" style="margin:0">اكتب بياناتك وعدد الطلاب والمشرفين، ونخصص لك الغرف تلقائياً وتظهر الفاتورة مباشرة.</p></div>
+  const A=S.isAdmin;if(A)f.agree=true;
+  return `<div class="grid">${A?`<div class="lbl">للإدارة ${demoTag()}</div><h2 class="big">عرض سعر جديد</h2><p class="muted" style="margin:0">أدخل بيانات المستأجر وعددهم ومواعيدهم، وبعد الحفظ تطلع لك رسالة عرض السعر جاهزة للإرسال على واتساب المستأجر مع بيانات التحويل.</p>
+    <div class="btns"><button class="btn sm ghost" type="button" id="fullForm">النموذج التفصيلي (اختيار الغرف والمرافق يدوياً)</button></div>`
+    :`<div class="lbl">طلب حجز ${demoTag()}</div><h2 class="big">احجز بيت الطالب</h2><p class="muted" style="margin:0">اكتب بياناتك وعدد الطلاب والمشرفين، ونخصص لك الغرف تلقائياً وتظهر الفاتورة مباشرة.</p>`}</div>
   ${!S.online?`<div class="note bad">تعذر الاتصال بالخادم الآن. تقدر تحسب السعر، وللإرسال تحقق من الاتصال وأعد فتح الصفحة.</div>`:""}
   <form class="book simple" id="bookForm" novalidate><div class="grid">
    <fieldset><legend>1. بيانات الجهة</legend><div class="fg">
@@ -604,12 +614,14 @@ function vBookSimple(){const f=S.form,c=cfg();
    <fieldset><legend>3. الغرف المخصصة لك تلقائياً</legend><div id="planBox">${planHTML(P)}</div>
      <small class="muted">الصالة الرئيسية مشمولة إذا حُجزت كل غرف الطلاب، والصالة الصغيرة (صالة المشرفين) مشمولة إذا حُجزت غرفتا المشرفين معاً.</small></fieldset>
    <fieldset><legend>4. الفاتورة</legend><div class="q" id="quote">${quoteHTML(q)}</div></fieldset>
-   <fieldset><legend>5. الشروط والسياسات</legend>
+   ${A?`<fieldset><legend>5. ملاحظة للمستأجر <small>اختياري</small></legend><textarea id="notes" rows="2" placeholder="تظهر في الطلب">${esc(f.notes||"")}</textarea>
+     <div class="errs" id="errs">${errsHTML(v)}</div>
+     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>حفظ وإصدار عرض السعر</button></fieldset>`:`<fieldset><legend>5. الشروط والسياسات</legend>
      <div class="polbox">${vPolicies().replace(/^\s*<div class="grid">[\s\S]*?<\/h2><\/div>/,"")}</div>
      <label class="check"><input type="checkbox" id="agree" ${f.agree?"checked":""}><span>قرأت الشروط والسياسات وأوافق عليها، ومنها سياسة الإلغاء والتأمين المسترد، و<b style="color:var(--bad,#C0392B)">شرط السلامة في المسبح ومسؤولية الموقّع على العقد</b>.</span></label>
      <div class="errs" id="errs">${errsHTML(v)}</div>
      <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>موافق، أرسل طلب الحجز</button>
-     <p class="muted" style="font-size:.8rem;margin:8px 0 0">يُعد الطلب مبدئياً حتى تعتمده الإدارة ويُدفع العربون.</p></fieldset>
+     <p class="muted" style="font-size:.8rem;margin:8px 0 0">يُعد الطلب مبدئياً حتى تعتمده الإدارة ويُدفع العربون.</p></fieldset>`}
   </div></form>`}
 const errsHTML=v=>v.E.map(e=>`<div class="note bad">${esc(e)}</div>`).join("")+v.W.map(e=>`<div class="note">${esc(e)}</div>`).join("");
 
@@ -682,7 +694,25 @@ function reqMsg(b){const f=b.form||{},q=b.quote||{};return ["السلام علي
  `• المدة: من ${dfmt(f.from)} إلى ${dfmt(f.to)} (${fmt(q.n)} ليلة)`,`• طريقة التأجير: ${modeLabel(f.mode)}، ${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين، الفئة: ${f.gender||""}`,
  f.purpose?`• الغرض: ${f.purpose}`:null,f.notes?`• ملاحظات: ${f.notes}`:null,`• الإجمالي التقديري: ${sar(q.total)}`,"","*نرجو مراجعة الطلب وإفادتنا.*"].filter(x=>x!==null).join("\n")}
 function waAdminBtn(b,cls){const ph=normPhone(cfg().contact.phone).replace(/^0/,"966");return `<a class="btn ${cls||""}" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(reqMsg(b))}">إرسال الطلب للإدارة على واتساب</a>`}
-function waMsg(b){const q=b.quote||{},s=ST[b.status][0],c=cfg(),f=b.form;
+function quoteMsg(b){const q=b.quote||{},c=cfg(),f=b.form||{},bk=c.bank||{},R=ROOMS();
+  const ids=(b.rooms&&b.rooms.ids)||f.roomIds||[],st=ids.filter(n=>(R.find(r=>r.n===n)||{}).t==="st"),sp=ids.filter(n=>(R.find(r=>r.n===n)||{}).t==="sup");
+  const nm=String(f.contact||"").trim(),hon=/^(أ|د|م|ا)\.?\s|^(الأستاذ|الدكتور|المهندس)/.test(nm)?nm:`أ. ${nm}`;
+  const day=dayMode(f);const L=["السلام عليكم ورحمة الله وبركاته",hon,"",
+   `يسعدنا تزويدكم بعرض سعر حجز *بيت الطالب الأندلسي* – شركة الأندلس التعليمية، فرع المنار.`,"",
+   `*رقم العرض:* ${b.ref}`,`*الجهة:* ${f.orgName||"—"}`,
+   day?`*التاريخ:* ${dfmt(f.from)} (${fmt(q.n)} يوم)`:`*الدخول:* ${dfmt(f.from)}${f.inTime?" الساعة "+f.inTime:""}`];
+  if(!day)L.push(`*الخروج:* ${dfmt(f.to)}${f.outTime?" الساعة "+f.outTime:""} (${fmt(q.n)} ${q.n===1?"ليلة":q.n===2?"ليلتان":q.n<=10?"ليالٍ":"ليلة"})`);
+  L.push(`*العدد:* ${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين`);
+  if(st.length||sp.length)L.push(`*الغرف:* ${[st.length?`غرف الطلاب (${st.join("، ")})`:"",sp.length?`غرف المشرفين (${sp.join("، ")})`:""].filter(Boolean).join(" + ")}`);
+  L.push("","*تفاصيل السعر:*",...(q.L||[]).map(([t,v])=>`• ${t}: ${sar(v)}`),...(q.D||[]).map(([t,v])=>`• ${t}: − ${sar(v)}`),
+   `• المجموع قبل الضريبة: ${sar(q.sub)}`,q.vatOn===false?"• ضريبة القيمة المضافة: لا تُطبق":`• ضريبة القيمة المضافة ${fmt(c.vat)}%: ${sar(q.vat)}`,`*• الإجمالي: ${sar(q.total)}*`);
+  if(!q.internal)L.push("",`*لتأكيد الحجز:* سداد عربون ${fmt(c.depositPct)}% بمبلغ *${sar(q.deposit)}* خلال 3 أيام عمل من تاريخ هذا العرض، ويُسدَّد المتبقي ${sar(q.total-q.deposit)} قبل الدخول بـ 3 أيام.`);
+  if(bk.iban)L.push("","*بيانات التحويل:*",bk.name?`• البنك: ${bk.name}`:"",bk.acc?`• اسم الحساب: ${bk.acc}`:"",bk.no?`• رقم الحساب: ${bk.no}`:"",`• الآيبان: ${bk.iban}`);
+  L.push("",`• تأمين مسترد ${sar(q.insurance)} يُدفع عند الدخول ويُرد بعد التأكد من سلامة المرفق.`,`• الشروط والسياسات: ${location.origin+location.pathname}#policies`);
+  if(b.adminNote)L.push(`• ملاحظة: ${b.adminNote}`);
+  L.push("","*نرجو إرسال صورة إيصال التحويل على هذا الرقم، مع ذكر رقم العرض، لتأكيد الحجز.*","",c.contact.name);
+  return L.filter((x,i,a)=>x!==""||a[i-1]!=="").join("\n")}
+function waMsg(b){if(["new","approved"].includes(b.status))return quoteMsg(b);const q=b.quote||{},s=ST[b.status][0],c=cfg(),f=b.form;
   const L=["السلام عليكم ورحمة الله وبركاته",/^(أ|د|م|ا)\.?\s|^(الأستاذ|الدكتور|المهندس)/.test(String(f.contact||"").trim())?String(f.contact).trim():`أ. ${f.contact}`,"",`بخصوص طلب حجز بيت الطالب الأندلسي رقم ${b.ref} لـ ${f.orgName}:`,
    `• المدة: من ${dfmt(f.from)} إلى ${dfmt(f.to)} (${fmt(q.n)} ليلة)`,`• طريقة التأجير: ${modeLabel(f.mode)}، ${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين`,
    `• الإجمالي: ${sar(q.total)}`,`• حالة الطلب: ${s}`];
@@ -790,6 +820,7 @@ function docInvoice(b){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf(b),P
    <tr><td>تأمين مسترد عند الدخول (خارج الإجمالي)</td><td class="n">${fmt(q.insurance??c.insurance,2)}</td></tr></tfoot></table>
   ${b.invoiceNo?`<p class="dnote">رقم الفاتورة الضريبية الصادرة: <b dir="ltr">${esc(b.invoiceNo)}</b></p>`:""}
   <p class="dnote">${b.status==="new"?"هذا عرض سعر تقديري، ويُعتمد بعد مراجعة الإدارة وتوفر الغرف.":"هذه فاتورة مبدئية بتفاصيل الحجز والمبالغ المستحقة، وليست فاتورة ضريبية. تصدر الفاتورة الضريبية من النظام المحاسبي للشركة بعد السداد."}</p>
+  ${c.bank&&c.bank.iban&&!q.internal?`<p class="dnote"><b>بيانات التحويل:</b> ${esc(c.bank.name||"")} · اسم الحساب: ${esc(c.bank.acc||"")}${c.bank.no?` · رقم الحساب: <span dir="ltr">${esc(c.bank.no)}</span>`:""} · الآيبان: <b dir="ltr">${esc(c.bank.iban)}</b></p>`:""}
   <p class="dnote">للتواصل: ${esc(c.contact.name)} · <span dir="ltr">${esc(c.contact.phone)}</span></p>`}
 function docPledge(b){const f=b.form||{},h=poolHours(b);
   return docHead("تعهد استخدام المسبح",b)+`
@@ -843,6 +874,10 @@ function settingsForm(){const c=cfg(),P=c.prices;const n=(id,l,v)=>`<label class
      <label class="f">جوال الإدارة<input type="tel" id="s-phone" dir="ltr" value="${esc(c.contact.phone)}"></label>
      <label class="f">اسم الموقِّع في الرسائل<input type="text" id="s-cname" value="${esc(c.contact.name)}"></label>
      <label class="f">الرقم الضريبي للشركة <small>يظهر في الفاتورة المبدئية</small><input type="text" id="s-vatno" dir="ltr" value="${esc(c.vatNo||"")}"></label>
+     <label class="f">اسم البنك <small>يظهر في رسالة عرض السعر</small><input type="text" id="s-bank" value="${esc((c.bank||{}).name||"")}"></label>
+     <label class="f">اسم الحساب<input type="text" id="s-bacc" value="${esc((c.bank||{}).acc||"")}" placeholder="شركة الأندلس التعليمية"></label>
+     <label class="f">رقم الحساب <small>اختياري</small><input type="text" id="s-bno" dir="ltr" value="${esc((c.bank||{}).no||"")}"></label>
+     <label class="f">رقم الآيبان<input type="text" id="s-iban" dir="ltr" value="${esc((c.bank||{}).iban||"")}" placeholder="SA00 0000 0000 0000 0000 0000"></label>
      <label class="check" style="align-self:end"><input type="checkbox" id="s-demo" ${c.demo?"checked":""}><span>إظهار شارة «نسخة تجريبية»</span></label></div></fieldset>
    <div class="btns"><button class="btn" type="submit">حفظ الإعدادات</button><span class="muted" style="font-size:.85rem">تُطبّق على الطلبات الجديدة فقط.</span></div></form>`}
 
@@ -870,15 +905,16 @@ function readForm(){const f=S.form;const v=id=>{const e=document.getElementById(
   document.querySelectorAll("[data-ad]").forEach(e=>{const q=Math.max(0,Math.floor(+e.value||0));if(q)f.addons[e.dataset.ad]=q;else delete f.addons[e.dataset.ad]});
   const a=document.getElementById("agree");if(a)f.agree=a.checked;
   if(f.org==="staff"||f.org==="internal")f.promo="";
-  if(!S.isAdmin&&S.view==="book")applyPlan(f)}
+  if(!S.fullForm&&S.view==="book")applyPlan(f);if(S.isAdmin&&!S.fullForm)f.agree=true}
 function refreshQuote(){readForm();const v=validate(S.form);$("#quote").innerHTML=quoteHTML(v.q);$("#errs").innerHTML=errsHTML(v)}
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo({top:y})};
 
 function wire(v){
-  if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
+  if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const qc=$("#qCopy");if(qc)qc.onclick=()=>copyText($("#qMsg").value);const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
     const F=$("#bookForm");if(!F)return;
-    const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area]'+(S.isAdmin?',#students,#supervisors':''));
-    if(!S.isAdmin){const pl=$("#planBox");F.addEventListener("input",e=>{if(e.target.matches("#students,#supervisors")&&pl){readForm();pl.innerHTML=planHTML(autoPlan(S.form))}})}
+    const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area]'+(S.fullForm?',#students,#supervisors':''));
+    const ff=$("#fullForm");if(ff)ff.onclick=()=>{S.fullForm=!S.fullForm;render()};
+    if(!S.fullForm){const pl=$("#planBox");F.addEventListener("input",e=>{if(e.target.matches("#students,#supervisors")&&pl){readForm();pl.innerHTML=planHTML(autoPlan(S.form))}})}
     F.addEventListener("input",e=>{if(!structural(e))refreshQuote()});
     F.addEventListener("change",e=>{if(structural(e)){readForm();if(e.target.id==="from"){const d=parse(S.form.from);if(d)S.calMonth=ymd(new Date(d.getFullYear(),d.getMonth(),1,12));if(S.form.to<=S.form.from)S.form.to=addDays(S.form.from,1)}keepScroll(render)}else refreshQuote()});
     const mv=k=>{readForm();const m=parse(S.calMonth);S.calMonth=ymd(new Date(m.getFullYear(),m.getMonth()+k,1,12));keepScroll(render)};
@@ -891,7 +927,7 @@ function wire(v){
         if(!res||!res.ok){btn.disabled=false;btn.textContent="إرسال طلب الحجز";$("#errs").innerHTML=errsHTML({E:(res&&res.errors)||["تعذر الإرسال"],W:[]});$("#errs").scrollIntoView({behavior:"smooth",block:"center"});return}
         const rec=res.booking;
         const mine=lsGet("bait-mine",[]);mine.push({ref:rec.ref,phone:rec.form.phone});lsSet("bait-mine",mine);S.mine.push(rec);
-        S.sent=rec;S.form={...S.form,addons:{},notes:"",agree:false,promo:""};render();window.scrollTo({top:0});toast("أُرسل طلب الحجز")}
+        S.sent=rec;S.form={...S.form,addons:{},notes:"",agree:false,promo:""};if(S.isAdmin){await loadAdmin();S.form={...S.form,orgName:"",contact:"",phone:"",email:"",purpose:""}}render();window.scrollTo({top:0});toast(S.isAdmin?"تم حفظ عرض السعر":"أُرسل طلب الحجز")}
       catch(err){console.error("bait_submit",err);btn.disabled=false;btn.textContent="إرسال طلب الحجز";toast("تعذر الإرسال. تحقق من الاتصال وأعد المحاولة")}}}
   if(v==="mine"){const T=$("#trackForm");T.onsubmit=async e=>{e.preventDefault();const ref=$("#tRef").value.trim().toUpperCase(),ph=normPhone($("#tPhone").value);if(!ref||!ph){toast("اكتب رقم الطلب ورقم الجوال");return}
       const r=await track(ref,ph);if(!r){toast("لم نجد طلباً بهذا الرقم والجوال");return}const mine=lsGet("bait-mine",[]);if(!mine.some(m=>m.ref===ref))mine.push({ref,phone:ph});lsSet("bait-mine",mine);mergeMine(r);render()};
@@ -939,7 +975,7 @@ async function saveSettings(e){e.preventDefault();const c=structuredClone(cfg())
   c.addons.forEach(a=>a.price=g("s-ad-"+a.key));c.durationTiers.forEach((t,i)=>t.pct=g("s-tier"+i));Object.keys(ORG).forEach(k=>c.orgDisc[k]=g("s-org-"+k));
   c.internal={...c.internal,insurance:g("s-int-ins"),facilitiesFree:$("#s-int-fac").checked,ops:c.internal.ops.map(o=>({...o,price:g("s-int-"+o.key)}))};c.staffAddons=$("#s-staffAdd").checked;c.staffVat=$("#s-staffVat").checked;c.earlyPct=g("s-early");c.wholeAddonDisc=g("s-wad");c.maxDisc=g("s-max");c.depositPct=g("s-dep");c.vat=g("s-vat");c.insurance=g("s-ins");c.ratio=Math.max(1,g("s-ratio"));
   c.promos={};String($("#s-promos").value||"").split(/\n+/).forEach(l=>{const [k,v]=l.split("=");if(k&&k.trim()&&+v>0)c.promos[k.trim().toUpperCase()]=+v});
-  c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.vatNo=$("#s-vatno").value.trim().slice(0,20);c.demo=$("#s-demo").checked;
+  c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.vatNo=$("#s-vatno").value.trim().slice(0,20);c.bank={name:$("#s-bank").value.trim().slice(0,60),acc:$("#s-bacc").value.trim().slice(0,80),no:$("#s-bno").value.trim().slice(0,30),iban:$("#s-iban").value.trim().toUpperCase().slice(0,40)};c.demo=$("#s-demo").checked;
   const {data:res,error}=await S.sb.rpc("bait_save_config",{p_cfg:c});if(error||!res||!res.ok){toast((res&&res.error)||"تعذر حفظ الإعدادات");return}S.cfg=mergeCfg(res.config);toast("حُفظت الإعدادات");keepScroll(render)}
 
 /* ===================== البيانات ===================== */
