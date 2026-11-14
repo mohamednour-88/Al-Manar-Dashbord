@@ -516,9 +516,9 @@ function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTim
   if(S.sent&&S.isAdmin){const b=S.sent,m=waMsg(b),ph=normPhone(b.form.phone).replace(/^0/,"966");return `<div class="card" style="max-width:680px;margin:0 auto;display:grid;gap:10px">
     <div class="lbl">تم حفظ عرض السعر</div><h2 class="big">${esc(b.ref)} · ${esc(b.form.orgName||"")}</h2>
     ${!(cfg().bank&&cfg().bank.iban)?`<div class="note bad">بيانات الحساب البنكي غير مسجلة. أضفها من «الإعدادات» لتظهر في الرسالة.</div>`:""}
-    <p class="muted" style="margin:0">رسالة عرض السعر جاهزة. راجعها ثم أرسلها على واتساب المستأجر.</p>
-    <textarea class="copybox" readonly id="qMsg" rows="16">${esc(m)}</textarea>
-    <div class="btns"><a class="btn sm" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(m)}">إرسال على واتساب المستأجر</a><button class="btn sm ghost" type="button" id="qCopy">نسخ الرسالة</button><button class="btn sm ghost" type="button" data-doc="invoice" data-docid="${esc(b.id)}">عرض السعر PDF</button><button class="btn sm ghost" type="button" id="newReq">عرض سعر جديد</button></div>
+    <p class="muted" style="margin:0">الرسالة المختصرة جاهزة، ويُرفق معها ملف عرض السعر PDF. من الجوال تفتح لك قائمة المشاركة: اختر واتساب ثم المستأجر.</p>
+    <textarea class="copybox" readonly id="qMsg" rows="9">${esc(m)}</textarea>
+    <div class="btns"><button class="btn sm" type="button" data-share="${esc(b.id)}">إرسال العرض PDF مع الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(m)}">الرسالة فقط على واتساب</a><button class="btn sm ghost" type="button" id="qCopy">نسخ الرسالة</button><button class="btn sm ghost" type="button" data-doc="invoice" data-docid="${esc(b.id)}">عرض السعر PDF</button><button class="btn sm ghost" type="button" id="newReq">عرض سعر جديد</button></div>
     <div class="q">${quoteHTML(b.quote)}</div></div>`}
   if(S.sent)return `<div class="card" style="max-width:640px;margin:0 auto;display:grid;gap:10px">
     <div class="lbl">تم إرسال الطلب</div><h2 class="big">رقم طلبك ${esc(S.sent.ref)}</h2>
@@ -688,7 +688,7 @@ function adminActions(b){const A=[];if(S.role==="viewer")return "";if(S.role==="
   if(["approved","confirmed"].includes(b.status))A.push(btn("cancelAdmin","إلغاء الحجز","ghost"));
   return `<div class="grid" style="gap:8px"><label class="f">ملاحظة للمستأجر <small>تظهر له في «متابعة طلبي»</small><input type="text" data-note value="${esc(b.adminNote||"")}"></label>
    <div class="btns">${A.join("")}<button class="btn ghost sm" data-act="msg">رسالة واتساب جاهزة</button></div>
-   ${S.msgFor===b.id?`<textarea class="copybox" readonly data-msgtxt>${esc(waMsg(b))}</textarea><div class="btns"><button class="btn sm" data-act="copy">نسخ الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/966${normPhone(b.form.phone).replace(/^0/,"")}?text=${encodeURIComponent(waMsg(b))}">فتح الواتساب</a></div>`:""}</div>`}
+   ${S.msgFor===b.id?`<textarea class="copybox" readonly data-msgtxt>${esc(waMsg(b))}</textarea><div class="btns">${["new","approved"].includes(b.status)?`<button class="btn sm" type="button" data-share="${esc(b.id)}">إرسال العرض PDF مع الرسالة</button>`:""}<button class="btn sm ${["new","approved"].includes(b.status)?"ghost":""}" data-act="copy">نسخ الرسالة</button><a class="btn sm ghost" target="_blank" rel="noopener" href="https://wa.me/966${normPhone(b.form.phone).replace(/^0/,"")}?text=${encodeURIComponent(waMsg(b))}">فتح الواتساب</a></div>`:""}</div>`}
 
 function reqMsg(b){const f=b.form||{},q=b.quote||{};return ["السلام عليكم ورحمة الله وبركاته","إدارة بيت الطالب الأندلسي","",`طلب حجز رقم ${b.ref}`,`• الجهة: ${f.orgName||""} (${ORG[f.org]||""})`,`• المسؤول: ${f.contact||""}، جوال ${f.phone||""}`,
  `• المدة: من ${dfmt(f.from)} إلى ${dfmt(f.to)} (${fmt(q.n)} ليلة)`,`• طريقة التأجير: ${modeLabel(f.mode)}، ${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين، الفئة: ${f.gender||""}`,
@@ -712,7 +712,30 @@ function quoteMsg(b){const q=b.quote||{},c=cfg(),f=b.form||{},bk=c.bank||{},R=RO
   if(b.adminNote)L.push(`• ملاحظة: ${b.adminNote}`);
   L.push("","*نرجو إرسال صورة إيصال التحويل على هذا الرقم، مع ذكر رقم العرض، لتأكيد الحجز.*","",c.contact.name);
   return L.filter((x,i,a)=>x!==""||a[i-1]!=="").join("\n")}
-function waMsg(b){if(["new","approved"].includes(b.status))return quoteMsg(b);const q=b.quote||{},s=ST[b.status][0],c=cfg(),f=b.form;
+function shortQuoteMsg(b){const q=b.quote||{},c=cfg(),f=b.form||{},bk=c.bank||{};
+  const nm=String(f.contact||"").trim(),hon=/^(أ|د|م|ا)\.?\s|^(الأستاذ|الدكتور|المهندس)/.test(nm)?nm:`أ. ${nm}`;
+  const L=["السلام عليكم ورحمة الله وبركاته",hon,"",`مرفق لكم عرض سعر حجز بيت الطالب الأندلسي رقم ${b.ref}${f.orgName?` لـ ${f.orgName}`:""}، من ${dfmt(f.from)} إلى ${dfmt(f.to)}، بإجمالي ${sar(q.total)}.`];
+  if(!q.internal)L.push("",`*لتأكيد الحجز نرجو سداد العربون ${sar(q.deposit)} خلال 3 أيام عمل${bk.iban?` على الآيبان ${bk.iban} (${bk.acc||""})`:""}، وإرسال صورة الإيصال على هذا الرقم.*`);
+  else L.push("","*نرجو مراجعة العرض وتأكيد الحجز على هذا الرقم.*");
+  L.push("",c.contact.name);return L.join("\n")}
+/* ملف عرض السعر PDF ومشاركته على واتساب مع الرسالة */
+const PDFC={};
+function loadPdfLib(){if(window.html2pdf)return Promise.resolve();return new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
+async function quotePdf(b){if(PDFC[b.id+b.status])return PDFC[b.id+b.status];await loadPdfLib();
+  const W=document.createElement("div");W.id="docv";W.style.cssText="position:absolute;left:-12000px;top:0;width:794px;padding:0;overflow:visible;background:#fff";
+  W.innerHTML=`<div class="dpage" style="box-shadow:none;border-radius:0;max-width:794px;padding:30px 34px;font-size:13.5px">${docInvoice(b)}</div>`;document.body.appendChild(W);
+  try{await document.fonts.ready;const blob=await html2pdf().set({margin:[6,6,8,6],image:{type:"jpeg",quality:.92},html2canvas:{scale:2,useCORS:true,windowWidth:794,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},pagebreak:{mode:["css","legacy"]}}).from(W.firstElementChild).outputPdf("blob");
+    const f=new File([blob],`عرض سعر بيت الطالب ${b.ref}.pdf`,{type:"application/pdf"});PDFC[b.id+b.status]=f;return f}finally{W.remove()}}
+async function shareQuote(b,btn){const msg=shortQuoteMsg(b),ph=normPhone(b.form.phone).replace(/^0/,"966");const t0=btn?btn.textContent:"";
+  let f=PDFC[b.id+b.status];
+  if(!f){if(btn){btn.disabled=true;btn.textContent="جارٍ تجهيز ملف العرض…"}
+    try{f=await quotePdf(b)}catch(e){console.error(e);if(btn){btn.disabled=false;btn.textContent=t0}toast("تعذر تجهيز ملف PDF. استخدم «عرض السعر PDF» ثم احفظه");return}
+    if(btn){btn.disabled=false;btn.textContent="الملف جاهز، اضغط للإرسال"}
+    if(navigator.canShare&&navigator.canShare({files:[f]}))return}
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{try{navigator.clipboard&&navigator.clipboard.writeText(msg)}catch(_){}await navigator.share({files:[f],text:msg});toast("نُسخت الرسالة أيضاً، الصقها إذا لم تظهر مع الملف");if(btn)btn.textContent=t0}catch(e){if(e.name!=="AbortError")toast("تعذرت المشاركة")}return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();
+  window.open(`https://wa.me/${ph}?text=${encodeURIComponent(msg)}`,"_blank");toast("نزل ملف العرض على جهازك، أرفقه في محادثة الواتساب");if(btn)btn.textContent=t0}
+function waMsg(b){if(["new","approved"].includes(b.status))return shortQuoteMsg(b);const q=b.quote||{},s=ST[b.status][0],c=cfg(),f=b.form;
   const L=["السلام عليكم ورحمة الله وبركاته",/^(أ|د|م|ا)\.?\s|^(الأستاذ|الدكتور|المهندس)/.test(String(f.contact||"").trim())?String(f.contact).trim():`أ. ${f.contact}`,"",`بخصوص طلب حجز بيت الطالب الأندلسي رقم ${b.ref} لـ ${f.orgName}:`,
    `• المدة: من ${dfmt(f.from)} إلى ${dfmt(f.to)} (${fmt(q.n)} ليلة)`,`• طريقة التأجير: ${modeLabel(f.mode)}، ${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين`,
    `• الإجمالي: ${sar(q.total)}`,`• حالة الطلب: ${s}`];
@@ -840,6 +863,7 @@ function openDoc(id,kind){const b=findBk(id);if(!b)return;const D=document.creat
   D.innerHTML=`<div class="dbar"><button type="button" class="btn sm" id="docPrint">طباعة أو حفظ PDF</button><button type="button" class="btn sm ghost" id="docClose">رجوع</button></div><div class="dpage">${kind==="pledge"?docPledge(b):docInvoice(b)}</div>`;
   document.body.appendChild(D);document.body.classList.add("docopen");D.querySelector("#docPrint").onclick=()=>print();D.querySelector("#docClose").onclick=()=>{D.remove();document.body.classList.remove("docopen")};window.scrollTo(0,0)}
 document.addEventListener("click",async e=>{const d=e.target.closest("[data-doc]");if(d){openDoc(d.dataset.docid,d.dataset.doc);return}
+  const sh=e.target.closest("[data-share]");if(sh){const b=findBk(sh.dataset.share);if(b)shareQuote(b,sh);return}
   const pb=e.target.closest("[data-pay]");if(!pb)return;const card=pb.closest("article.bk");const b=(S.all||[]).find(x=>x.id===card.dataset.bid);if(!b)return;S.payOpen=b.id;
   const pdata=pb.dataset.pay==="inv"?{kind:"invoice",invoiceNo:card.querySelector("[data-pinv]").value.trim()}:{kind:card.querySelector("[data-pk]").value,amount:+card.querySelector("[data-pa]").value,method:card.querySelector("[data-pm]").value,ref:card.querySelector("[data-pr]").value.trim()};
   pb.disabled=true;const {data:res,error}=await S.sb.rpc("bait_set_payment",{p_id:b.id,p_data:pdata});pb.disabled=false;
@@ -910,7 +934,7 @@ function refreshQuote(){readForm();const v=validate(S.form);$("#quote").innerHTM
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo({top:y})};
 
 function wire(v){
-  if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const qc=$("#qCopy");if(qc)qc.onclick=()=>copyText($("#qMsg").value);const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
+  if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const qc=$("#qCopy");if(qc)qc.onclick=()=>copyText($("#qMsg").value);if(S.sent&&S.isAdmin)quotePdf(S.sent).catch(()=>{});const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
     const F=$("#bookForm");if(!F)return;
     const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area]'+(S.fullForm?',#students,#supervisors':''));
     const ff=$("#fullForm");if(ff)ff.onclick=()=>{S.fullForm=!S.fullForm;render()};
