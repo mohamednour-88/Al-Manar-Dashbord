@@ -195,6 +195,10 @@ dialog.lb button{position:absolute;top:8px;inset-inline-start:8px;width:36px;hei
 .perk b{display:block;font-size:.92rem}.perk span{font-size:.8rem;color:var(--muted)}
 .tour{display:block;width:100%;max-width:900px;margin-inline:auto;aspect-ratio:16/9;background:#000;border-radius:var(--r);border:1px solid var(--line)}
 .authbox{max-width:420px;margin:0 auto;display:grid;gap:12px}
+.book.simple{display:block;max-width:760px;margin:0 auto}
+.prow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line)}.prow>b{min-width:110px;font-size:.92rem}.prow>div{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--sunk);font-size:.85rem}.pchip.ok{background:var(--ok-soft,#E3F2EA);color:var(--ok,#1C7A4A)}.pchip.bad{background:var(--late-soft,#FBE9E7);color:var(--bad,#C0392B)}
+.polbox{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);margin-bottom:10px}.polbox .pol{display:grid;gap:8px}.polbox .card{box-shadow:none}
 </style></head><body>
 <div class="wrap">
   <header class="top">
@@ -318,7 +322,7 @@ if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch
 
 /* ===================== الحالة ===================== */
 const S={view:"facility",cfg:structuredClone(DEFAULTS),blocks:[],mine:[],all:[],isAdmin:false,user:null,sb:null,adminFilter:"new",calMonth:null,online:false,
-  form:{from:addDays(today(),14),to:addDays(today(),17),mode:"rooms",roomIds:[1,5],areas:[],students:10,supervisors:1,guests:"",addons:{},org:"school",orgName:"",empNo:"",contact:"",phone:"",email:"",gender:"بنين",age:"",purpose:"",promo:"",notes:"",agree:false},sent:null};
+  form:{from:addDays(today(),14),to:addDays(today(),17),mode:"rooms",roomIds:[1,5],areas:[],students:20,supervisors:2,inTime:"14:00",outTime:"12:00",guests:"",addons:{},org:"school",orgName:"",empNo:"",contact:"",phone:"",email:"",gender:"بنين",age:"",purpose:"",promo:"",notes:"",agree:false},sent:null};
 const cfg=()=>S.cfg;
 
 /* ===================== التسعير ===================== */
@@ -355,6 +359,23 @@ function allocate(f,excludeId){const free=freeRooms(f,excludeId),R=ROOMS();
   if(f.mode==="rooms"||isPkg(f.mode)){const ids=selIds(f),fs=new Set(free.map(r=>r.n));return ids.length&&ids.every(n=>fs.has(n))?{ok:true,ids}:{ok:false}}
   const a=pickRooms(free.filter(r=>r.t==="st"),+f.students||0),b=pickRooms(free.filter(r=>r.t==="sup"),+f.supervisors||0);
   return a&&b?{ok:true,ids:[...a,...b].map(r=>r.n).sort((x,y)=>x-y)}:{ok:false}}
+/* التخصيص التلقائي للمستأجر: أقل عدد غرف يكفي العدد، وغرف المشرفين من جناح المشرفين (غرفة 3 أسرّة وغرفة 4 أسرّة) أولاً */
+const WING=()=>(cfg().supWing||[5,9]).map(Number);
+function bestSet(list,need,prefer){if(need<=0)return[];let best=null;const n=list.length;
+  for(let m=1;m<(1<<n);m++){const set=list.filter((_,i)=>m>>i&1);const beds=set.reduce((a,r)=>a+r.beds,0);if(beds<need)continue;
+    const out=prefer?set.filter(r=>!prefer.includes(r.n)).length:0;const key=[out,set.length,beds-need,set.map(r=>r.n).join(",")];
+    if(!best||key[0]<best.k[0]||key[0]===best.k[0]&&(key[1]<best.k[1]||key[1]===best.k[1]&&(key[2]<best.k[2]||key[2]===best.k[2]&&key[3]<best.k[3])))best={set,k:key}}
+  return best?best.set:null}
+function autoPlan(f){const st=+f.students||0,sup=+f.supervisors||0,R=ROOMS(),W=WING();
+  const ok=f.from&&f.to&&f.to>f.from;const free=ok?freeRooms(f):R;
+  const a=bestSet(free.filter(r=>r.t==="st"),st),b=bestSet(free.filter(r=>r.t==="sup"),sup,W);
+  const busy=new Set();if(ok)blocksOver(f).forEach(x=>{if(x.whole)AREAS.forEach(z=>busy.add(z.k));(x.areas||[]).forEach(k=>busy.add(k))});
+  const stIds=(a||[]).map(r=>r.n).sort((x,y)=>x-y),supIds=(b||[]).map(r=>r.n).sort((x,y)=>x-y),ids=[...stIds,...supIds];
+  const allSt=R.filter(r=>r.t==="st").every(r=>stIds.includes(r.n)),wingN=W.filter(n=>supIds.includes(n)).length;
+  const P={stIds,supIds,ids,okSt:!!a,okSup:!!b,main:"",small:""};
+  if(st+sup>0){P.main=allSt?"inc":busy.has("main")?"busy":"pay";P.small=wingN===W.length?"inc":wingN===1?(busy.has("small")?"busy":"pay"):""}
+  P.areas=[...(P.main==="pay"?["main"]:[]),...(P.small==="pay"?["small"]:[])];return P}
+function applyPlan(f){const P=autoPlan(f);f.mode="rooms";f.roomIds=P.ids;f.areas=P.ids.length?P.areas:[];f.addons=f.addons||{};return P}
 function roomsNeeded(f){const R=ROOMS();const ids=f.mode==="whole"?R.map(r=>r.n):(f.mode==="rooms"||isPkg(f.mode))?selIds(f):(allocate(f).ids||[]);const t=n=>(R.find(r=>r.n===n)||{}).t;return{ids,st:ids.filter(n=>t(n)==="st").length,sup:ids.filter(n=>t(n)==="sup").length}}
 function quote(f){const c=cfg(),P=c.prices;const {n,we,wd}=nightSplit(f);const L=[],D=[];
   if(n<=0)return{n,we,wd,L,D,acc:0,addons:0,disc:0,sub:0,vat:0,total:0,deposit:0,discPct:0};
@@ -411,7 +432,9 @@ function validate(f,{forSubmit}={}){const c=cfg(),cap=c.capacity,E=[],W=[];const
     if(f.org==="staff"&&!String(f.empNo).trim())E.push("اكتب الرقم الوظيفي لتطبيق خصم المنسوبين.");
     if(!/^05\d{8}$/.test(normPhone(f.phone)))E.push("اكتب رقم جوال سعودي صحيح يبدأ بـ 05 ومن 10 أرقام.");
     if(f.email&&!/^\S+@\S+\.\S+$/.test(f.email))E.push("البريد الإلكتروني غير صحيح.");
-    if(!f.agree)E.push("وافق على الشروط والسياسات لإرسال الطلب.")}
+    if(!f.agree)E.push("وافق على الشروط والسياسات لإرسال الطلب.");
+    if(!S.isAdmin&&(!f.inTime||!f.outTime))E.push("حدّد وقت الدخول ووقت الخروج.")}
+  if(!S.isAdmin&&!dayMode(f)&&f.from&&f.to>f.from){const P=autoPlan(f);if((+f.students||0)>0&&!P.okSt)E.unshift("لا توجد غرف طلاب كافية لهذا العدد في التواريخ المختارة. غيّر التواريخ أو تواصل مع الإدارة.");if((+f.supervisors||0)>0&&!P.okSup)E.unshift("لا توجد غرف مشرفين كافية لهذا العدد في التواريخ المختارة.")}
   return{E,W,q}}
 
 /* ===================== الواجهات ===================== */
@@ -428,7 +451,7 @@ const poolHours=b=>+(((b.form||{}).addons||{}).pool)||0;
 function setView(v){const ok=["facility","prices","book","mine","policies","admin","join"];if(/^join-[a-f0-9]{16,}$/.test(v)){S.joinToken=v.slice(5);S.joinInfo=null;v="join"}if(!ok.includes(v))v="facility";S.view=v;
   document.querySelectorAll("nav.tabs a").forEach(a=>{if(a.dataset.v===v)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});render();window.scrollTo({top:0})}
 window.addEventListener("hashchange",()=>setView(location.hash.slice(1)));
-function render(){const A=$("#app"),v=S.view;A.innerHTML=({facility:vFacility,prices:vPrices,book:vBook,mine:vMine,policies:vPolicies,admin:vAdmin,join:vJoin})[v]();wire(v)}
+function render(){const A=$("#app"),v=S.view;A.innerHTML=({facility:vFacility,prices:vPrices,book:()=>S.isAdmin?vBook():vBookSimple(),mine:vMine,policies:vPolicies,admin:vAdmin,join:vJoin})[v]();wire(v)}
 const demoTag=()=>cfg().demo?`<span class="demo">نسخة تجريبية</span>`:"";
 
 function planSVG(){const R=(x,y,w,h,t,s,cls)=>`<g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" class="${cls}"/><text x="${x+w/2}" y="${y+h/2-(s?6:0)}" text-anchor="middle" dominant-baseline="middle" class="pt">${t}</text>${s?`<text x="${x+w/2}" y="${y+h/2+12}" text-anchor="middle" dominant-baseline="middle" class="ps">${s}</text>`:""}</g>`;
@@ -493,7 +516,7 @@ function vBook(){const f=S.form,c=cfg();
   if(S.sent)return `<div class="card" style="max-width:640px;margin:0 auto;display:grid;gap:10px">
     <div class="lbl">تم إرسال الطلب</div><h2 class="big">رقم طلبك ${esc(S.sent.ref)}</h2>
     ${window.BAIT_PREVIEW?`<div class="note bad"><b>هذه نسخة معاينة:</b> الطلب محفوظ على جهازك فقط ولم يصل للإدارة. اضغط «إرسال الطلب للإدارة على واتساب» ليصلهم.</div>`:`<p>وصل طلبك إلى إدارة بيت الطالب، وتصلك الإفادة خلال يومي عمل. احتفظ برقم الطلب، وتابع حالته من <a href="#mine">متابعة طلبي</a> برقم الطلب ورقم جوالك.</p>`}
-    <div class="btns">${waAdminBtn(S.sent,"")}<button class="btn sm ghost" id="cpRef">نسخ رقم الطلب</button></div>
+    <div class="btns"><button class="btn sm" type="button" data-doc="invoice" data-docid="${esc(S.sent.id)}">عرض الفاتورة وطباعتها</button>${waAdminBtn(S.sent,"")}<button class="btn sm ghost" id="cpRef">نسخ رقم الطلب</button></div>
     <div class="q">${quoteHTML(S.sent.quote)}</div>
     <div class="btns"><button class="btn" id="newReq">طلب حجز جديد</button><a class="btn ghost" href="#mine">متابعة طلبي</a></div></div>`;
   const v=validate(f),q=v.q;
@@ -546,6 +569,48 @@ function vBook(){const f=S.form,c=cfg();
      <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>إرسال طلب الحجز</button>
      <p class="muted" style="font-size:.8rem;margin:8px 0 0">السعر النهائي يُعتمد في عرض السعر الرسمي من الإدارة.</p></aside>
   </form>`}
+function planHTML(P){const R=ROOMS(),b=n=>(R.find(r=>r.n===n)||{}).beds||0;
+  const li=(ids,t)=>ids.length?ids.map(n=>`<span class="pchip">غرفة ${n} · ${bedsTxt(b(n))}</span>`).join(""):`<span class="muted">—</span>`;
+  const hl=(st,lbl)=>st==="inc"?`<span class="pchip ok">${lbl}: مشمولة في سعر الغرف</span>`:st==="pay"?`<span class="pchip">${lbl}: تُحسب تلقائياً</span>`:st==="busy"?`<span class="pchip bad">${lbl}: محجوزة لجهة أخرى في تواريخك</span>`:"";
+  return `<div class="prow"><b>غرف الطلاب</b><div>${P.okSt?li(P.stIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
+   <div class="prow"><b>غرف المشرفين</b><div>${P.okSup?li(P.supIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
+   <div class="prow"><b>الصالات</b><div>${hl(P.main,"الصالة الرئيسية")}${hl(P.small,"الصالة الصغيرة (صالة المشرفين)")}${!P.main&&!P.small?`<span class="muted">—</span>`:""}</div></div>`}
+function vBookSimple(){const f=S.form,c=cfg();
+  if(S.sent)return vBook();
+  const P=applyPlan(f);const v=validate(f),q=v.q;
+  const num=(id,lbl,val,max,hint)=>`<label class="f">${lbl}<input type="number" id="${id}" inputmode="numeric" min="0" max="${max}" value="${esc(val)}">${hint?`<small>${hint}</small>`:""}</label>`;
+  return `<div class="grid"><div class="lbl">طلب حجز ${demoTag()}</div><h2 class="big">احجز بيت الطالب</h2><p class="muted" style="margin:0">اكتب بياناتك وعدد الطلاب والمشرفين، ونخصص لك الغرف تلقائياً وتظهر الفاتورة مباشرة.</p></div>
+  ${!S.online?`<div class="note bad">تعذر الاتصال بالخادم الآن. تقدر تحسب السعر، وللإرسال تحقق من الاتصال وأعد فتح الصفحة.</div>`:""}
+  <form class="book simple" id="bookForm" novalidate><div class="grid">
+   <fieldset><legend>1. بيانات الجهة</legend><div class="fg">
+     <label class="f">نوع الجهة<select id="org">${Object.entries(ORG).map(([k,t])=>`<option value="${k}" ${f.org===k?"selected":""}>${t}</option>`).join("")}</select></label>
+     <label class="f">${f.org==="staff"?"جهة العمل في الشركة":f.org==="internal"?"القسم المنظّم للبرنامج":"اسم الجهة"}<input type="text" id="orgName" value="${esc(f.orgName)}" autocomplete="organization"></label>
+     ${f.org==="staff"?`<label class="f">الرقم الوظيفي<input type="text" id="empNo" dir="ltr" value="${esc(f.empNo)}"></label>`:""}
+     <label class="f">اسم المسؤول<input type="text" id="contact" value="${esc(f.contact)}" autocomplete="name"></label>
+     <label class="f">جوال المسؤول<input type="tel" id="phone" dir="ltr" value="${esc(f.phone)}" placeholder="05xxxxxxxx" autocomplete="tel"></label>
+     <label class="f">البريد الإلكتروني <small>اختياري</small><input type="email" id="email" dir="ltr" value="${esc(f.email)}" autocomplete="email"></label>
+     <label class="f">الفئة<select id="gender">${["بنين","بنات","مختلط (عائلات أو كبار)"].map(x=>`<option ${f.gender===x?"selected":""}>${x}</option>`).join("")}</select></label>
+     <label class="f">الغرض من الإقامة <small>اختياري</small><input type="text" id="purpose" value="${esc(f.purpose)}" placeholder="مثال: معسكر، مسابقة، رحلة مدرسية"></label>
+   </div></fieldset>
+   <fieldset><legend>2. العدد والمواعيد</legend><div class="fg">
+     ${num("students","عدد الطلاب",f.students,capInfo().stBeds,"")}
+     ${num("supervisors","عدد المشرفين",f.supervisors,capInfo().supBeds,`مشرف لكل ${fmt(c.ratio)} طالباً على الأقل`)}
+     <label class="f">تاريخ الدخول<input type="date" id="from" min="${today()}" value="${esc(f.from)}"><small>${hijri(f.from)}</small></label>
+     <label class="f">وقت الدخول<input type="time" id="inTime" value="${esc(f.inTime||c.checkIn)}"></label>
+     <label class="f">تاريخ الخروج<input type="date" id="to" min="${esc(addDays(f.from||today(),1))}" value="${esc(f.to)}"><small>${hijri(f.to)}</small></label>
+     <label class="f">وقت الخروج<input type="time" id="outTime" value="${esc(f.outTime||c.checkOut)}"></label>
+     <div class="f"><span class="lbl">عدد الليالي</span><b class="num" style="font-size:1.5rem;color:var(--accent)">${fmt(q.n||0)}</b></div>
+   </div></fieldset>
+   <fieldset><legend>3. الغرف المخصصة لك تلقائياً</legend><div id="planBox">${planHTML(P)}</div>
+     <small class="muted">الصالة الرئيسية مشمولة إذا حُجزت كل غرف الطلاب، والصالة الصغيرة (صالة المشرفين) مشمولة إذا حُجزت غرفتا المشرفين معاً.</small></fieldset>
+   <fieldset><legend>4. الفاتورة</legend><div class="q" id="quote">${quoteHTML(q)}</div></fieldset>
+   <fieldset><legend>5. الشروط والسياسات</legend>
+     <div class="polbox">${vPolicies().replace(/^\s*<div class="grid">[\s\S]*?<\/h2><\/div>/,"")}</div>
+     <label class="check"><input type="checkbox" id="agree" ${f.agree?"checked":""}><span>قرأت الشروط والسياسات وأوافق عليها، ومنها سياسة الإلغاء والتأمين المسترد، و<b style="color:var(--bad,#C0392B)">شرط السلامة في المسبح ومسؤولية الموقّع على العقد</b>.</span></label>
+     <div class="errs" id="errs">${errsHTML(v)}</div>
+     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>موافق، أرسل طلب الحجز</button>
+     <p class="muted" style="font-size:.8rem;margin:8px 0 0">يُعد الطلب مبدئياً حتى تعتمده الإدارة ويُدفع العربون.</p></fieldset>
+  </div></form>`}
 const errsHTML=v=>v.E.map(e=>`<div class="note bad">${esc(e)}</div>`).join("")+v.W.map(e=>`<div class="note">${esc(e)}</div>`).join("");
 
 function quoteHTML(q){const c=cfg();if(!q||!q.n)return `<p class="muted">حدّد التواريخ لعرض السعر.</p>`;
@@ -713,7 +778,7 @@ function docHead(title,b){const c=cfg();return `<div class="dh"><img src="logo.p
 function docInvoice(b){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf(b),P=b.payments||[];const day=dayMode(f);
   return docHead(b.status==="new"?"عرض سعر":"فاتورة مبدئية",b)+`
   <table class="dt2"><tr><th>الجهة</th><td>${esc(f.orgName||"")}</td><th>المسؤول</th><td>${esc(f.contact||"")}</td></tr><tr><th>الجوال</th><td dir="ltr">${esc(f.phone||"")}</td><th>البريد</th><td dir="ltr">${esc(f.email||"—")}</td></tr>
-   <tr><th>${day?"تاريخ اللقاء":"الوصول"}</th><td>${dfmt(f.from)}</td><th>${day?"الأيام":"المغادرة"}</th><td>${day?fmt(q.n):dfmt(f.to)}</td></tr>
+   <tr><th>${day?"تاريخ اللقاء":"الوصول"}</th><td>${dfmt(f.from)}${f.inTime?" · الساعة "+esc(f.inTime):""}</td><th>${day?"الأيام":"المغادرة"}</th><td>${day?fmt(q.n):dfmt(f.to)+(f.outTime?" · الساعة "+esc(f.outTime):"")}</td></tr>
    <tr><th>طريقة التأجير</th><td>${esc(modeLabel(f.mode))}</td><th>${day?"الحضور":"العدد"}</th><td>${day?fmt(f.guests||0):`${fmt(f.students)} طالباً و${fmt(f.supervisors)} مشرفين`}</td></tr></table>
   <table class="dl"><thead><tr><th>البيان</th><th>المبلغ (ر.س)</th></tr></thead><tbody>
    ${(q.L||[]).map(([t,v])=>`<tr><td>${esc(t)}</td><td class="n">${fmt(v,2)}</td></tr>`).join("")}
@@ -795,7 +860,7 @@ function vPolicies(){const c=cfg();
 
 /* ===================== الربط ===================== */
 function readForm(){const f=S.form;const v=id=>{const e=document.getElementById(id);return e?e.value:undefined};
-  ["from","to","gender","age","org","orgName","empNo","contact","phone","email","promo","purpose","notes"].forEach(k=>{const x=v(k);if(x!==undefined)f[k]=x});
+  ["from","to","inTime","outTime","gender","age","org","orgName","empNo","contact","phone","email","promo","purpose","notes"].forEach(k=>{const x=v(k);if(x!==undefined)f[k]=x});
   ["stRooms","supRooms","students","supervisors","guests"].forEach(k=>{const x=v(k);if(x!==undefined)f[k]=x===""?"":Math.max(0,Math.floor(+x||0))});
   const m=document.querySelector('input[name="mode"]:checked');if(m)f.mode=m.value;
   const hd=document.getElementById("hdays");if(hd&&f.from)f.to=addDays(f.from,Math.min(cfg().maxNights,Math.max(1,Math.floor(+hd.value||1))));
@@ -804,18 +869,20 @@ function readForm(){const f=S.form;const v=id=>{const e=document.getElementById(
   const ab=document.querySelectorAll("[data-area]");if(ab.length)f.areas=[...ab].filter(x=>x.checked).map(x=>x.dataset.area);
   document.querySelectorAll("[data-ad]").forEach(e=>{const q=Math.max(0,Math.floor(+e.value||0));if(q)f.addons[e.dataset.ad]=q;else delete f.addons[e.dataset.ad]});
   const a=document.getElementById("agree");if(a)f.agree=a.checked;
-  if(f.org==="staff"||f.org==="internal")f.promo=""}
+  if(f.org==="staff"||f.org==="internal")f.promo="";
+  if(!S.isAdmin&&S.view==="book")applyPlan(f)}
 function refreshQuote(){readForm();const v=validate(S.form);$("#quote").innerHTML=quoteHTML(v.q);$("#errs").innerHTML=errsHTML(v)}
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo({top:y})};
 
 function wire(v){
   if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
     const F=$("#bookForm");if(!F)return;
-    const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area],#students,#supervisors');
+    const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area]'+(S.isAdmin?',#students,#supervisors':''));
+    if(!S.isAdmin){const pl=$("#planBox");F.addEventListener("input",e=>{if(e.target.matches("#students,#supervisors")&&pl){readForm();pl.innerHTML=planHTML(autoPlan(S.form))}})}
     F.addEventListener("input",e=>{if(!structural(e))refreshQuote()});
     F.addEventListener("change",e=>{if(structural(e)){readForm();if(e.target.id==="from"){const d=parse(S.form.from);if(d)S.calMonth=ymd(new Date(d.getFullYear(),d.getMonth(),1,12));if(S.form.to<=S.form.from)S.form.to=addDays(S.form.from,1)}keepScroll(render)}else refreshQuote()});
     const mv=k=>{readForm();const m=parse(S.calMonth);S.calMonth=ymd(new Date(m.getFullYear(),m.getMonth()+k,1,12));keepScroll(render)};
-    $("#calPrev").onclick=()=>mv(-1);$("#calNext").onclick=()=>mv(1);
+    if($("#calPrev")){$("#calPrev").onclick=()=>mv(-1);$("#calNext").onclick=()=>mv(1)}
     F.onsubmit=async e=>{e.preventDefault();readForm();const vv=validate(S.form,{forSubmit:true});
       if(vv.E.length){$("#errs").innerHTML=errsHTML(vv);$("#errs").scrollIntoView({behavior:"smooth",block:"center"});return}
       const btn=$("#send");btn.disabled=true;btn.textContent="جارٍ الإرسال…";
