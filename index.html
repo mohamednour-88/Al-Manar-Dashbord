@@ -183,6 +183,13 @@ header .hright{justify-self:end;justify-items:end}
 .sitefoot img{height:72px}
 @media (max-width:760px){header{grid-template-columns:auto 1fr}header .hbrand>div{text-align:start}.hlogo{height:70px}header .hright{grid-column:1/-1;justify-self:stretch;justify-items:start;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px}}
 @media (max-width:520px){.hlogo{height:58px}.sitefoot img{height:56px}}
+/* الإصدار 35: قائمة الحساب يسار الصفحة */
+.hacct{position:relative}.acctbtn{font:inherit;display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:99px;padding:6px 14px;cursor:pointer;min-height:40px}.acctbtn:hover{background:var(--sunk)}.acav{font-size:1rem}
+.acctmenu{position:absolute;inset-inline-end:0;top:calc(100% + 6px);z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);min-width:230px;padding:6px;display:grid;gap:2px}
+.acctmenu .acid{font-size:.8rem;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
+.acctmenu button{font:inherit;text-align:start;background:none;border:0;color:inherit;padding:9px 10px;border-radius:8px;cursor:pointer;min-height:40px}.acctmenu button:hover{background:var(--sunk)}.acctmenu .lo{color:var(--late)}
+header .hright{display:grid;gap:6px;justify-items:end}
+@media (max-width:760px){header .hright{grid-column:auto;grid-row:1;justify-self:end;display:grid;justify-items:end}header{grid-template-columns:auto 1fr auto}header .hbrand>div{text-align:center}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 <style>
@@ -257,9 +264,19 @@ body.staff aside{display:none}
 .crow:last-child{border-bottom:0}.crow:hover{background:var(--accent-soft)}.crow .ct,.crow .cs{display:block}.crow .ct{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow .cs{font-size:.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crow.late{border-inline-start:4px solid var(--late)}.crow .lt{color:var(--late);font-weight:700}
 .chead{cursor:default;background:var(--sunk);font-size:.78rem;color:var(--muted);font-weight:700}.chead:hover{background:var(--sunk)}
 .pager{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;margin-top:10px;font-size:.85rem}.pager .pg{display:flex;gap:4px;flex-wrap:wrap}.pager button{font:inherit;min-width:36px;min-height:36px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;color:inherit}.pager button[aria-current="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}.pager button:disabled{opacity:.4;cursor:default}
-.ocards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}.ocards .stat{border-inline-start:4px solid var(--line)}.ocards .o-late{border-inline-start-color:var(--late)}.ocards .o-late b{color:var(--late)}.ocards .o-today{border-inline-start-color:var(--accent)}.ocards .o-done{border-inline-start-color:var(--ok)}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ucard{display:grid;gap:4px;border:1px solid color-mix(in srgb,var(--mc,var(--accent)) 30%,var(--line));border-inline-start:5px solid var(--mc,var(--accent));border-radius:var(--r);padding:10px 12px;background:color-mix(in srgb,var(--mc,var(--accent)) 7%,var(--surface))}
+.ucard .umain{display:grid;gap:8px;text-align:start;font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}.ucard .ut{font-size:1.05rem;color:color-mix(in srgb,var(--mc,var(--accent)) 75%,var(--fg))}
+.ucard .mcell.ok b{color:var(--ok)}.uavg{font-size:.82rem;color:var(--muted)}.uavg b{color:var(--fg)}
+.urate{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}.urate .pbar{width:100%;margin:0}.urate b{color:var(--fg);font-variant-numeric:tabular-nums}
+.ucard .urep{justify-self:start;font-size:.82rem}
+[data-mod="tasks"]{--mc:#2F6B57}
+.rtdet{padding:8px 12px;background:var(--sunk);border-bottom:1px solid var(--line)}.rtown{grid-template-columns:minmax(0,1.6fr) 90px 130px minmax(0,1fr) 24px 0}
+.teamq{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}.qrbox{width:168px;min-height:168px;display:grid;place-items:center;background:#fff;border-radius:10px;padding:4px}@media (max-width:520px){.teamq{grid-template-columns:1fr}}
+.ocall{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-2px 0 8px;font-size:.85rem}
+.ocards{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:8px;margin:8px 0}.ocards .stat{border-inline-start:4px solid var(--line)}.ocards .o-late{border-inline-start-color:var(--late)}.ocards .o-late b{color:var(--late)}.ocards .o-today{border-inline-start-color:var(--accent)}.ocards .o-done{border-inline-start-color:var(--ok)}
 .sumgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sumcard{display:grid;gap:8px;text-align:start;font:inherit;color:inherit;cursor:pointer;border:1px solid color-mix(in srgb,var(--mc) 30%,var(--line));border-inline-start:5px solid var(--mc);border-radius:var(--r);padding:10px 12px;background:color-mix(in srgb,var(--mc) 8%,var(--surface))}.sumcard>b{color:color-mix(in srgb,var(--mc) 75%,var(--fg))}.sumcard .rate{font-size:.82rem;color:var(--muted)}
-@media (max-width:760px){.prow3{grid-template-columns:minmax(0,1fr) 80px 100px auto}.prow3 [data-f="spec"],.prow3 [data-f="note"]{grid-column:1/-2}.crow{grid-template-columns:minmax(0,1fr) auto}.crow .hm,.crow.hm{display:none}.ocards{grid-template-columns:repeat(2,minmax(0,1fr))}.sumgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.prow3{grid-template-columns:minmax(0,1fr) 80px 100px auto}.prow3 [data-f="spec"],.prow3 [data-f="note"]{grid-column:1/-2}.crow{grid-template-columns:minmax(0,1fr) auto}.crow .hm,.crow.hm{display:none}.ocards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.sumgrid{grid-template-columns:minmax(0,1fr)}}
 .prow2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,.8fr) minmax(0,.8fr) auto;gap:6px;align-items:center}
 .fgrid.buyer{background:var(--sunk);border-radius:8px;padding:8px}
 .dstats{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -370,7 +387,13 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
       <h1>متابعات المنار اليومية</h1>
       <p class="sub" id="hsub">الدعم اللوجستي ـ فرع المنار</p>
     </div></div>
-    <div class="hright"><div class="today" id="today"></div><div class="me"><span class="ltr" id="me-email"></span><button class="instbtn" type="button" id="themeBtn" aria-label="تغيير المظهر">◐ تلقائي</button><button class="instbtn" type="button" data-install hidden>📲 تثبيت التطبيق</button><button class="linkbtn" type="button" id="logout">تسجيل الخروج</button></div></div>
+    <div class="hright"><div class="today" id="today"></div><div class="hacct"><button type="button" class="acctbtn" id="acctBtn" aria-haspopup="true" aria-expanded="false"><span class="acav" aria-hidden="true">👤</span><span>الحساب</span><span aria-hidden="true">▾</span></button>
+      <div class="acctmenu" id="acctMenu" hidden role="menu"><div class="acid ltr" id="me-email"></div>
+        <button type="button" role="menuitem" id="m-settings" hidden>⚙️ الإعدادات</button>
+        <button type="button" role="menuitem" id="m-mail" hidden>✉️ إضافة بريدك المؤسسي</button>
+        <button type="button" role="menuitem" id="themeBtn" aria-label="تغيير المظهر">◐ تلقائي</button>
+        <button type="button" role="menuitem" data-install hidden>📲 تثبيت التطبيق</button>
+        <button type="button" role="menuitem" id="logout" class="lo">تسجيل الخروج</button></div></div></div>
   </header>
 
   <div class="insthelp" id="installHelp" hidden>لتثبيت «متابعات المنار» على الآيفون: افتح الرابط في <b>Safari</b> ← اضغط زر <b>المشاركة</b> (المربع والسهم) ← اختر <b>«إضافة إلى الشاشة الرئيسية»</b> ← <b>إضافة</b>. بعدها يفتح من أيقونته مثل أي تطبيق.</div>
@@ -520,7 +543,9 @@ function render(){
   $("itemform").hidden=!state.canAssign||!state.people.length;
   renderList();
   renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderBuffets();renderSettings();renderRemind();renderRoutine();renderEvents();renderSafety();
-  document.querySelector(".stats").hidden=!canTab("tasks");
+  /* الإصدار 35: لوحة الأرقام العامة ما تظهر داخل الصفحات — أرقام المهام في صفحة المهام فقط، وأرقام الوحدات في لوحة البيانات */
+  $("tstats").hidden=!(state.view==="tasks"&&canTab("tasks"));$("qstats").hidden=true;if(state.view!=="dash")$("remind").hidden=true;
+  $("m-settings").hidden=state.role!=="admin";{const m=person(state.me);$("m-mail").hidden=!(m&&!INST.test(m.email||""))}
   document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
 
@@ -1192,7 +1217,8 @@ function pagerHTML(key,pg){if(!pg.total)return"";const {P,pages}=pg;const nums=[
 function wirePager(root,key){const w=root.querySelector(`[data-pager="${key}"]`);if(!w)return;const P=state.pg[key];
   w.querySelectorAll("[data-pgo]").forEach(b=>b.onclick=()=>{P.page=+b.dataset.pgo;render();const h=root.querySelector(".phead");if(h)h.scrollIntoView({block:"start"})});
   const sel=w.querySelector("[data-pgsize]");if(sel)sel.onchange=()=>{state.pgSize=+sel.value;try{localStorage.setItem("manar-pgsize",sel.value)}catch(e){}P.page=1;render()}}
-function ocardsHTML(key,cards,cur){return `<div class="ocards">${cards.map(([k,l,n,c])=>`<button type="button" class="stat ${c}" data-oc="${key}:${k}" aria-pressed="${cur===k}"><b>${num(n)}</b><span>${l}</span></button>`).join("")}</div>`}
+function ocardsHTML(key,cards,cur){return `<div class="ocards" style="--n:${cards.length}">${cards.map(([k,l,n,c])=>`<button type="button" class="stat ${c}" data-oc="${key}:${k}" aria-pressed="${cur===k}"><b>${num(n)}</b><span>${l}</span></button>`).join("")}</div>
+  <div class="ocall"><span class="hint">${cards.some(c=>c[0]===cur)?"اضغط الرقم مرة ثانية للرجوع للمفتوحة":cur==="any"?"معروض: كل الطلبات":""}</span><button type="button" class="linkbtn" data-ocall="${key}" aria-pressed="${cur==="any"}">عرض كل الطلبات</button></div>`}
 function money(n){return (Number(n)||0).toLocaleString("en-US",{maximumFractionDigits:2})+" ر.س"}
 
 async function uploadFile(kind,id,file){
@@ -1252,12 +1278,12 @@ function renderTabs(){
   const myOpenN=myEntries().filter(e=>e.open).length+refQueue().length;
   const tabs=[["send","إرسال طلب",myOpenN?`<span class="tb">${num(myOpenN)}</span>`:""],["tasks","المهام",""],["requests","الطلبات",myOpenIn.length?`<span class="tb ${lateN?"l":""}">${num(myOpenIn.length)}</span>`:""],["events","طلبات المناسبات",evN?`<span class="tb">${num(evN)}</span>`:""],["purchases","المشتريات",purN?`<span class="tb">${num(purN)}</span>`:""],["transport","الحركة والنقل",trN?`<span class="tb">${num(trN)}</span>`:""],["stores","المستودعات",whN?`<span class="tb">${num(whN)}</span>`:""],["buffets","البوفيهات",bfLowN()?`<span class="tb l">${num(bfLowN())}</span>`:""],["routine","الأعمال الدورية",""],["safety","الأمن والسلامة",sfN?`<span class="tb l">${num(sfN)}</span>`:""]];
   tabs.push(["feed","آخر التحديثات",unread?`<span class="tb">${num(unread)}</span>`:""],["dash","لوحة البيانات",""]);
-  if(state.role==="admin")tabs.push(["settings","الإعدادات",""]);
+
   const allow=myTabs();const tmp=allow.includes("send")&&SEND_VIEWS.includes(state.view)&&!allow.includes(state.view)&&(state.view!=="requests"||canReq())?state.view:"";
   for(let i=tabs.length-1;i>=0;i--)if((!allow.includes(tabs[i][0])&&tabs[i][0]!==tmp)||tabs[i][0]==="requests")tabs.splice(i,1);
   if(!state.v20init&&state.people.length){state.v20init=true;if(myScope()&&!(location.hash||"").slice(1))state.view="dash"}
   const sc=myScope();if(sc)window.__hsub="اطلاع على بيانات "+scopeName(sc)+" — الطلبات والمشتريات والنقل والمستودعات ولوحة البيانات";else if(state.role!=="admin"&&state.people.length&&allow.length===1)window.__hsub="أرسل طلبك وتابع وين وصل، واكتب ملاحظاتك عليه";
-  if((state.people.length||state.role==="admin")&&!tabs.some(x=>x[0]===state.view))state.view=tabs.length?tabs[0][0]:"tasks";
+  if((state.people.length||state.role==="admin")&&!tabs.some(x=>x[0]===state.view)&&!(state.view==="settings"&&state.role==="admin"))state.view=tabs.length?tabs[0][0]:"tasks";
   $("tabs").innerHTML=tabs.map(([k,l,b])=>`<button type="button" role="tab" aria-selected="${state.view===k}" data-v="${k}">${l}${b}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}if(state.view==="feed"){state.feedSeenAt=state.lastSeen;markSeen()}render();window.scrollTo({top:0})});
   $("tasksView").hidden=state.view!=="tasks";$("reqView").hidden=state.view!=="requests";$("feedView").hidden=state.view!=="feed";
@@ -1287,14 +1313,15 @@ function renderPurchases(){
   const cb=state.purCat?base.filter(x=>(x.category||"")===state.purCat):base;
   v.innerHTML=`<div class="phead"><div><h2>المشتريات</h2><div class="prole">${isBuyer()?"طلبات الشراء الواردة إليك — حدّث حالتها وأرفق عروض الأسعار والفواتير":"اطلب احتياجات قسمك، وأرفق الملفات، وتابع حالة الطلب حتى الاستلام"}</div></div>
     <div class="filters">${sc.map(([k,l])=>`<button type="button" class="chip" data-ps="${k}" aria-pressed="${state.purScope===k}">${l}</button>`).join("")}</div></div>
-    ${officer?ocardsHTML("pur",[["open","المفتوحة",cb.filter(purOpen).length,""],["late","المتأخرة",cb.filter(purLate).length,"o-late"],["today","سيتم إنجازها اليوم",cb.filter(purToday).length,"o-today"],["received","المكتملة",cb.filter(x=>x.status==="received").length,"o-done"]],state.purStatus):""}
-    <div class="filters">${[["open","المفتوحة"],["late","المتأخرة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-pt="${k}" aria-pressed="${state.purStatus===k}">${l}</button>`).join("")}
+    ${ocardsHTML("pur",[["open","المفتوحة",cb.filter(purOpen).length,""],["late","المتأخرة",cb.filter(purLate).length,"o-late"],["today","سيتم إنجازها اليوم",cb.filter(purToday).length,"o-today"],["received","المكتملة",cb.filter(x=>x.status==="received").length,"o-done"]],state.purStatus)}
+    <div class="filters">
       <label class="hint" style="margin-inline-start:auto">بند المصروف <select data-pcat><option value="">كل البنود</option>${PCAT.map(c=>`<option ${state.purCat===c?"selected":""}>${esc(c)}</option>`).join("")}</select></label></div>
     ${state.me||state.role==="admin"?newPurHTML():""}
     <div id="purList"></div>${pagerHTML(pk,pg)}`;
   v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{state.purScope=b.dataset.ps;render()});
   v.querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{state.purStatus=b.dataset.pt;render()});
   v.querySelectorAll("[data-oc]").forEach(b=>b.onclick=()=>{const k=b.dataset.oc.split(":")[1];state.purStatus=state.purStatus===k?"open":k;render()});
+  v.querySelectorAll("[data-ocall]").forEach(b=>b.onclick=()=>{state.purStatus=state.purStatus==="any"?"open":"any";render()});
   v.querySelector("[data-pcat]").onchange=e=>{state.purCat=e.target.value;render()};
   if(state.me||state.role==="admin")wireNewPur(v);
   wirePager(v,pk);
@@ -1646,18 +1673,20 @@ function renderEvents(){
   let list=route?offHide(state.events):state.events.slice();
   if(state.evScope==="mine")list=list.filter(e=>e.requesterId===me);else if(state.evScope==="coord")list=list.filter(e=>e.coordId===me);
   const st=state.evStatus;
-  if(st==="open")list=list.filter(evOpen);else if(st==="new")list=list.filter(e=>e.status==="new");else if(st==="postponed")list=list.filter(e=>e.status==="postponed");else if(st==="done")list=list.filter(e=>!evOpen(e));
+  const evBase=list;const evToday=e=>evOpen(e)&&e.date===todayStr();
+  if(st==="open")list=list.filter(evOpen);else if(st==="new")list=list.filter(e=>e.status==="new");else if(st==="postponed")list=list.filter(e=>e.status==="postponed");else if(st==="done")list=list.filter(e=>!evOpen(e));else if(st==="late")list=list.filter(evLate);else if(st==="today")list=list.filter(evToday);else if(st==="fin")list=list.filter(e=>e.status==="done");
   list.sort((a,b)=>(evOpen(b)-evOpen(a))||(String(a.date).localeCompare(String(b.date))));
   const scopes=evSeeAll()?[["all","كل الطلبات"],["coord","المسندة إليّ"],["mine","طلباتي"]]:state.events.some(e=>e.coordId===me)?[["coord","المسندة إليّ"],["mine","طلباتي"]]:[["mine","طلباتي"]];
   if(!scopes.some(s=>s[0]===state.evScope))state.evScope=scopes[0][0];
   v.innerHTML=`<div class="phead"><div><h2>طلبات المناسبات</h2><div class="prole">${route?"طلبات الطاولات والكراسي والمفارش والاستيج والشاشات: اعتمدها، وحدد المنسق، ووزعها على المستودعات":"اطلب تجهيز مناسبتك (طاولات، كراسي، مفارش، استيج، شاشات…) وتابع حالة الطلب"}</div></div></div>
    <div class="filters">${scopes.map(([k,l])=>`<button type="button" class="chip" data-es="${k}" aria-pressed="${state.evScope===k}">${l}</button>`).join("")}</div>
-   <div class="filters">${[["open","المفتوحة"],["new","الجديدة"],["postponed","المؤجلة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-est="${k}" aria-pressed="${st===k}">${l}</button>`).join("")}</div>
+   ${ocardsHTML("ev",[["open","المفتوحة",evBase.filter(evOpen).length,""],...(route?[["new","الجديدة",evBase.filter(e=>e.status==="new").length,""]]:[]),["late","المتأخرة",evBase.filter(evLate).length,"o-late"],["today","مناسبات اليوم",evBase.filter(evToday).length,"o-today"],["fin","المكتملة",evBase.filter(e=>e.status==="done").length,"o-done"]],st)}
    ${admin?`<details class="newreq"><summary>رابط تسجيل رواد النشاط والإداريين</summary><div class="acts" style="margin-top:8px"><span class="addr ltr" style="overflow-wrap:anywhere">${esc(joinLink())}</span><a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(joinMsg())}">مشاركة عبر واتساب</a><button class="linkbtn" type="button" data-jcopy>نسخ الرابط</button></div><div class="hint">من يسجّل من الرابط يدخل على «طلبات المناسبات» فقط، ويظهر اسمه في الإعدادات وتقدر تعدّل صلاحيته.</div></details>`:""}
    ${me?evFormHTML():""}
    <div class="list" id="evList"></div>`;
   v.querySelectorAll("[data-es]").forEach(b=>b.onclick=()=>{state.evScope=b.dataset.es;render()});
-  v.querySelectorAll("[data-est]").forEach(b=>b.onclick=()=>{state.evStatus=b.dataset.est;render()});
+  v.querySelectorAll("[data-oc]").forEach(b=>b.onclick=()=>{const k=b.dataset.oc.split(":")[1];state.evStatus=st===k?"open":k;render()});
+  v.querySelectorAll("[data-ocall]").forEach(b=>b.onclick=()=>{state.evStatus=st==="any"?"open":"any";render()});
   const jc=v.querySelector("[data-jcopy]");if(jc)jc.onclick=()=>{try{navigator.clipboard.writeText(joinLink());toast("نُسخ الرابط")}catch(e){}};
   if(me)wireEvForm(v);
   const L=v.querySelector("#evList");
@@ -1813,7 +1842,15 @@ function selfRegHTML(email){return `<div class="req" style="max-width:560px"><h3
    <label>الصفة<select id="sr-kind"><option value="activity">${EV_LEAD}</option><option value="admin">${EV_ADM}</option></select></label>
    <label>القسم<select id="sr-sec">${EV_SECS.map(s=>`<option>${s}</option>`).join("")}</select></label>
    <div class="full"><button class="btn" type="submit">تسجيل</button></div></form></div>`}
-function wireSelfReg(email){const b=$("banner");b.hidden=false;b.classList.remove("banner");b.style.marginBottom="12px";b.innerHTML=selfRegHTML(email);
+async function teamJoinBox(){const box=$("teamJoin");if(!box)return;
+  try{const {data:req}=await sb.from("join_requests").select("person_id,status").maybeSingle();
+    if(req&&req.status==="pending"){box.innerHTML=`<div class="req"><h3>طلب التفعيل وصل ✓</h3><div class="hint">طلبك بانتظار موافقة م. محمد نور عمر. بعد الموافقة حدّث الصفحة وتظهر لك المنصة.</div><div class="acts"><button class="btn sm" type="button" onclick="location.reload()">تحديث الصفحة</button></div></div>`;return}
+    const {data,error}=await sb.rpc("join_candidates");if(error||!data||!data.length){box.innerHTML="";return}
+    box.innerHTML=`<div class="req" style="max-width:560px"><h3>أنا من فريق العمل</h3><div class="hint">اختر اسمك من القائمة، ويوصل طلب التفعيل لمدير المنصة للموافقة.${req&&req.status==="rejected"?" (رُفض طلبك السابق — تأكد من اختيار اسمك الصحيح)":""}</div>
+      <div class="acts"><select id="tj-p" aria-label="اسمك"><option value="">— اختر اسمك —</option>${data.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.title?" — "+esc(p.title):""}</option>`).join("")}</select><button class="btn sm" type="button" id="tj-go">إرسال طلب التفعيل</button></div></div>`;
+    $("tj-go").onclick=async()=>{const pid=$("tj-p").value;if(!pid){toast("اختر اسمك");return}const {data:r,error:e}=await sb.rpc("request_join",{p_person:pid});if(e||!r||!r.ok){toast((r&&r.error)||"تعذر الإرسال");return}teamJoinBox()};
+  }catch(e){box.innerHTML=""}}
+function wireSelfReg(email){const b=$("banner");b.hidden=false;b.classList.remove("banner");b.style.marginBottom="12px";b.innerHTML=`<div id="teamJoin"></div>`+selfRegHTML(email);teamJoinBox();
   b.querySelector("#srform").onsubmit=async e=>{e.preventDefault();const name=$("sr-name").value.trim(),phone=$("sr-phone").value.trim();if(!name||!waNum(phone)){toast("اكتب الاسم والجوال");return}
     const {error}=await sb.rpc("self_register",{p_name:name,p_phone:phone,p_kind:$("sr-kind").value,p_section:$("sr-sec").value});
     if(error){toast("تعذر التسجيل: "+(error.message||""));return}
@@ -2353,13 +2390,39 @@ function canTab(k){return myTabs().includes(k)}
 /* ---------- الإعدادات (للمدير فقط) ---------- */
 function renderSettings(){
   const v=$("setView");if(state.view!=="settings"||state.role!=="admin"){v.innerHTML="";return}
-  const sub=[["access","صلاحيات الوصول"],["routing","مسارات الطلبات"],["order","ترتيب الأسماء"],["units","وحدات القياس"]];
+  const sub=[["access","صلاحيات الوصول"],["accounts","الحسابات والتفعيل"],["routing","مسارات الطلبات"],["order","ترتيب الأسماء"],["units","وحدات القياس"]];
   if(!sub.some(s=>s[0]===state.setTab))state.setTab="access";
   v.innerHTML=`<div class="phead"><div><h2>الإعدادات</h2><div class="prole">حدّد لكل شخص الأقسام اللي تظهر له ومستوى صلاحيته، ورتّب الأسماء داخل كل فريق</div></div></div>
    <div class="filters">${sub.map(([k,l])=>`<button type="button" class="chip" data-st="${k}" aria-pressed="${state.setTab===k}">${l}</button>`).join("")}</div><div id="setBody" class="panel"></div>`;
   v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{state.setTab=b.dataset.st;render()});
   const B=v.querySelector("#setBody");
-  if(state.setTab==="access")accessView(B);else if(state.setTab==="units")unitsView(B);else if(state.setTab==="routing")routingView(B);else orderView(B);
+  if(state.setTab==="access")accessView(B);else if(state.setTab==="units")unitsView(B);else if(state.setTab==="routing")routingView(B);else if(state.setTab==="accounts")accountsView(B);else orderView(B);
+}
+const teamLink=()=>here()+"?team=1";
+const INST=/@as\.edu\.sa$/i;
+function teamMsg(){return ["السلام عليكم ورحمة الله وبركاته","","نرجو تفعيل حسابكم في منصة متابعات المنار من الرابط التالي:",teamLink(),"","1) أنشئ حسابك ببريدك المؤسسي @as.edu.sa وكلمة مرور.","2) بعد الدخول اختر اسمك من القائمة وأرسل طلب التفعيل.","3) بعد الموافقة تظهر لك المنصة.","","*نرجو إكمال التفعيل اليوم*","","م. محمد نور عمر"].join("\n")}
+function mailMsg(p){return ["السلام عليكم ورحمة الله وبركاته",p.name,"","نرجو إكمال بيانات حسابكم في منصة متابعات المنار بإضافة بريدكم المؤسسي:","ادخل المنصة ← «الحساب» أعلى الصفحة ← «إضافة بريدك المؤسسي» واكتب بريدك المنتهي بـ @as.edu.sa.",here(),"","*نرجو إكمالها اليوم وتأكيد ذلك*","","م. محمد نور عمر"].join("\n")}
+function loadQR(){return new Promise(res=>{if(window.QRCode)return res(true);const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";sc.onload=()=>res(!!window.QRCode);sc.onerror=()=>res(false);document.head.appendChild(sc)})}
+async function accountsView(B){
+  const P=state.people.filter(p=>!p.selfReg);const lk=P.filter(p=>p._linked);const noMail=lk.filter(p=>!INST.test(p.email||""));
+  B.innerHTML=`<div class="ocards" style="--n:4"><div class="stat"><b>${num(P.length)}</b><span>الموظفون</span></div><div class="stat o-done"><b>${num(lk.length)}</b><span>حسابات مفعّلة</span></div><div class="stat o-late"><b>${num(P.length-lk.length)}</b><span>غير مفعّلة</span></div><div class="stat o-today"><b>${num(noMail.length)}</b><span>مفعّلة بدون بريد مؤسسي</span></div></div>
+   <section class="dcard"><h3>رابط تفعيل الحسابات للفريق</h3><div class="hint">رابط واحد وباركود للفريق كامل: الموظف ينشئ حسابه، ويختار اسمه، ويوصلك طلب التفعيل هنا للموافقة. ما ينربط أي حساب بدون موافقتك.</div>
+    <div class="teamq"><div id="qrbox" class="qrbox" aria-label="باركود رابط التفعيل"></div><div style="display:grid;gap:8px;align-content:start"><span class="addr ltr" style="overflow-wrap:anywhere">${esc(teamLink())}</span>
+     <div class="acts"><a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(teamMsg())}">إرسال للفريق عبر واتساب</a><button class="linkbtn" type="button" data-tcopy>نسخ الرابط</button><button class="linkbtn" type="button" data-qprint>طباعة الباركود</button></div></div></div></section>
+   <section class="dcard"><h3>طلبات التفعيل</h3><div id="jrq" class="hint">جارٍ التحميل…</div></section>
+   <section class="dcard"><h3>حالة الحسابات</h3><div class="ptab"><table class="dt"><thead><tr><th>الموظف</th><th>الحساب</th><th>البريد المؤسسي</th><th></th></tr></thead><tbody>
+   ${P.map(p=>{const ph=waNum(p.phone);const ok=INST.test(p.email||"");return `<tr><td><b>${esc(p.name)}</b> <span class="hint">${esc(titleOf(p))}</span></td><td>${p._linked?'<span class="pill p-done">مفعّل</span>':'<span class="pill p-late">غير مفعّل</span>'}</td><td class="ltr">${ok?esc(p.email):'<span class="hint">—</span>'}</td>
+     <td>${ph&&(!p._linked||!ok)?`<a class="linkbtn" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(p._linked?mailMsg(p):teamMsg().replace("السلام عليكم ورحمة الله وبركاته","السلام عليكم ورحمة الله وبركاته\n"+p.name))}">${p._linked?"طلب إضافة البريد":"إرسال رابط التفعيل"}</a>`:""}</td></tr>`}).join("")}</tbody></table></div></section>`;
+  B.querySelector("[data-tcopy]").onclick=()=>{try{navigator.clipboard.writeText(teamLink());toast("نُسخ الرابط")}catch(e){}};
+  B.querySelector("[data-qprint]").onclick=()=>{const c=B.querySelector("#qrbox canvas,#qrbox img");const src=c?(c.tagName==="CANVAS"?c.toDataURL():c.src):"";if(!src){toast("الباركود غير متاح — استخدم الرابط");return}
+    const w=window.open("","_blank");if(!w){toast("اسمح بالنوافذ المنبثقة");return}w.document.write(`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>باركود تفعيل الحسابات</title><style>body{font-family:Tahoma,sans-serif;text-align:center;padding:30px}img{width:300px;height:300px}h1{color:#242482}</style></head><body>${LOGO?`<img src="${LOGO}" style="height:70px;width:auto">`:""}<h1>منصة متابعات المنار</h1><p>امسح الباركود لتفعيل حسابك</p><img src="${src}"><p dir="ltr">${esc(teamLink())}</p><script>onload=()=>setTimeout(()=>print(),300)<\/script></body></html>`);w.document.close()};
+  loadQR().then(ok=>{const q=B.querySelector("#qrbox");if(!q)return;if(ok){q.innerHTML="";new QRCode(q,{text:teamLink(),width:160,height:160,correctLevel:QRCode.CorrectLevel.M})}else q.innerHTML='<span class="hint">تعذر تحميل الباركود — أرسل الرابط</span>'});
+  const J=B.querySelector("#jrq");
+  try{const {data,error}=await sb.from("join_requests").select("uid,person_id,login,status,created_at");if(error)throw error;const pend=(data||[]).filter(r=>r.status==="pending");
+    J.className="";J.innerHTML=pend.length?`<div class="list">${pend.map(r=>{const p=person(r.person_id)||{};return `<div class="item" data-ju="${esc(r.uid)}"><div class="row1"><div class="ttl">${esc(p.name||r.person_id)}</div><span class="pill p-req">بانتظار موافقتك</span></div><div class="meta"><span>الحساب: <b class="ltr">${esc(showId(r.login||""))}</b></span><span>${esc(titleOf(p)||"")}</span><span>${fmtTs(new Date(r.created_at).getTime())}</span></div><div class="acts"><button class="btn sm" type="button" data-jok>موافقة وربط الحساب</button><button class="linkbtn mute" type="button" data-jno>رفض</button></div></div>`}).join("")}</div>`:'<div class="hint">لا توجد طلبات تفعيل حالياً.</div>';
+    J.querySelectorAll("[data-ju]").forEach(row=>{const go=async ok=>{const {data:r,error:e}=await sb.rpc("decide_join",{p_uid:row.dataset.ju,p_ok:ok});if(e||!r||!r.ok){toast((r&&r.error)||"تعذر الحفظ");return}toast(ok?"فُعّل الحساب":"رُفض الطلب");db.refreshAll();render()};
+      row.querySelector("[data-jok]").onclick=()=>go(true);row.querySelector("[data-jno]").onclick=()=>go(false)})}
+  catch(e){J.textContent="تعذر تحميل الطلبات — تأكد أنك شغّلت ملف upgrade-v35.sql"}
 }
 async function loadRouting(){try{const {data,error}=await sb.from("app_settings").select("data").eq("id","routing").maybeSingle();if(!error&&data&&data.data)state.routing=data.data}catch(e){}if(!state.routing)state.routing={scopes:{}};if(!state.routing.scopes)state.routing.scopes={}}
 function routingView(B){
@@ -2612,10 +2675,11 @@ function trRequestsView(B){
   list.sort((a,b)=>(trOpen(b)-trOpen(a))||((a.date||"")+(a.timeOut||"")).localeCompare((b.date||"")+(b.timeOut||"")));
   const seeAll=state.role!=="staff"||canTrans()||!!myScope();if(!seeAll)state.trScope="mine";
   const officer=state.role==="admin"||canTrans();const pk="tr:"+state.trScope+":"+state.trStatus;const pg=pageOf(pk,list);
-  B.innerHTML=`${officer?ocardsHTML("tr",[["open","المفتوحة",base.filter(trOpen).length,""],["late","المتأخرة",base.filter(trLate).length,"o-late"],["today","سيتم إنجازها اليوم",base.filter(trToday).length,"o-today"],["fin","المكتملة",base.filter(x=>x.status==="done").length,"o-done"]],state.trStatus):""}<div class="filters">${seeAll?[["all",canTrans()||myScope()?"كل الطلبات":"طلبات فريقي"],["mine","طلباتي"]].map(([k,l])=>`<button type="button" class="chip" data-tsc="${k}" aria-pressed="${state.trScope===k}">${l}</button>`).join(""):""}
-     ${[["open","المفتوحة"],["done","المنتهية"],["any","الكل"]].map(([k,l])=>`<button type="button" class="chip" data-tst="${k}" aria-pressed="${state.trStatus===k}">${l}</button>`).join("")}</div>
+  B.innerHTML=`${ocardsHTML("tr",[["open","المفتوحة",base.filter(trOpen).length,""],["late","المتأخرة",base.filter(trLate).length,"o-late"],["today","سيتم إنجازها اليوم",base.filter(trToday).length,"o-today"],["fin","المكتملة",base.filter(x=>x.status==="done").length,"o-done"]],state.trStatus)}<div class="filters">${seeAll?[["all",canTrans()||myScope()?"كل الطلبات":"طلبات فريقي"],["mine","طلباتي"]].map(([k,l])=>`<button type="button" class="chip" data-tsc="${k}" aria-pressed="${state.trScope===k}">${l}</button>`).join(""):""}
+</div>
    ${state.me||state.role==="admin"?newTrHTML():""}<div class="list" id="trList"></div>${pagerHTML(pk,pg)}`;
   B.querySelectorAll("[data-oc]").forEach(b=>b.onclick=()=>{const k=b.dataset.oc.split(":")[1];state.trStatus=state.trStatus===k?"open":k;render()});
+  B.querySelectorAll("[data-ocall]").forEach(b=>b.onclick=()=>{state.trStatus=state.trStatus==="any"?"open":"any";render()});
   wirePager(B,pk);
   B.querySelectorAll("[data-tsc]").forEach(b=>b.onclick=()=>{state.trScope=b.dataset.tsc;render()});
   B.querySelectorAll("[data-tst]").forEach(b=>b.onclick=()=>{state.trStatus=b.dataset.tst;render()});
@@ -3373,39 +3437,151 @@ function deptStats(ids){
   return{mem:mem.length,open:it.filter(i=>i.status!=="done").length,late:it.filter(isLate).length,done7:it.filter(i=>i.status==="done"&&(i.doneAt||0)>=wk).length,
     rate:it.length?Math.round(100*it.filter(i=>i.status==="done").length/it.length):null,rqOpen:rq.filter(reqOpen).length,rqLate:rq.filter(reqLate).length,puOpen:pu.filter(purOpen).length,total:it.length};
 }
+/* ================= الإصدار 35: لوحة البيانات التنفيذية والتقارير ================= */
+const PERS=[["week","هذا الأسبوع"],["month","هذا الشهر"],["30","آخر 30 يوم"],["90","آخر 90 يوم"],["all","كل الفترات"]];
+function perRange(per,from,to){const now=Date.now();const d0=new Date();d0.setHours(0,0,0,0);
+  if(per==="custom"){const a=from?new Date(from+"T00:00:00").getTime():0,b=to?new Date(to+"T23:59:59").getTime():now;return{a,b,label:`من ${from?fmtDate(from):"البداية"} إلى ${to?fmtDate(to):"اليوم"}`}}
+  if(per==="week"){const x=new Date(d0);x.setDate(x.getDate()-x.getDay());return{a:x.getTime(),b:now,label:"هذا الأسبوع"}}
+  if(per==="month"){const x=new Date(d0);x.setDate(1);return{a:x.getTime(),b:now,label:"شهر "+x.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{month:"long",year:"numeric"})}}
+  if(per==="30"||per==="90"){return{a:now-Number(per)*864e5,b:now,label:"آخر "+per+" يوم"}}
+  return{a:0,b:now,label:"كل الفترات"}}
+function inRange(t,r){t=Number(t)||0;return t>=r.a&&t<=r.b}
+function tsOfDate(d){return d?new Date(d+"T12:00:00").getTime():0}
+/* تعريف الوحدات: كل وحدة تحسب الطلبات والمتأخرة والمكتملة بنفس الطريقة */
+function unitDefs(){
+  const U=[];const can=k=>state.role==="admin"||canTab(k);
+  const reqUnit=(k,mod,label,kind,arr,o)=>U.push({k,mod,label,kind,arr,...o});
+  if(can("tasks"))reqUnit("tasks","tasks","المهام","item",()=>state.items,{created:x=>x.createdAt||tsOfDate(x.start),late:isLate,done:x=>x.status==="done",void:()=>false,doneAt:x=>x.doneAt||x.updatedAt,group:x=>{const t=state.topics.find(t=>t.id===x.fileId);return t?t.name:"بدون تصنيف"},stLabel:x=>ST[x.status]||x.status,go:()=>{state.view="tasks";state.filter="open";state.sel="all"}});
+  if(can("purchases"))reqUnit("purchases","purchases","المشتريات","purchase",()=>state.purchases,{created:x=>x.createdAt,late:purLate,done:x=>x.status==="received",void:x=>["rejected","cancelled"].includes(x.status),doneAt:x=>x.decidedAt||x.updatedAt,group:x=>x.groupName||"—",group2:x=>x.category||"بدون بند",group2Label:"حسب بند المصروف",stLabel:x=>uniLabel("purchase",x),go:()=>{state.view="purchases";state.purStatus="open";state.purDetail=null}});
+  if(can("transport"))reqUnit("transport","transport","الحركة والنقل","trans",()=>state.transReqs,{created:x=>x.createdAt,late:trLate,done:x=>x.status==="done",void:x=>["rejected","cancelled"].includes(x.status),doneAt:x=>x.doneAt||x.updatedAt,group:x=>x.groupName||"—",stLabel:x=>uniLabel("trans",x),go:()=>{state.view="transport";state.trTab="requests";state.trStatus="open"}});
+  if(can("events"))reqUnit("events","events","المناسبات","event",()=>state.events,{created:x=>x.createdAt,late:evLate,done:x=>x.status==="done",void:x=>["rejected","cancelled"].includes(x.status),doneAt:x=>x.doneAt||x.updatedAt,group:x=>x.section||"—",stLabel:x=>uniLabel("event",x),go:()=>{state.view="events";state.evStatus="open"}});
+  if(can("stores"))reqUnit("stores","stores","المستودعات","loan",()=>state.loans.filter(l=>l.type!=="in"),{created:x=>x.createdAt,late:loanLate,done:x=>["returned","received"].includes(x.status)||(x.status==="issued"&&x.type!=="loan"),void:x=>["rejected","cancelled"].includes(x.status),doneAt:x=>x.updatedAt,group:x=>x.warehouseName||"—",stLabel:x=>(typeof LST!=="undefined"&&LST[x.status])||x.status,go:()=>{state.view="stores"}});
+  if(state.requests.length&&(state.role==="admin"||canReq()))reqUnit("requests","requests","الطلبات بين الموظفين","request",()=>state.requests,{created:x=>x.createdAt,late:reqLate,done:x=>x.status==="done",void:x=>x.status==="rejected",doneAt:x=>x.doneAt||x.updatedAt,group:x=>x.toName||"—",stLabel:x=>(typeof RST!=="undefined"&&RST[x.status])||x.status,go:()=>{state.view="requests";state.reqStatus="open"}});
+  if(can("buffets")&&state.buffets.length)U.push({k:"buffets",mod:"buffets",label:"البوفيهات",special:"buffets",go:()=>{state.view="buffets"}});
+  if(can("routine")&&state.routine.some(x=>x.kind==="duty"))U.push({k:"routine",mod:"routine",label:"الأعمال الدورية",special:"routine",go:()=>{state.dashUnit="routine"}});
+  if(can("safety")&&state.safety.some(i=>i.kind==="item"))U.push({k:"safety",mod:"safety",label:"الأمن والسلامة",special:"safety",go:()=>{state.view="safety"}});
+  return U}
+function workDays(r,cap){const out=[];const end=Math.min(r.b,Date.now());let t=end;const a=Math.max(r.a,end-(cap||62)*864e5);
+  while(t>=a){const d=dateOf(t);const w=new Date(d+"T12:00:00").getDay();if(w!==5&&w!==6)out.push(d);t-=864e5}return out}
+function routineStats(r,owner){const owners=owner?[owner]:rOwners();const days=workDays(r,state.dashPer==="all"?90:62);const per=[];
+  for(const o of owners){let tot=0,dn=0,sc=[];for(const d of days)for(const row of rRows(o,d)){tot++;if(row.log&&row.log.status==="done")dn++;if(row.target&&row.log&&row.log.score)sc.push(Number(row.log.score))}
+    if(tot)per.push({o,tot,dn,miss:tot-dn,avg:sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:null,n:sc.length})}
+  const tot=per.reduce((a,x)=>a+x.tot,0),dn=per.reduce((a,x)=>a+x.dn,0);const all=per.filter(x=>x.avg!==null);const n=all.reduce((a,x)=>a+x.n,0);
+  return{per,days,tot,dn,miss:tot-dn,avg:n?all.reduce((a,x)=>a+x.avg*x.n,0)/n:null}}
+function unitStats(u,r){
+  if(u.special==="buffets"){const it=state.buffets.flatMap(b=>bfItems(b.id));const low=it.filter(bfLow).length;return{total:it.length,late:low,done:it.length-low,open:low,rate:it.length?Math.round(100*(it.length-low)/it.length):null,lbl:["الأصناف","تحت الحد الأدنى","متوفرة"],rateLbl:"نسبة التوفر"}}
+  if(u.special==="safety"){const it=state.safety.filter(i=>i.kind==="item");const bad=it.filter(i=>sfBad(i)||sfDue(i)==="late").length;return{total:it.length,late:bad,done:it.length-bad,open:bad,rate:it.length?Math.round(100*(it.length-bad)/it.length):null,lbl:["المعدات","تحتاج إجراء","سليمة"],rateLbl:"نسبة الجاهزية"}}
+  if(u.special==="routine"){const s=routineStats(r);return{total:s.tot,late:s.miss,done:s.dn,open:s.miss,rate:s.tot?Math.round(100*s.dn/s.tot):null,lbl:["المهام الدورية","لم تُنفذ","المنفذة"],avg:s.avg,rs:s,rateLbl:"نسبة التنفيذ"}}
+  const L=u.arr().filter(x=>inRange(u.created(x),r)||(r.a>0&&(u.created(x)||0)<r.a&&!u.done(x)&&!u.void(x)));const valid=L.filter(x=>!u.void(x));const done=valid.filter(u.done).length;
+  return{L,total:L.length,late:L.filter(u.late).length,done,open:valid.length-done,voided:L.length-valid.length,rate:valid.length?Math.round(100*done/valid.length):null,lbl:["الطلبات","المتأخرة","المكتملة"],rateLbl:"نسبة الإنجاز"}}
+function ucardHTML(u,st){return `<article class="ucard" data-mod="${u.mod}"><button type="button" class="umain" data-unit="${u.k}" aria-label="${esc(u.label)} — التفاصيل">
+   <b class="ut">${esc(u.label)}</b>
+   <span class="mrow"><span class="mcell"><b>${num(st.total)}</b>${st.lbl[0]}</span><span class="mcell ${st.late?"lt":""}"><b>${num(st.late)}</b>${st.lbl[1]}</span><span class="mcell ok"><b>${num(st.done)}</b>${st.lbl[2]}</span></span>
+   ${st.avg!=null?`<span class="uavg">متوسط التقييم <b>${num(+st.avg.toFixed(1))}</b> من ${num(5)}</span>`:""}
+   <span class="urate"><span>${st.rateLbl}</span><span class="pbar"><span style="width:${st.rate||0}%"></span></span><b>${st.rate==null?"—":num(st.rate)+"%"}</b></span></button>
+   <button type="button" class="linkbtn urep" data-urep="${u.k}">تقرير ${esc(u.label)}</button></article>`}
 function renderDash(){
   const v=$("dashView");if(state.view!=="dash"||!canTab("dash")){v.innerHTML="";return}
-  const it=state.items,rq=state.requests,pu=state.purchases;
-  const done=it.filter(i=>i.status==="done").length;
-  const rqDone=rq.filter(r=>r.status==="done"&&r.doneAt&&r.createdAt);
-  const avg=rqDone.length?rqDone.reduce((s,r)=>s+(r.doneAt-r.createdAt),0)/rqDone.length:0;
-  const ontime=rqDone.length?Math.round(100*rqDone.filter(r=>!r.dueAt||r.doneAt<=r.dueAt).length/rqDone.length):null;
-  const kpi=(l,n,cls,sub)=>`<div class="stat ${cls||""}"><b>${n}</b><span>${l}</span>${sub?`<span class="ksub">${sub}</span>`:""}</div>`;
-  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d.getTime())}
-  const cnt=(arr,f)=>days.map(t=>arr.filter(x=>{const v=f(x);return v>=t&&v<t+864e5}).length);
-  const created=cnt(it,x=>x.createdAt||0),closed=cnt(it.filter(x=>x.status==="done"),x=>x.doneAt||0);
-  const mx=Math.max(1,...created,...closed);
-  const bars=days.map((t,i)=>`<div class="bc" title="${new Date(t).toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{day:"numeric",month:"short"})}: ${created[i]} جديدة · ${closed[i]} منجزة"><div class="bb"><span class="b1" style="height:${100*created[i]/mx}%"></span><span class="b2" style="height:${100*closed[i]/mx}%"></span></div><span class="bl">${new Date(t).getDate()}</span></div>`).join("");
-  const rows=orderedGroups().map(({g,lvl})=>{const s=deptStats(lvl?[g.id]:groupIds(g.id));if(!s.mem&&!s.puOpen)return"";
-    return `<tr class="${lvl?"sub":""}"><td><button type="button" class="linkbtn" data-g="${esc(g.id)}">${lvl?"— ":""}${esc(g.name)}</button></td><td>${num(s.mem)}</td><td>${num(s.open)}</td><td class="${s.late?"lt":""}">${num(s.late)}</td><td>${num(s.done7)}</td>
-      <td>${s.rate===null?"—":`<div class="pbar"><span style="width:${s.rate}%"></span></div><span class="pv">${s.rate}%</span>`}</td><td>${num(s.rqOpen)}${s.rqLate?` <span class="lt">(${num(s.rqLate)} متأخر)</span>`:""}</td><td>${num(s.puOpen)}</td></tr>`}).join("");
-  const lateBy=state.people.map(p=>({p,n:it.filter(i=>i.personId===p.id&&isLate(i)).length,r:rq.filter(r=>r.toId===p.id&&reqLate(r)).length})).filter(x=>x.n||x.r).sort((a,b)=>(b.n+b.r)-(a.n+a.r)).slice(0,8);
-  const openIt=it.filter(i=>i.status!=="done").sort((a,b)=>(isLate(b)-isLate(a))||((a.due||"9")<(b.due||"9")?-1:(a.due||"9")>(b.due||"9")?1:0));
-  const fgroups=[...state.topics.map(t=>({id:t.id,name:t.name})),{id:"",name:"بدون تصنيف"}].map(f=>({f,list:openIt.filter(i=>(state.topics.some(t=>t.id===i.fileId)?i.fileId:"")===f.id)})).filter(x=>x.list.length);
-  const taskRows=fgroups.map(({f,list})=>`<tr class="fh"><td colspan="4">${esc(f.name)} <span class="hint">(${num(list.length)})</span></td></tr>`+list.map(i=>`<tr><td><button type="button" class="linkbtn" data-t="${esc(i.id)}">${esc(i.title||"")}</button>${i.priority==="high"?' <span class="pill p-high">عالية</span>':""}</td><td>${esc(contact(i).name||i.owner||"—")}</td><td>${esc(ST[i.status]||i.status||"")}</td><td class="${isLate(i)?"lt":""}">${fmtDate(i.due)}</td></tr>`).join("")).join("");
-  v.innerHTML=`<div class="phead"><div><h2>لوحة البيانات</h2><div class="prole">${state.role==="admin"?"كل الأقسام":myScope()?esc(scopeName(myScope())):"أقسام فريقك"} · تتحدث تلقائياً</div></div></div>
-   <div class="stats dstats">${kpi("مهام مفتوحة",num(it.length-done))}${kpi("مهام متأخرة",num(it.filter(isLate).length),"late")}${kpi("نسبة الإنجاز",it.length?Math.round(100*done/it.length)+"%":"—","ok",`${num(done)} من ${num(it.length)}`)}${kpi("طلبات مفتوحة",num(rq.filter(reqOpen).length),"modk mp-requests",`${num(rq.filter(reqLate).length)} متأخر`)}${kpi("طلبات الشراء المفتوحة",num(pu.filter(purOpen).length),"modk mp-purchases",`${num(pu.filter(x=>x.status==="new").length)} جديد`)}${kpi("طلبات النقل المفتوحة",num(state.transReqs.filter(trOpen).length),"modk mp-transport",`${num(state.transReqs.filter(x=>x.status==="new").length)} جديد`)}${kpi("طلبات المناسبات المفتوحة",num(state.events.filter(evOpen).length),"modk mp-events",`${num(state.events.filter(x=>x.status==="new").length)} جديد`)}${kpi("طلبات المستودعات المفتوحة",num(state.loans.filter(ldOpen).length),"modk mp-stores",`${num(state.loans.filter(x=>x.status==="requested").length)} بانتظار الموافقة`)}
-   ${kpi("متوسط تنفيذ الطلب",rqDone.length?dur(avg):"—","",ontime===null?"":`${ontime}% في الموعد`)}${kpi("حسابات مفعّلة",num(state.people.filter(p=>p._linked).length)+" / "+num(state.people.length))}</div>
-   ${sumCardsHTML()}${modSummaryHTML()}${rRateCards()}${bfDashCard()}
-   <section class="dcard"><h3>المهام خلال آخر 14 يوماً</h3><div class="legend"><span><i class="k1"></i>مهام جديدة</span><span><i class="k2"></i>مهام منجزة</span></div><div class="bars">${bars}</div></section>
-   <section class="dcard"><h3>الأقسام</h3><div class="ptab"><table class="dt"><thead><tr><th>القسم</th><th>الموظفون</th><th>مفتوحة</th><th>متأخرة</th><th>منجزة 7 أيام</th><th>نسبة الإنجاز</th><th>طلبات مفتوحة</th><th>مشتريات مفتوحة</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="hint">لا توجد أقسام فيها موظفون بعد.</td></tr>'}</tbody></table></div></section>
-   <section class="dcard"><h3>يحتاج متابعة: الأكثر تأخراً</h3>${lateBy.length?`<div class="ptab"><table class="dt"><thead><tr><th>الموظف</th><th>مهام متأخرة</th><th>طلبات متأخرة</th></tr></thead><tbody>${lateBy.map(x=>`<tr><td><button type="button" class="linkbtn" data-p="${esc(x.p.id)}">${esc(x.p.name)}</button> <span class="hint">${esc(titleOf(x.p))}</span></td><td class="${x.n?"lt":""}">${num(x.n)}</td><td class="${x.r?"lt":""}">${num(x.r)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">لا يوجد تأخير حالياً.</div>'}</section>
-   <section class="dcard"><h3>المهام المفتوحة حسب الملف (${num(openIt.length)})</h3>${taskRows?`<div class="ptab"><table class="dt"><thead><tr><th>المهمة</th><th>المسؤول</th><th>الحالة</th><th>الموعد</th></tr></thead><tbody>${taskRows}</tbody></table></div>`:'<div class="hint">لا توجد مهام مفتوحة.</div>'}</section>`;
-  v.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{const id=b.dataset.t,i=it.find(x=>x.id===id);if(!i)return;if(person(i.personId))state.sel=i.personId;state.filter="any";state.view="tasks";render();setTimeout(()=>{const x=document.querySelector(`[data-item="${CSS.escape(id)}"]`);if(x)x.scrollIntoView({behavior:"smooth",block:"center"})},100)});
-  v.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{state.sel="g:"+b.dataset.g;state.view="tasks";setOpen(b.dataset.g,true);render();window.scrollTo({top:0})});
-  v.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.p;state.view="tasks";state.filter="late";render();window.scrollTo({top:0})});
-  v.querySelectorAll("[data-gobf]").forEach(b=>b.onclick=()=>{state.bfSel=b.dataset.gobf;state.view="buffets";try{history.replaceState(null,"",location.pathname+"#buffets")}catch(e){}render();window.scrollTo({top:0})});
+  state.dashPer=state.dashPer||"month";const r=perRange(state.dashPer);const U=unitDefs();
+  if(state.dashUnit==="routine"){dashRoutine(v,r);return}
+  const S=U.map(u=>[u,unitStats(u,r)]);
+  v.innerHTML=`<div class="phead"><div><h2>لوحة البيانات</h2><div class="prole">${state.role==="admin"?"ملخص تنفيذي لكل الوحدات":myScope()?esc(scopeName(myScope())):"وحدات فريقك"} — اضغط أي وحدة لتفاصيلها</div></div>
+     <div class="filters"><label class="hint">الفترة <select data-per>${PERS.map(([k,l])=>`<option value="${k}" ${state.dashPer===k?"selected":""}>${l}</option>`).join("")}</select></label>
+     <button type="button" class="btn sm" data-repall>تقرير شامل</button><button type="button" class="btn ghost sm" data-repbuild>تقرير مخصص</button></div></div>
+   <div class="hint" style="margin:-4px 0 10px">${esc(r.label)} · الأرقام: الطلبات المرفوعة خلال الفترة + المفتوحة من قبلها، والنسبة بدون الملغاة والمتعذرة</div>
+   <div class="ugrid">${S.map(([u,st])=>ucardHTML(u,st)).join("")||'<div class="empty">لا توجد وحدات لعرضها.</div>'}</div>`;
+  v.querySelector("[data-per]").onchange=e=>{state.dashPer=e.target.value;render()};
+  v.querySelectorAll("[data-unit]").forEach(b=>b.onclick=()=>{const u=U.find(x=>x.k===b.dataset.unit);if(!u)return;u.go();if(state.view!=="dash")try{history.replaceState(null,"",location.pathname+"#"+state.view)}catch(e){}render();window.scrollTo({top:0})});
+  v.querySelectorAll("[data-urep]").forEach(b=>b.onclick=()=>openReport([b.dataset.urep],state.dashPer));
+  v.querySelector("[data-repall]").onclick=()=>openReport(U.map(u=>u.k),state.dashPer);
+  v.querySelector("[data-repbuild]").onclick=()=>reportBuilder(U);
 }
+function dashRoutine(v,r){const s=routineStats(r);const sel=state.dashRtOwner;
+  const back=`<button type="button" class="linkbtn" data-back>→ رجوع إلى لوحة البيانات</button>`;
+  v.innerHTML=`<div class="phead"><div>${back}<h2>الأعمال الدورية</h2><div class="prole">${esc(r.label)} · ${num(s.days.length)} يوم عمل — اضغط اسم المشرف للتفاصيل</div></div>
+    <div class="filters"><label class="hint">الفترة <select data-per>${PERS.map(([k,l])=>`<option value="${k}" ${state.dashPer===k?"selected":""}>${l}</option>`).join("")}</select></label><button type="button" class="btn sm" data-rep>تقرير الأعمال الدورية</button></div></div>
+   <div class="ocards" style="--n:4"><div class="stat"><b>${num(s.tot)}</b><span>المهام الدورية</span></div><div class="stat o-done"><b>${num(s.dn)}</b><span>المنفذة</span></div><div class="stat o-late"><b>${num(s.miss)}</b><span>لم تُنفذ</span></div><div class="stat o-today"><b>${s.avg==null?"—":num(+s.avg.toFixed(1))+" / "+num(5)}</b><span>متوسط التقييم</span></div></div>
+   <div class="clist">${s.per.map(x=>{const p=person(x.o)||{};const pct=Math.round(100*x.dn/x.tot);return `<button type="button" class="crow rtown" data-own="${esc(x.o)}" aria-expanded="${sel===x.o}">
+     <span><span class="ct">${esc(p.name||"")}</span><span class="cs">${esc(titleOf(p)||"")}</span></span><span class="cs hm">${num(x.dn)} من ${num(x.tot)}</span>
+     <span class="hm"><span class="pbar"><span style="width:${pct}%"></span></span>${num(pct)}%</span><span class="cs">${x.avg==null?"بدون تقييم":"التقييم "+num(+x.avg.toFixed(1))+" / 5"}</span><span class="cs hm">${sel===x.o?"▴":"▾"}</span><span></span></button>
+     ${sel===x.o?`<div class="rtdet">${rOwnerDetail(x.o,s.days)}</div>`:""}`}).join("")||'<div class="empty">لا توجد أعمال دورية خلال الفترة.</div>'}</div>`;
+  v.querySelector("[data-back]").onclick=()=>{state.dashUnit=null;state.dashRtOwner=null;render()};
+  v.querySelector("[data-per]").onchange=e=>{state.dashPer=e.target.value;render()};
+  v.querySelector("[data-rep]").onclick=()=>openReport(["routine"],state.dashPer);
+  v.querySelectorAll("[data-own]").forEach(b=>b.onclick=()=>{state.dashRtOwner=sel===b.dataset.own?null:b.dataset.own;render()});
+}
+/* تفاصيل مشرف: كل مهمة دورية بنسبة تنفيذها، والتقييم لكل بوابة أو موقع */
+function rOwnerDetail(o,days){const by={};
+  for(const d of days)for(const row of rRows(o,d)){const key=row.duty.id+"|"+(row.target?row.target.label:row.site?rSiteName(row.site):"");const b=by[key]=by[key]||{duty:row.duty.title,name:row.target?row.target.label+(row.worker?" — "+row.worker:""):row.site?rSiteName(row.site)+(row.worker?" — "+row.worker:""):"عام",tot:0,dn:0,sc:[],miss:[]};
+    b.tot++;if(row.log&&row.log.status==="done")b.dn++;else b.miss.push(d);if(row.target&&row.log&&row.log.score)b.sc.push(Number(row.log.score))}
+  const rows=Object.values(by);if(!rows.length)return'<div class="hint">لا توجد بيانات.</div>';
+  return `<div class="ptab"><table class="dt"><thead><tr><th>المهمة</th><th>البند / الموقع</th><th>المنفذ</th><th>النسبة</th><th>متوسط التقييم</th><th>آخر أيام لم تُنفذ</th></tr></thead><tbody>${rows.map(b=>{const pct=Math.round(100*b.dn/b.tot);const av=b.sc.length?b.sc.reduce((a,c)=>a+c,0)/b.sc.length:null;
+    return `<tr><td>${esc(b.duty||"")}</td><td>${esc(b.name)}</td><td>${num(b.dn)} / ${num(b.tot)}</td><td><div class="pbar"><span style="width:${pct}%"></span></div><span class="pv">${num(pct)}%</span></td><td>${av==null?"—":num(+av.toFixed(1))+" / 5"}</td><td class="hint">${b.miss.slice(0,3).map(fmtDate).join("، ")}</td></tr>`}).join("")}</tbody></table></div>`}
+/* ---------- التقارير ---------- */
+function reportBuilder(U){const ov=document.createElement("div");ov.className="rsn-ov";
+  ov.innerHTML=`<div class="rsn" role="dialog" aria-modal="true" aria-label="تقرير مخصص"><h3>تقرير مخصص</h3>
+   <div class="hint">اختر الوحدات والفترة، ويطلع لك تقرير بالأرقام والرسوم تقدر تطبعه أو تحفظه PDF.</div>
+   <div style="display:grid;gap:4px">${U.map(u=>`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" value="${u.k}" checked> ${esc(u.label)}</label>`).join("")}</div>
+   <label>الفترة<select data-p>${PERS.map(([k,l])=>`<option value="${k}" ${state.dashPer===k?"selected":""}>${l}</option>`).join("")}<option value="custom">فترة محددة…</option></select></label>
+   <div class="fgrid" data-cust hidden><label>من<input type="date" data-f></label><label>إلى<input type="date" data-t></label></div>
+   <div class="acts"><button class="btn sm" type="button" data-ok>عرض التقرير</button><button class="linkbtn mute" type="button" data-no>إغلاق</button></div></div>`;
+  document.body.appendChild(ov);const q=s=>ov.querySelector(s);
+  q("[data-p]").onchange=()=>{q("[data-cust]").hidden=q("[data-p]").value!=="custom"};
+  q("[data-no]").onclick=()=>ov.remove();ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  q("[data-ok]").onclick=()=>{const ks=[...ov.querySelectorAll("input[type=checkbox]:checked")].map(c=>c.value);if(!ks.length){toast("اختر وحدة واحدة على الأقل");return}
+    const p=q("[data-p]").value;if(p==="custom"&&!q("[data-f]").value){toast("حدد تاريخ البداية");return}
+    openReport(ks,p,q("[data-f]").value,q("[data-t]").value);ov.remove()}}
+function svgBars(buckets,color){/* أعمدة مزدوجة: المرفوعة (رمادي) والمكتملة (لون الوحدة) */
+  const W=640,H=200,pl=28,pb=34,pt=10;const mx=Math.max(1,...buckets.flatMap(b=>[b.c,b.d]));const n=buckets.length;const gw=(W-pl-8)/n;const bw=Math.max(4,Math.min(22,gw/2-3));
+  const y=v=>pt+(H-pt-pb)*(1-v/mx);const ticks=[0,Math.ceil(mx/2),mx];
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="الطلبات المرفوعة والمكتملة" style="direction:ltr">
+   ${ticks.map(t=>`<line x1="${pl}" x2="${W-4}" y1="${y(t)}" y2="${y(t)}" stroke="#e3e3e3"/><text x="${pl-6}" y="${y(t)+4}" font-size="10" text-anchor="end" fill="#777">${t}</text>`).join("")}
+   ${buckets.map((b,i)=>{const x=pl+gw*i+gw/2;return `<rect x="${x-bw-1}" y="${y(b.c)}" width="${bw}" height="${H-pb-y(b.c)}" rx="3" fill="#A9B1BA"><title>${b.l}: ${b.c} مرفوعة</title></rect><rect x="${x+1}" y="${y(b.d)}" width="${bw}" height="${H-pb-y(b.d)}" rx="3" fill="${color}"><title>${b.l}: ${b.d} مكتملة</title></rect><text x="${x}" y="${H-pb+14}" font-size="10" text-anchor="middle" fill="#555">${b.l}</text>`}).join("")}
+   </svg><div class="lg"><span><i style="background:#A9B1BA"></i>المرفوعة</span><span><i style="background:${color}"></i>المكتملة</span></div>`}
+function bucketsOf(u,st,r){const a=r.a||Math.min(...st.L.map(u.created).filter(Boolean),Date.now());const span=Math.max(1,r.b-a);const daily=span<=15*864e5;const step=daily?864e5:span<=120*864e5?7*864e5:30*864e5;
+  const B=[];for(let t=a;t<=r.b&&B.length<16;t+=step){const d=new Date(t);B.push({a:t,b:t+step,l:daily?String(d.getDate()):d.getDate()+"/"+(d.getMonth()+1),c:0,d:0})}
+  st.L.forEach(x=>{const t=Math.max(u.created(x)||0,B[0].a);const b=B.find(b=>t>=b.a&&t<b.b);if(b)b.c++;if(u.done(x)){const td=u.doneAt(x)||t;const bd=B.find(b=>td>=b.a&&td<b.b)||B[B.length-1];if(bd)bd.d++}});return B}
+const MODC={tasks:"#2F6B57",purchases:"#A06E2C",transport:"#2E7783",events:"#86607A",stores:"#5E7B3B",buffets:"#A0573F",routine:"#5A5E9E",safety:"#9B4545",requests:"#4E6A85"};
+function countBy(L,f){const m={};L.forEach(x=>{const k=f(x)||"—";m[k]=(m[k]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+function repUnitHTML(u,r){const st=unitStats(u,r);const c=MODC[u.mod]||"#2F6B57";
+  const kp=(l,v,cls)=>`<div class="kp ${cls||""}"><b>${v}</b><span>${l}</span></div>`;
+  let h=`<section class="us"><h2 style="border-color:${c}">${esc(u.label)}</h2>`;
+  if(u.special){h+=`<div class="kps">${kp(st.lbl[0],num(st.total))}${kp(st.lbl[1],num(st.late),"l")}${kp(st.lbl[2],num(st.done),"o")}${kp(st.rateLbl,st.rate==null?"—":num(st.rate)+"%")}${st.avg!=null?kp("متوسط التقييم",num(+st.avg.toFixed(1))+" / 5"):""}</div>`;
+    if(u.special==="routine"&&st.rs.per.length)h+=`<h3>حسب المشرف</h3><table><thead><tr><th>المشرف</th><th>المنفذ</th><th>النسبة</th><th>متوسط التقييم</th></tr></thead><tbody>${st.rs.per.map(x=>`<tr><td>${esc((person(x.o)||{}).name||"")}</td><td>${num(x.dn)} من ${num(x.tot)}</td><td>${num(Math.round(100*x.dn/x.tot))}%</td><td>${x.avg==null?"—":num(+x.avg.toFixed(1))+" / 5"}</td></tr>`).join("")}</tbody></table>`;
+    if(u.special==="buffets")h+=`<h3>حسب البوفيه</h3><table><thead><tr><th>البوفيه</th><th>الأصناف</th><th>تحت الحد الأدنى</th></tr></thead><tbody>${state.buffets.map(b=>{const it=bfItems(b.id);return `<tr><td>${esc(b.name)}</td><td>${num(it.length)}</td><td>${num(it.filter(bfLow).length)}</td></tr>`}).join("")}</tbody></table>`;
+    return h+`</section>`}
+  const durs=st.L.filter(u.done).map(x=>(u.doneAt(x)||0)-(u.created(x)||0)).filter(d=>d>0);const avgD=durs.length?durs.reduce((a,b)=>a+b,0)/durs.length:null;
+  h+=`<div class="kps">${kp("الطلبات",num(st.total))}${kp("المفتوحة",num(st.open))}${kp("المتأخرة",num(st.late),"l")}${kp("المكتملة",num(st.done),"o")}${kp("نسبة الإنجاز",st.rate==null?"—":num(st.rate)+"%")}${avgD?kp("متوسط مدة الإنجاز",dur(avgD)):""}</div>`;
+  if(st.L.length)h+=`<h3>المرفوعة والمكتملة خلال الفترة</h3>${svgBars(bucketsOf(u,st,r),c)}`;
+  const bySt=countBy(st.L,u.stLabel);if(bySt.length)h+=`<div class="two"><div><h3>حسب الحالة</h3><table><tbody>${bySt.map(([k,n])=>`<tr><td>${esc(k)}</td><td>${num(n)}</td></tr>`).join("")}</tbody></table></div>`;
+  const byG=countBy(st.L,u.group).slice(0,8);if(!st.L.length)return h+`<div class="hint">لا توجد طلبات خلال الفترة.</div></section>`;h+=`<div><h3>${u.k==="stores"?"حسب المستودع":u.k==="tasks"?"حسب الملف":u.k==="requests"?"حسب المستلم":"حسب القسم"}</h3><table><tbody>${byG.map(([k,n])=>`<tr><td>${esc(k)}</td><td>${num(n)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  if(u.group2){const g2=countBy(st.L,u.group2);h+=`<h3>${u.group2Label}</h3><table><tbody>${g2.map(([k,n])=>`<tr><td>${esc(k)}</td><td>${num(n)}</td></tr>`).join("")}</tbody></table>`}
+  return h+`</section>`}
+function openReport(keys,per,from,to){const U=unitDefs().filter(u=>keys.includes(u.k));if(!U.length){toast("لا توجد بيانات للتقرير");return}
+  const r=perRange(per,from,to);const multi=U.length>1;const d=new Date();
+  const rows=U.map(u=>[u,unitStats(u,r)]);
+  const sum=multi?`<section class="us"><h2>الملخص العام</h2><table><thead><tr><th>الوحدة</th><th>الإجمالي</th><th>المتأخرة / تحتاج إجراء</th><th>المكتملة</th><th>النسبة</th></tr></thead><tbody>${rows.map(([u,s])=>`<tr><td><b>${esc(u.label)}</b></td><td>${num(s.total)}</td><td>${num(s.late)}</td><td>${num(s.done)}</td><td>${s.rate==null?"—":num(s.rate)+"%"}</td></tr>`).join("")}</tbody></table>
+    <h3>نسبة الإنجاز حسب الوحدة</h3><div class="hb">${rows.map(([u,s])=>`<div class="hbr"><span>${esc(u.label)}</span><span class="hbt"><span style="width:${s.rate||0}%;background:${MODC[u.mod]||"#2F6B57"}"></span></span><b>${s.rate==null?"—":num(s.rate)+"%"}</b></div>`).join("")}</div></section>`:"";
+  const title=multi?"التقرير الشامل":"تقرير "+U[0].label;
+  const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)} — ${esc(r.label)}</title>
+   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700&display=swap">
+   <style>@page{size:A4;margin:13mm}*{box-sizing:border-box}body{font-family:"SF Mada","Mada",Tahoma,sans-serif;color:#1d2328;font-size:11pt;margin:0;line-height:1.55}
+   .hd{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #242482;padding-bottom:8px;margin-bottom:12px}.hd img{height:54px}.hd .t{text-align:left;font-size:9.5pt;color:#444;line-height:1.5}
+   h1{font-size:17pt;margin:4px 0 2px;color:#242482;text-align:center}.per{text-align:center;color:#555;margin-bottom:14px;font-size:10pt}
+   h2{font-size:13pt;margin:0 0 8px;border-inline-start:5px solid #242482;padding-inline-start:8px}h3{font-size:10.5pt;margin:12px 0 6px;color:#333}
+   .us{break-inside:avoid-page;margin-bottom:18px;padding-bottom:6px;border-bottom:1px solid #e5e5e5}
+   .kps{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}.kp{border:1px solid #ddd;border-radius:8px;padding:6px 10px;display:grid}.kp b{font-size:15pt;font-variant-numeric:tabular-nums}.kp span{font-size:9pt;color:#555}.kp.l b{color:#B42318}.kp.o b{color:#2E7D4F}
+   table{width:100%;border-collapse:collapse;font-size:10pt}th,td{border:1px solid #d6d6d6;padding:5px 8px;text-align:right}th{background:#F1F2F7}td:last-child{font-variant-numeric:tabular-nums}
+   .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.lg{display:flex;gap:14px;font-size:9pt;color:#555;justify-content:center}.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:4px;vertical-align:middle}
+   .hb{display:grid;gap:6px}.hbr{display:grid;grid-template-columns:150px 1fr 50px;gap:8px;align-items:center;font-size:10pt}.hbt{height:12px;background:#eee;border-radius:99px;overflow:hidden;display:block}.hbt span{display:block;height:100%;border-radius:99px}
+   .ft{margin-top:16px;font-size:8.5pt;color:#777;text-align:center}.tb{position:sticky;top:0;background:#fff;padding:8px 0;display:flex;gap:8px;justify-content:center;border-bottom:1px solid #eee;margin-bottom:10px}.tb button{font:inherit;padding:6px 16px;border-radius:8px;border:1px solid #242482;background:#242482;color:#fff;cursor:pointer}.tb button+button{background:#fff;color:#242482}
+   @media print{.tb{display:none}}</style></head><body>
+   <div class="tb"><button onclick="print()">طباعة / حفظ PDF</button><button onclick="close()">إغلاق</button></div>
+   <div class="hd">${LOGO?`<img src="${LOGO}" alt="شركة الأندلس التعليمية">`:"<b>شركة الأندلس التعليمية</b>"}<div class="t">شركة الأندلس التعليمية<br>فرع المنار — الدعم اللوجستي</div></div>
+   <h1>${esc(title)}</h1><div class="per">${esc(r.label)} · أُعدّ ${d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{day:"numeric",month:"long",year:"numeric"})}</div>
+   ${sum}${rows.filter(([u,s])=>!multi||s.total>0).map(([u])=>repUnitHTML(u,r)).join("")}
+   <div class="ft">الأرقام: الطلبات المرفوعة خلال الفترة + المفتوحة من قبلها · نسبة الإنجاز = المكتملة ÷ (الإجمالي بدون الملغاة والمتعذرة) · منصة متابعات المنار</div></body></html>`;
+  const w=window.open("","_blank");if(!w){toast("اسمح بالنوافذ المنبثقة لعرض التقرير");return}w.document.open();w.document.write(html);w.document.close()}
 
 /* ---------- آخر التحديثات (يشمل المشتريات) ---------- */
 function feedEntries(){
@@ -3528,6 +3704,13 @@ $("authform").onsubmit=async e=>{e.preventDefault();const rawId=$("a-email").val
   }catch(err){authMsg(trAuthErr(err))}finally{go.disabled=false}};
 document.querySelectorAll("#a-tabs button").forEach(b=>b.onclick=()=>setAuthMode(b.dataset.m));
 $("a-forgot").onclick=()=>setAuthMode("reset");
+$("acctBtn").onclick=e=>{e.stopPropagation();const m=$("acctMenu");m.hidden=!m.hidden;$("acctBtn").setAttribute("aria-expanded",String(!m.hidden))};
+document.addEventListener("click",e=>{const m=$("acctMenu");if(m&&!m.hidden&&!e.target.closest(".hacct")){m.hidden=true;$("acctBtn").setAttribute("aria-expanded","false")}});
+$("m-mail").onclick=async()=>{$("acctMenu").hidden=true;const e=await askReason("إضافة بريدك المؤسسي","مثال: name@as.edu.sa");if(e===null)return;
+  const {data,error}=await sb.rpc("set_my_email",{p_email:e});if(error||!data||!data.ok){toast((data&&data.error)||"تعذر الحفظ");return}
+  try{await sb.auth.updateUser({email:e.trim().toLowerCase()})}catch(x){}
+  toast("سُجّل بريدك المؤسسي. إذا وصلك بريد تأكيد افتحه، وبعدها تقدر تدخل بالبريد");db.refreshAll()};
+$("m-settings").onclick=()=>{$("acctMenu").hidden=true;state.view="settings";try{history.replaceState(null,"",location.pathname+"#settings")}catch(e){}render();window.scrollTo({top:0})};
 $("logout").onclick=async()=>{try{await sb.auth.signOut()}catch(e){}location.replace(here())};
 
 let started=false;
@@ -3542,7 +3725,7 @@ async function startApp(user){
   state.isTransport=!!me.transport;state.srvVehicles=Array.isArray(me.vehicles)?me.vehicles:[];state.srvStores=Array.isArray(me.stores)?me.stores:[];state.myVehicles=state.srvVehicles.slice();state.myStores=state.srvStores.slice();
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
-  {const hv=(location.hash||"").slice(1);if(["send","tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"].includes(hv))state.view=hv;}
+  {const hv=(location.hash||"").slice(1);if(["send","tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"].includes(hv))state.view=hv;else if(admin)state.view="dash";}
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)window.__hsub="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
@@ -3598,6 +3781,7 @@ async function startApp(user){
     $("a-welcome").hidden=false;$("a-welcome").textContent="أهلاً "+(info.name||"")+(info.role?" — "+info.role:"")+". فعّل حسابك للدخول إلى منصة المتابعة.";
     $("a-email").value=info.email||info.phone||"";
     return}
+  if(new URLSearchParams(location.search).has("team")&&!session){setAuthMode("up");$("a-welcome").hidden=false;$("a-welcome").textContent="أهلاً بك في منصة متابعات المنار. أنشئ حسابك ببريدك المؤسسي @as.edu.sa (أو جوالك) وكلمة مرور، وبعد الدخول اختر اسمك من القائمة ليصل طلب التفعيل لمدير المنصة.";return}
   const join=new URLSearchParams(location.search).has("join");setAuthMode(recovering?"newpass":join&&!session?"up":"in");if(join&&!session){$("a-welcome").hidden=false;$("a-welcome").textContent="أهلاً بك. رواد النشاط والإداريون: أنشئ حسابك بجوالك وكلمة مرور، ثم أكمل بياناتك لرفع طلبات المناسبات."}
   if(session&&!recovering){await redeemPending().catch(e=>{});startApp(session.user)}else showAuth();
 })();
