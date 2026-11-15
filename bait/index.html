@@ -204,6 +204,10 @@ dialog.lb button{position:absolute;top:8px;inset-inline-start:8px;width:36px;hei
 .dsign{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;margin-top:14px;font-size:.9em}
 .dpage .hv td.bx{text-align:center;font-size:1.1em}.dpage .hv td,.dpage .hv th{height:17px;padding-top:2px;padding-bottom:2px}.dpage .hv{font-size:.9em}
 .dsign3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.dsign3>div{border:1px solid #CFD6E3;border-radius:8px;padding:7px 9px;display:grid;gap:6px;font-size:.88em}.dsign3 b{color:#202E85}
+.addon.off{opacity:.7}.addon.off input{display:none}
+.pedit{display:grid;gap:6px}.pedit .ph,.pedit .pr{display:grid;grid-template-columns:1.2fr 1.6fr 90px 110px 90px;gap:6px;align-items:center}.pedit .ph{font-size:.8rem;color:var(--muted)}
+.pedit .ph.ad,.pedit .pr.ad{grid-template-columns:1.2fr 1.3fr 100px 90px 90px 70px 70px auto}.pedit input,.pedit select{min-width:0}
+@media(max-width:760px){.pedit .ph{display:none}.pedit .pr,.pedit .pr.ad{grid-template-columns:1fr 1fr;border-bottom:1px dashed var(--line);padding-bottom:8px}}
 </style></head><body>
 <div class="wrap">
   <header class="top">
@@ -250,37 +254,47 @@ const DEFAULTS={vatNo:"3002197652100003",bank:{name:"البنك الأهلي ا�
     {key:"trip",t:"الرحلة المدرسية",who:"للمدارس · ليلتان",nights:2,mode:"main",inc:["القسم الرئيسي بغرفه وصالاته والمصلى","4 ساعات ملاعب وساعتان مسبح","مشواران بالباص","إعاشة كاملة: 3 وجبات يومياً"],addons:{field:4,pool:2,bus:2},meals:true,hosp:false,classPerDay:0,gold:false,active:false},
     {key:"camp",t:"المعسكر الصيفي",who:"للمعسكرات والأندية · أسبوع",nights:7,mode:"whole",inc:["المبنى كاملاً بخصم على المرافق والخدمات","10 ساعات ملاعب و6 مسبح و6 صالة رياضية","إعاشة كاملة وركن ضيافة يومي","نظافة إضافية يومين"],addons:{field:10,pool:6,gym:6,clean:2},meals:true,hosp:true,classPerDay:0,gold:true,active:false},
     {key:"program",t:"البرنامج الإثرائي",who:"للبرامج التعليمية والدورات · 3 ليالٍ",nights:3,mode:"rooms",inc:["المبيت في الغرف التي تختارها","فصلان دراسيان يومياً ومصادر التعلم","المجلس الرئيسي بشاشة العرض للافتتاح والختام","إعاشة كاملة وركن ضيافة"],addons:{lrc:6,majlis:4},meals:true,hosp:true,classPerDay:2,gold:false,active:false}],
-  checkIn:"14:00", checkOut:"12:00", minNights:1, maxNights:60, ratio:15,
+  checkIn:"16:00", checkOut:"12:00", minNights:1, maxNights:60, ratio:15, pricingV4:true, maxManualDisc:20,
+  roomsNotice:"يقتصر حجز الغرف المحددة على الغرف والخدمات المثبتة في تأكيد الحجز، ويحق للمدرسة تأجير الغرف الأخرى لمستفيدين آخرين خلال الفترة نفسها. ولا يمنح هذا الحجز حق الاستخدام الحصري للمقر أو المناطق المشتركة.",
+  wholeInc:"جميع الغرف التسع، والصالة الرئيسية مع منطقة الترفيه والمصلى، والصالة الصغيرة.",
+  wholeExtra:"المرافق (الملاعب والمسبح والصالة الرياضية ومصادر التعلم والفصول وغرفة الاجتماعات والمجلس) والنقل والخدمات الإضافية برسوم إضافية.",
   weekendNights:[4,5],
-  prices:{roomSt:{wd:250,we:250},roomSup:{wd:200,we:200},hallMain:{wd:250,we:250},hallSmall:{wd:100,we:100}},
-  service:{price:450,basis:"night",onHallOnly:true},
+  prices:{whole:{wd:2450,we:2450,unit:"night",label:"استئجار المقر كاملاً",desc:"جميع الغرف التسع والصالتان ومنطقة الترفيه والمصلى",show:true},
+    roomSt:{wd:250,we:250,unit:"night",label:"غرفة الطلاب",desc:"",show:true},roomSup:{wd:200,we:200,unit:"night",label:"غرفة المشرفين",desc:"",show:true},
+    hallMain:{wd:250,we:250,unit:"day",label:"الصالة الرئيسية",desc:"مع منطقة الترفيه والمصلى، حجز مستقل",show:true},hallSmall:{wd:100,we:100,unit:"day",label:"الصالة الصغيرة",desc:"حجز مستقل",show:true},
+    common:{wd:250,we:250,unit:"day",label:"استخدام الصالة ومنطقة الترفيه (مشتركة)",desc:"لحجوزات الغرف المحددة، مرة واحدة لكل يوم مهما كان عدد الغرف",show:true}},
+  service:{price:450,basis:"booking",label:"رسوم الخدمة"},
   addons:[
-    {key:"field",label:"الملاعب",unit:"ساعة",price:150,group:"المرافق"},
-    {key:"pool",label:"المسبح",unit:"ساعة",price:250,group:"المرافق"},
-    {key:"gym",label:"الصالة الرياضية",unit:"ساعة",price:150,group:"المرافق"},
-    {key:"lrc",label:"مصادر التعلم",unit:"ساعة",price:100,group:"المرافق"},
-    {key:"meet",label:"غرفة اجتماعات",unit:"ساعة",price:100,group:"المرافق"},
-    {key:"class",label:"فصل دراسي",unit:"يوم",price:300,group:"المرافق"},
-    {key:"majlis",label:"المجلس الرئيسي مع شاشة عرض (للورش واللقاءات)",unit:"ساعة",price:200,group:"المرافق"},
-    {key:"bus",label:"نقل بالباص",unit:"مشوار",price:400,group:"الخدمات"},
-    {key:"pickup",label:"نقل بالوانيت",unit:"مشوار",price:150,group:"الخدمات"},
-    {key:"clean",label:"نظافة إضافية",unit:"يوم",price:200,group:"الخدمات"},
-    {key:"meals",label:"إعاشة (وجبة للشخص)",unit:"وجبة",price:35,group:"الخدمات"},
-    {key:"hosp",label:"ركن ضيافة مفتوح (قهوة وشاي وماء)",unit:"يوم",price:150,group:"الخدمات"}
+    {key:"field",label:"الملاعب",desc:"",unit:"ساعة",price:150,group:"المرافق",show:true,active:true},
+    {key:"pool",label:"المسبح",desc:"",unit:"ساعة",price:250,group:"المرافق",show:true,active:true},
+    {key:"gym",label:"الصالة الرياضية",desc:"",unit:"ساعة",price:150,group:"المرافق",show:true,active:true},
+    {key:"lrc",label:"مصادر التعلم",desc:"",unit:"ساعة",price:100,group:"المرافق",show:true,active:true},
+    {key:"meet",label:"غرفة الاجتماعات",desc:"",unit:"ساعة",price:100,group:"المرافق",show:true,active:true},
+    {key:"class",label:"الفصل الدراسي",desc:"",unit:"ساعة",price:null,group:"المرافق",show:true,active:true},
+    {key:"majlis",label:"المجلس الرئيسي مع شاشة عرض",desc:"للورش واللقاءات، عند حجزه منفصلاً",unit:"ساعة",price:200,group:"المرافق",show:true,active:true},
+    {key:"bus",label:"نقل بالباص مع السائق",desc:"",unit:"يوم",price:null,group:"الخدمات",show:true,active:true},
+    {key:"pickup",label:"نقل بالوانيت مع السائق",desc:"",unit:"يوم",price:null,group:"الخدمات",show:true,active:true},
+    {key:"worker",label:"خدمات عامل",desc:"التحميل والتنزيل والترتيب",unit:"تحددها الإدارة",price:null,group:"الخدمات",show:true,active:true},
+    {key:"meals",label:"إعاشة (وجبة للشخص)",desc:"",unit:"وجبة",price:35,group:"الخدمات",show:true,active:true},
+    {key:"hosp",label:"خدمات الضيافة",desc:"",unit:"تحددها الإدارة",price:null,group:"الخدمات",show:true,active:true}
   ],
-  wholeAddonDisc:20,
-  durationTiers:[{nights:7,pct:10},{nights:14,pct:15},{nights:30,pct:25}],
-  orgDisc:{internal:0,staff:50,school:10,gov:10,charity:15,company:0,other:0},
+  wholeAddonDisc:0,
+  durationTiers:[],
+  orgDisc:{internal:0,staff:0,school:0,gov:0,charity:0,company:0,other:0},
   internal:{insurance:2000,facilitiesFree:true,ops:[{key:"sec",label:"رسوم الأمن والحراسة",price:150},{key:"cln",label:"رسوم النظافة",price:150},{key:"utl",label:"رسوم تشغيلية (كهرباء ومياه وتكييف)",price:100}]},
-  staffAddons:true, staffVat:true,
-  earlyDays:30, earlyPct:5, promos:{"ANDALUS10":10},
+  staffAddons:false, staffVat:true,
+  earlyDays:30, earlyPct:0, promos:{},
   maxDisc:30, vat:15, depositPct:30, insurance:1500,
   cancel:{freeDays:14,halfDays:7},
   contact:{phone:"0545967881",name:"م. محمد نور عمر"}
 };
 const ORG={internal:"قسم من أقسام الفرع (برنامج داخلي)",staff:"منسوبو شركة الأندلس",school:"مدرسة أو جهة تعليمية",gov:"جهة حكومية",charity:"جمعية أو جهة خيرية",company:"شركة أو جهة خاصة",other:"أفراد أو أخرى"};
 const ST={new:["بانتظار المراجعة","p-new"],approved:["معتمد، بانتظار العربون","p-warn"],confirmed:["مؤكد","p-ok"],checkedin:["داخل المرفق","p-gold"],done:["مكتمل","p-mute"],rejected:["معتذر عنه","p-bad"],cancelled:["ملغي","p-mute"]};
-const MODE={whole:"المبنى كاملاً",main:"القسم الرئيسي",suite:"الجناح المستقل",rooms:"غرف وصالات محددة",beds:"حسب العدد"};
+const MODE={whole:"المقر كاملاً",main:"القسم الرئيسي",suite:"الجناح المستقل",rooms:"غرف محددة",beds:"حسب العدد"};
+const UNIT={night:"ليلة",day:"يوم"};const unitName=k=>UNIT[(cfg().prices[k]||{}).unit]||"ليلة";
+const priced=a=>a&&a.active!==false&&a.price!==null&&a.price!==""&&+a.price>0;
+const visAddons=()=>(cfg().addons||[]).filter(a=>a.active!==false&&(S.isAdmin||a.show!==false));
+const orgList=()=>Object.entries(ORG).filter(([k])=>S.isAdmin||k!=="internal");
 const DAYN=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
 
 /* ===================== أدوات ===================== */
@@ -327,7 +341,7 @@ if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch
 
 /* ===================== الحالة ===================== */
 const S={view:"facility",cfg:structuredClone(DEFAULTS),blocks:[],mine:[],all:[],isAdmin:false,user:null,sb:null,adminFilter:"new",calMonth:null,online:false,
-  form:{from:addDays(today(),14),to:addDays(today(),17),mode:"rooms",roomIds:[1,5],areas:[],students:20,supervisors:2,inTime:"14:00",outTime:"12:00",guests:"",addons:{},org:"school",orgName:"",empNo:"",contact:"",phone:"",email:"",gender:"بنين",age:"",purpose:"",promo:"",notes:"",agree:false},sent:null};
+  form:{from:addDays(today(),14),to:addDays(today(),17),mode:"whole",roomIds:[],shared:false,ackRooms:false,discounts:[],vatEx:{on:false},areas:[],students:20,supervisors:2,inTime:"16:00",outTime:"12:00",guests:"",addons:{},org:"school",orgName:"",empNo:"",contact:"",phone:"",email:"",gender:"بنين",age:"",purpose:"",promo:"",notes:"",agree:false},sent:null};
 const cfg=()=>S.cfg;
 
 /* ===================== التسعير ===================== */
@@ -346,9 +360,9 @@ const AREAS=[{k:"main",p:"hallMain",label:"الصالة الرئيسية",inc:"�
 const areasOf=f=>f.mode==="whole"?AREAS.map(a=>a.k):f.mode==="rooms"?[...new Set((f.areas||[]).filter(k=>AREAS.some(a=>a.k===k)))]:[];
 const dayMode=f=>f.mode==="rooms"&&!(f.roomIds||[]).length&&areasOf(f).length>0;
 const unitOf=f=>dayMode(f)?"يوم":"ليلة";
-const SVC=()=>Object.assign({price:450,basis:"night",onHallOnly:true},cfg().service||{});
+const SVC=()=>Object.assign({price:450,basis:"booking",label:"رسوم الخدمة"},cfg().service||{});
 const svcTxt="النظافة والحراسة والإنترنت والكهرباء والماء";
-const wholePrice=()=>ROOMS().reduce((a,r)=>a+roomPrice(r),0)+AREAS.reduce((a,x)=>a+PR(x.p),0);
+const wholePrice=()=>PR("whole");
 const selIds=f=>isPkg(f.mode)?(pkgOf(f.mode).rooms||[]).map(Number):(f.roomIds||[]).map(Number);
 function occupiedOn(day,excludeId){const s=new Set();for(const b of S.blocks){if(b.id===excludeId)continue;if(!(day>=b.from&&day<b.to))continue;if(b.whole)ROOMS().forEach(r=>s.add(r.n));(b.rooms||[]).forEach(n=>s.add(+n))}return s}
 function freeRooms(f,excludeId){const n=nightsBetween(f.from,f.to),occ=new Set();for(let i=0;i<n;i++)occupiedOn(addDays(f.from,i),excludeId).forEach(x=>occ.add(x));return ROOMS().filter(r=>!occ.has(r.n))}
@@ -377,39 +391,28 @@ function autoPlan(f){const st=+f.students||0,sup=+f.supervisors||0,R=ROOMS(),W=W
   const busy=new Set();if(ok)blocksOver(f,S.editId).forEach(x=>{if(x.whole)AREAS.forEach(z=>busy.add(z.k));(x.areas||[]).forEach(k=>busy.add(k))});
   const stIds=(a||[]).map(r=>r.n).sort((x,y)=>x-y),supIds=(b||[]).map(r=>r.n).sort((x,y)=>x-y),ids=[...stIds,...supIds];
   const allSt=R.filter(r=>r.t==="st").every(r=>stIds.includes(r.n)),wingN=W.filter(n=>supIds.includes(n)).length;
-  const P={stIds,supIds,ids,okSt:!!a,okSup:!!b,main:"",small:""};
-  if(st+sup>0){P.main=allSt?"inc":busy.has("main")?"busy":"pay";P.small=wingN===W.length?"inc":wingN===1?(busy.has("small")?"busy":"pay"):""}
-  P.areas=[...(P.main==="pay"?["main"]:[]),...(P.small==="pay"?["small"]:[])];return P}
-function applyPlan(f){const P=autoPlan(f);f.mode="rooms";f.auto=true;f.roomIds=P.ids;f.areas=P.ids.length?P.areas:[];f.addons=f.addons||{};return P}
+  const P={stIds,supIds,ids,okSt:!!a,okSup:!!b,areas:[]};return P}
+function applyPlan(f){f.auto=true;f.addons=f.addons||{};if(f.mode==="whole"){f.roomIds=[];f.areas=[];return null}f.mode="rooms";const P=autoPlan(f);f.roomIds=P.ids;f.areas=[];return P}
 function roomsNeeded(f){const R=ROOMS();const ids=f.mode==="whole"?R.map(r=>r.n):(f.mode==="rooms"||isPkg(f.mode))?selIds(f):(allocate(f).ids||[]);const t=n=>(R.find(r=>r.n===n)||{}).t;return{ids,st:ids.filter(n=>t(n)==="st").length,sup:ids.filter(n=>t(n)==="sup").length}}
-function quote(f){const c=cfg(),P=c.prices;const {n,we,wd}=nightSplit(f);const L=[],D=[];
-  if(n<=0)return{n,we,wd,L,D,acc:0,addons:0,disc:0,sub:0,vat:0,total:0,deposit:0,discPct:0};
-  let acc=0;const u=unitOf(f);
-  if(f.mode==="whole"){const ci=capInfo();for(const [lbl,k,qty] of [["غرف الطلاب","roomSt",ci.stRooms],["غرف المشرفين","roomSup",ci.supRooms]]){const v=qty*n*PR(k);if(v){L.push([`المبنى كاملاً - ${lbl}: ${fmt(qty)} غرف × ${fmt(n)} ليلة × ${sar(PR(k))}`,v]);acc+=v}}}
-  else if(isPkg(f.mode)){const pk=pkgOf(f.mode),v=n*(+pk.price.wd||0);if(v){L.push([`${pk.label}: ${fmt(n)} ليلة × ${sar(pk.price.wd)}`,v]);acc+=v}}
-  else if(f.mode==="rooms"){for(const r of ROOMS().filter(r=>selIds(f).includes(r.n))){const v=n*roomPrice(r);if(v){L.push([`غرفة ${r.n} (${r.t==="st"?"طلاب":"مشرفين"}): ${fmt(n)} ليلة`,v]);acc+=v}}}
-  for(const a of AREAS.filter(a=>areasOf(f).includes(a.k))){const v=n*PR(a.p);if(v){L.push([`${a.label}${a.inc?" "+a.inc:""}: ${fmt(n)} ${u} × ${sar(PR(a.p))}`,v]);acc+=v}}
-  let add=0;for(const a of c.addons){const q=+(f.addons||{})[a.key]||0;if(q>0){const v=q*a.price;add+=v;L.push([`${a.label}: ${fmt(q)} ${a.unit} × ${sar(a.price)}`,v])}}
+function quote(f){const c=cfg(),P=c.prices;const n=nightsBetween(f.from,f.to);const L=[],D=[];
+  if(n<=0)return{n,L,D,acc:0,addons:0,disc:0,sub:0,vat:0,total:0,deposit:0};
+  let acc=0;const day=dayMode(f);
+  if(f.mode==="whole"){const v=n*PR("whole");if(v){L.push([`${P.whole.label||"استئجار المقر كاملاً"}: ${fmt(n)} ${unitName("whole")} × ${sar(PR("whole"))}`,v]);acc+=v}}
+  else if(f.mode==="rooms"){for(const r of ROOMS().filter(r=>selIds(f).includes(r.n))){const k=r.t==="st"?"roomSt":"roomSup",v=n*PR(k);if(v){L.push([`غرفة ${r.n} (${r.t==="st"?"طلاب":"مشرفين"}): ${fmt(n)} ${unitName(k)} × ${sar(PR(k))}`,v]);acc+=v}}
+    for(const a of AREAS.filter(a=>areasOf(f).includes(a.k))){const v=n*PR(a.p);if(v){L.push([`${(P[a.p]||{}).label||a.label} (حجز مستقل): ${fmt(n)} ${day?"يوم":unitName(a.p)} × ${sar(PR(a.p))}`,v]);acc+=v}}
+    if(f.shared&&!day&&!areasOf(f).includes("main")){const v=n*PR("common");if(v){L.push([`${P.common.label}: ${fmt(n)} يوم × ${sar(PR("common"))}`,v]);acc+=v}}}
+  let add=0;for(const a of c.addons){const q=+(f.addons||{})[a.key]||0;if(q>0&&priced(a)){const v=Math.round(q*a.price*100)/100;add+=v;L.push([`${a.label}: ${fmt(q)} ${a.unit} × ${sar(a.price)}`,v])}}
   for(const x of (Array.isArray(f.extras)?f.extras:[])){const qq=+x.qty||0,pp=+x.price||0,v=Math.round(qq*pp*100)/100;if(v>0&&String(x.label||"").trim()){add+=v;L.push([`خدمة إضافية - ${x.label}: ${fmt(qq)} × ${sar(pp)}`,v])}}
-  const staff=f.org==="staff",internal=f.org==="internal";let addDisc=0,accDisc=0,pct=0,ops=0;
-  /* رسوم الخدمة: سطر واحد واضح، لا يشملها خصم الإيجار، والبرامج الداخلية لها رسوم التشغيل بدلاً منها */
-  let svc=0;const sv=SVC();if(!internal&&acc>0&&sv.price>0&&!(dayMode(f)&&!sv.onHallOnly)){svc=sv.basis==="booking"?sv.price:sv.price*n;L.push([`رسوم الخدمة (${svcTxt}): ${sv.basis==="booking"?"للحجز":fmt(n)+" "+u+" × "+sar(sv.price)}`,svc])}
+  const internal=f.org==="internal";let addDisc=0,accDisc=0,ops=0,over=false;
+  let svc=0;const sv=SVC();if(!internal&&acc>0&&sv.price>0){svc=+sv.price;L.push([`${sv.label||"رسوم الخدمة"} (مرة واحدة للحجز)`,svc])}
   if(internal){const I=c.internal;accDisc=acc;if(acc)D.push(["إعفاء من رسوم الإيجار للبرامج الداخلية",accDisc]);
-    if(I.facilitiesFree){const fac=c.addons.filter(a=>a.group==="المرافق").reduce((s,a)=>s+(+(f.addons||{})[a.key]||0)*a.price,0);if(fac){addDisc=fac;D.push(["إعفاء من رسوم المرافق للبرامج الداخلية",fac])}}
-    for(const o of I.ops){const v=o.price*n;if(v){ops+=v;L.push([`${o.label}: ${fmt(n)} ${u} × ${sar(o.price)}`,v])}}}
-  else if(staff){pct=c.orgDisc.staff||0;accDisc=acc*pct/100;if(pct)D.push([`خصم منسوبي شركة الأندلس ${fmt(pct)}% على الإقامة`,accDisc]);
-    if(c.staffAddons&&add>0&&pct){addDisc=add*pct/100;D.push([`خصم منسوبي شركة الأندلس ${fmt(pct)}% على المرافق والخدمات`,addDisc])}}
-  else{
-    if(f.mode==="whole"&&add>0&&c.wholeAddonDisc){addDisc=add*c.wholeAddonDisc/100;D.push([`خصم الباقة الكاملة على المرافق والخدمات ${fmt(c.wholeAddonDisc)}%`,addDisc])}
-    const parts=[];const tier=[...c.durationTiers].sort((a,b)=>b.nights-a.nights).find(t=>n>=t.nights);if(tier){pct+=tier.pct;parts.push(`مدة ${fmt(tier.nights)} ${u==="يوم"?"أيام":"ليالٍ"} فأكثر ${fmt(tier.pct)}%`)}
-    const op=c.orgDisc[f.org]||0;if(op){pct+=op;parts.push(`${ORG[f.org]} ${fmt(op)}%`)}
-    const lead=nightsBetween(f.created||today(),f.from);if(lead>=c.earlyDays&&c.earlyPct){pct+=c.earlyPct;parts.push(`حجز مبكر ${fmt(c.earlyPct)}%`)}
-    const code=String(f.promo||"").trim().toUpperCase();const pp=code&&c.promos[code];if(pp){pct+=pp;parts.push(`كود ${code} ${fmt(pp)}%`)}
-    const capped=Math.min(pct,c.maxDisc);accDisc=acc*capped/100;
-    if(capped>0)D.push([`خصم الإيجار ${fmt(capped)}%${pct>c.maxDisc?` (الحد الأعلى ${fmt(c.maxDisc)}%)`:""}: ${parts.join("، ")}`,accDisc]);pct=capped}
-  const disc=addDisc+accDisc,sub=acc+add+ops+svc-disc;const vatOn=!internal&&!(staff&&!c.staffVat);const vat=vatOn?sub*c.vat/100:0,total=sub+vat,deposit=internal?0:total*c.depositPct/100,insurance=internal?c.internal.insurance:c.insurance;
-  const code=String(f.promo||"").trim().toUpperCase();
-  return{n,we,wd,L,D,acc,addons:add,ops,svc,disc,sub,vat,vatOn,total,deposit,insurance,internal,discPct:pct,codeBad:!staff&&!internal&&!!(code&&!c.promos[code]),codeIgnored:(staff||internal)&&!!code}}
+    if(I.facilitiesFree){const fac=c.addons.filter(a=>a.group==="المرافق"&&priced(a)).reduce((s,a)=>s+(+(f.addons||{})[a.key]||0)*a.price,0);if(fac){addDisc=fac;D.push(["إعفاء من رسوم المرافق للبرامج الداخلية",fac])}}
+    for(const o of I.ops){const v=o.price*n;if(v){ops+=v;L.push([`${o.label}: ${fmt(n)} ليلة × ${sar(o.price)}`,v])}}}
+  else{const base=acc+add+svc,cap=Math.round(base*(c.maxManualDisc||20))/100;let man=0;
+    for(const d of (Array.isArray(f.discounts)?f.discounts:[])){if(!String(d.name||"").trim())continue;const val=Math.max(0,+d.value||0);const v=d.type==="amt"?val:Math.round(base*val)/100;if(v>0){man+=v;D.push([`خصم: ${d.name}${d.type==="amt"?"":" "+fmt(val)+"%"}`,v])}}
+    over=man>cap+0.001;accDisc=Math.min(man,cap)}
+  const disc=addDisc+accDisc,sub=acc+add+ops+svc-disc;const vatOn=!internal&&!(f.vatEx&&f.vatEx.on);const vat=vatOn?sub*c.vat/100:0,total=sub+vat,deposit=internal?0:total*c.depositPct/100,insurance=internal?c.internal.insurance:c.insurance;
+  return{n,L,D,acc,addons:add,ops,svc,disc,sub,vat,vatOn,vatEx:vatOn?null:f.vatEx,total,deposit,insurance,internal,discOver:over}}
 
 /* ===================== التوفر ===================== */
 function usageOn(day,excludeId){const occ=occupiedOn(day,excludeId),R=ROOMS();return{n:occ.size,st:R.filter(r=>r.t==="st"&&occ.has(r.n)).length,sup:R.filter(r=>r.t==="sup"&&occ.has(r.n)).length,whole:occ.size>=R.length}}
@@ -433,15 +436,16 @@ function validate(f,{forSubmit}={}){const c=cfg(),cap=c.capacity,E=[],W=[];const
   if(!f.supWithSt&&sup>maxSup)E.push(sel?(isPkg(f.mode)?`عدد المشرفين (${fmt(sup)}) أكبر من أسرّة المشرفين في ${modeLabel(f.mode)} (${fmt(maxSup)}).`:`عدد المشرفين (${fmt(sup)}) أكبر من أسرّة غرف المشرفين المختارة (${fmt(maxSup)}). أضف غرفة مشرفين.`):`السعة القصوى للمشرفين ${fmt(maxSup)} مشرف.`);
   if(st>0&&sup<Math.ceil(st/c.ratio))E.push(`يلزم مشرف واحد على الأقل لكل ${fmt(c.ratio)} طالباً، أي ${fmt(Math.ceil(st/c.ratio))} مشرف لهذا العدد.`);
   if(n>0&&!E.length){const bad=checkAvail(f,S.editId);if(bad.length)E.push(allocate(f,S.editId).area?`الصالة المختارة محجوزة في ${dfmt(bad[0])}. اختر تاريخاً آخر.`:`لا توجد سعة كافية في ${fmt(bad.length)} ليلة، أولها ${dfmt(bad[0])}. اختر تواريخ أو غرفاً أخرى.`)}
-  const q=quote(f);if(q.codeBad)W.push("كود الخصم غير صحيح، ولم يُحتسب.");if(q.codeIgnored)W.push("خصم المنسوبين لا يُجمع مع أكواد الخصم.");
-  if(f.org==="staff")W.push("خصم المنسوبين يُعتمد بعد تحقق الإدارة من الرقم الوظيفي.");if(f.org==="internal")W.push("البرامج الداخلية معفاة من الإيجار، وتُحسب رسوم التشغيل والخدمات وتأمين مسترد. يُعتمد بعد تحقق الإدارة من القسم.");
+  const q=quote(f);if(q.discOver)E.push(`مجموع الخصومات يتجاوز ${fmt(c.maxManualDisc||20)}% من قيمة الحجز قبل الضريبة. خفّض الخصم.`);
+  if(f.vatEx&&f.vatEx.on&&!String(f.vatEx.reason||"").trim())E.push("اكتب سبب الإعفاء أو المعالجة الضريبية ومرجع المستند.");
+  if(f.org==="internal")W.push("البرامج الداخلية معفاة من الإيجار، وتُحسب رسوم التشغيل والخدمات وتأمين مسترد.");
   if(forSubmit){if(!f.orgName.trim())E.push(f.org==="staff"?"اكتب جهة عملك في الشركة (المدرسة أو الإدارة).":f.org==="internal"?"اكتب اسم القسم المنظّم للبرنامج.":"اكتب اسم الجهة.");if(!f.contact.trim())E.push("اكتب اسم المسؤول.");
-    if(f.org==="staff"&&!String(f.empNo).trim())E.push("اكتب الرقم الوظيفي لتطبيق خصم المنسوبين.");
+    if(!S.isAdmin&&f.mode==="rooms"&&!f.ackRooms)E.push("اقرأ ملاحظة حجز الغرف المحددة وأشّر على الموافقة.");
     if(!/^05\d{8}$/.test(normPhone(f.phone)))E.push("اكتب رقم جوال سعودي صحيح يبدأ بـ 05 ومن 10 أرقام.");
     if(f.email&&!/^\S+@\S+\.\S+$/.test(f.email))E.push("البريد الإلكتروني غير صحيح.");
     if(!f.agree)E.push("وافق على الشروط والسياسات لإرسال الطلب.");
     if(!S.fullForm&&(!f.inTime||!f.outTime))E.push("حدّد وقت الدخول ووقت الخروج.")}
-  if(!S.fullForm&&!dayMode(f)&&f.from&&f.to>f.from){const P=autoPlan(f);if((+f.students||0)>0&&!P.okSt)E.unshift("لا توجد غرف طلاب كافية لهذا العدد في التواريخ المختارة. غيّر التواريخ أو تواصل مع الإدارة.");if((+f.supervisors||0)>0&&!P.okSup)E.unshift("لا توجد غرف مشرفين كافية لهذا العدد في التواريخ المختارة.")}
+  if(!S.fullForm&&f.mode==="rooms"&&!dayMode(f)&&f.from&&f.to>f.from){const P=autoPlan(f);if((+f.students||0)>0&&!P.okSt)E.unshift("لا توجد غرف طلاب كافية لهذا العدد في التواريخ المختارة. غيّر التواريخ أو تواصل مع الإدارة.");if((+f.supervisors||0)>0&&!P.okSup)E.unshift("لا توجد غرف مشرفين كافية لهذا العدد في التواريخ المختارة.")}
   return{E,W,q}}
 
 /* ===================== الواجهات ===================== */
@@ -473,7 +477,7 @@ function vFacility(){const c=cfg(),cap=capInfo();const beds=cap.stBeds+cap.supBe
     <div class="grid" style="align-content:start">
       <div class="lbl">مرفق استثماري للإقامة والبرامج ${demoTag()}</div>
       <h2 class="big">إقامة متكاملة لـ ${fmt(beds)} شخصاً داخل مجمع تعليمي</h2>
-      <p class="muted" style="max-width:62ch">بيت الطالب الأندلسي يضم ${fmt(cap.stRooms+cap.supRooms)} غرف مبيت: ${fmt(cap.stRooms)} غرف للطلاب تتسع لـ ${fmt(cap.stBeds)} طالباً، و${fmt(cap.supRooms)} غرف للمشرفين تتسع لـ ${fmt(cap.supBeds)} أشخاص، مع دورة مياه للطلاب وأخرى للمشرفين، وصالات جلوس ومنطقة ألعاب ومصلى كبير. ويمكن حجز غرف محددة بسعر ثابت للغرفة، أو المبنى كاملاً، أو الصالة الرئيسية أو الصغيرة وحدها للقاءات والفعاليات بدون مبيت.</p>
+      <p class="muted" style="max-width:62ch">بيت الطالب الأندلسي يضم ${fmt(cap.stRooms+cap.supRooms)} غرف مبيت: ${fmt(cap.stRooms)} غرف للطلاب تتسع لـ ${fmt(cap.stBeds)} طالباً، و${fmt(cap.supRooms)} غرف للمشرفين تتسع لـ ${fmt(cap.supBeds)} أشخاص، مع دورة مياه للطلاب وأخرى للمشرفين، وصالات جلوس ومنطقة ألعاب ومصلى كبير. والأصل تأجير المقر كاملاً بجميع غرفه، ويمكن حجز غرف محددة بحسب التوفر، أو الصالة الرئيسية أو الصغيرة وحدها للقاءات والفعاليات بدون مبيت.</p>
       <div class="stats"><div class="stat"><b>${fmt(beds)}</b><span>الطاقة الاستيعابية</span></div><div class="stat"><b>${fmt(cap.stRooms+cap.supRooms)}</b><span>غرف مبيت</span></div><div class="stat"><b>${fmt(cap.stBeds)}</b><span>سرير للطلاب</span></div><div class="stat"><b>${fmt(cap.supBeds)}</b><span>سرير للمشرفين</span></div></div>
       <div class="btns"><a class="btn" href="#book">ابدأ طلب حجز</a><a class="btn ghost" href="#prices">الأسعار</a></div>
     </div>
@@ -482,42 +486,33 @@ function vFacility(){const c=cfg(),cap=capInfo();const beds=cap.stBeds+cap.supBe
   <section class="sec" style="text-align:center"><h2>جولة مصورة في الفرع</h2><p class="muted" style="margin:0">المدخل والاستقبال الرئيسي ومرافق فرع المنار.</p><video class="tour" controls playsinline preload="metadata" poster="media/tour.jpg"><source src="media/tour.mp4" type="video/mp4">متصفحك لا يدعم عرض الفيديو.</video></section>
   <section class="sec"><h2>صور من بيت الطالب</h2><div class="gal">${[["majlis","الصالة الرئيسية",1],["majlis2","المجلس",1],["entrance","مدخل بيت الطالب",0],["billiards","منطقة الألعاب: البلياردو",0],["waiting","ركن الاستراحة",1],["coffee","ركن القهوة والضيافة",1],["ps","بلايستيشن",0],["pingpong","تنس الطاولة والفوسبول",0],["arcade","غرفة الألعاب (Arcade)",1],["lounge","صالة جلوس صغيرة",1]].map(([f,t,w])=>`<figure class="${w?"wide":""}" data-zoom="img/${f}.jpg" data-cap="${t}" tabindex="0" role="button" aria-label="عرض صورة ${t}"><img src="img/${f}.jpg" alt="${t}" loading="lazy"><figcaption>${t}</figcaption></figure>`).join("")}</div>
   <div class="chips" style="margin-top:10px">${["بلياردو","تنس طاولة","فوسبول","هوكي هوائي","بلايستيشن","ركن قهوة"].map(x=>`<span class="chip">${x}</span>`).join("")}</div><p class="muted" style="margin:6px 0 0;font-size:.85rem">ألعاب منطقة الترفيه وركن القهوة متاحة للنزلاء ضمن الإقامة.</p></section>
-    <section class="sec"><h2>مرافق المبنى المتاحة للمستأجر</h2><div class="chips">${["الملاعب","المسبح","الصالات الرياضية","مصادر التعلم","غرف الاجتماعات","الفصول الدراسية","المجلس الرئيسي للورش واللقاءات"].map(x=>`<span class="chip">${x}</span>`).join("")}</div><p class="muted">تُحجز بالساعة أو باليوم مع طلب الإقامة.</p></section>
+    <section class="sec"><h2>مرافق المبنى المتاحة للمستأجر</h2><div class="chips">${["الملاعب","المسبح","الصالة الرياضية","مصادر التعلم","غرفة الاجتماعات","الفصل الدراسي","المجلس الرئيسي للورش واللقاءات"].map(x=>`<span class="chip">${x}</span>`).join("")}</div><p class="muted">تُحجز بالساعة مع طلب الإقامة.</p></section>
   <section class="sec"><h2>الخدمات</h2><div class="grid g3">
-    <div class="card"><h3>النظافة</h3><p class="muted">نظافة يومية للغرف والمرافق المشتركة ضمن السعر، ونظافة إضافية عند الطلب.</p></div>
+    <div class="card"><h3>النظافة</h3><p class="muted">نظافة يومية للغرف والمرافق المشتركة ضمن رسوم الخدمة.</p></div>
     <div class="card"><h3>الحراسة</h3><p class="muted">حراسة على مدار الساعة لبوابات المجمع ضمن السعر، ومناوبات إضافية عند الحاجة.</p></div>
-    <div class="card"><h3>النقل</h3><p class="muted">باصات للمجموعات ووانيت للأغراض والتنقلات القصيرة، بسعر المشوار.</p></div>
+    <div class="card"><h3>النقل</h3><p class="muted">باص أو وانيت مع السائق، باليوم.</p></div>
     <div class="card"><h3>الإعاشة <span class="demo">جديد</span></h3><p class="muted">ثلاث وجبات يومياً عبر مطعم متعاقد، بسعر الوجبة للشخص.</p></div>
-    <div class="card"><h3>الضيافة <span class="demo">جديد</span></h3><p class="muted">ركن ضيافة مفتوح طوال اليوم في الصالة الرئيسية، بالسعر اليومي.</p></div></div></section>`}
+    <div class="card"><h3>الضيافة وخدمات العمال</h3><p class="muted">خدمات الضيافة، وعامل للتحميل والتنزيل والترتيب، بسعر تحدده الإدارة حسب الطلب.</p></div></div></section>`}
 
 const INVESTOR_NOTE="المرافق الإضافية: إذا كان استخدامها عن طريق المستثمر أو في وقته فحسابها مع المستثمر مباشرة، وإذا كان عن طريق الفرع في الأوقات خارج وقت المستثمر فتُحجز وتُحاسب هنا بالأسعار أعلاه.";
 const POOL_RULE="استخدام المسبح مشروط بوجود منقذ معتمد طوال وقت السباحة، أو بتعهد كتابي من المستأجر بتولي مسؤولية السلامة. ويتحمل الشخص الموقّع على العقد المسؤولية الكاملة عن أي حادث أو ضرر يقع أثناء استخدام المسبح، لا سمح الله.";
-function vPrices(){const c=cfg(),P=c.prices;const g=k=>c.addons.filter(a=>a.group===k);const weTxt=c.weekendNights.map(d=>"ليلة "+DAYN[d]).join(" و");
-  const rowA=a=>`<tr><td>${esc(a.label)}</td><td>${esc(a.unit)}</td><td class="price">${sar(a.price)}</td></tr>`;
-  const pr=(t,k)=>`<tr><td>${t}</td><td class="price">${sar(P[k].wd)}</td><td class="price">${sar(P[k].we)}</td></tr>`;
-  return `<div class="grid"><div class="lbl">بالريال السعودي، ولا تشمل ضريبة القيمة المضافة ${fmt(c.vat)}% ${demoTag()}</div><h2 class="big">${PRESETS_().length?"الأسعار والباقات":"الأسعار"}</h2>
-    ${c.demo?`<div class="note">الأسعار والخصومات افتراضية لهذه النسخة التجريبية، وتُعتمد من الإدارة قبل الإطلاق.</div>`:""}</div>
-  ${PRESETS_().length?`<section class="sec"><h2>باقات جاهزة</h2><p class="muted" style="margin:0">اختر الباقة وتُعبّأ لك المرافق والخدمات في نموذج الحجز تلقائياً، ثم عدّل العدد والتواريخ كما تريد.</p><div class="pkgs">${PRESETS_().map(p=>`<div class="card pkg ${p.gold?"gold":""}"><span class="who">${esc(p.who)}</span><h3>${esc(p.t)}</h3><ul>${(p.inc||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="btn sm" type="button" onclick="__pickPkg('${esc(p.key)}')">اطلب هذه الباقة</button></div>`).join("")}</div></section>`:""}
-  <section class="card sec"><h2>أسعار الإيجار</h2><p class="muted" style="margin:0">سعر واحد طوال أيام الأسبوع. الغرفة بسعر ثابت أياً كان عدد من يسكنها، وتختار ما تحتاجه من غرف وصالات.</p>
-    <div class="tbl"><table class="t"><thead><tr><th>البند</th><th>ما يشمله</th><th>السعر</th></tr></thead><tbody>
-      <tr><td>غرفة طلاب</td><td>أي غرفة من غرف الطلاب (${fmt(capInfo().stRooms)} غرف)</td><td class="price">${sar(PR("roomSt"))} لليلة</td></tr>
-      <tr><td>غرفة مشرفين</td><td>أي غرفة من غرف المشرفين (${fmt(capInfo().supRooms)} غرف)</td><td class="price">${sar(PR("roomSup"))} لليلة</td></tr>
-      ${AREAS.map(a=>`<tr><td>${a.label}</td><td>${a.inc?a.inc.replace(/^مع /,"تشمل "):"للجلسات واللقاءات الصغيرة"}</td><td class="price">${sar(PR(a.p))} لليلة أو اليوم</td></tr>`).join("")}
-      ${SVC().price?`<tr><td>رسوم الخدمة</td><td>تشمل ${svcTxt}</td><td class="price">${sar(SVC().price)} ${SVC().basis==="booking"?"للحجز":"لليلة أو اليوم"}</td></tr>`:""}
-      <tr><td><b>المبنى كاملاً</b></td><td>الغرف التسع والصالتان</td><td class="price">${sar(wholePrice())} لليلة${SVC().price?" + رسوم الخدمة":""}</td></tr>
-      ${PKGS().filter(p=>p.active!==false).map(p=>`<tr><td>${esc(p.label)}</td><td>${p.rooms.length>1?"الغرف":"الغرفة"} ${p.rooms.join("، ")}${p.areas?" مع "+esc(p.areas):""}</td><td class="price">${sar(p.price.wd)} لليلة</td></tr>`).join("")}</tbody></table></div>
-    <p class="muted" style="margin:0">مثال: غرفتا طلاب وغرفة مشرفين لليلة واحدة = ${sar(2*PR("roomSt")+PR("roomSup"))}${SVC().price?` + رسوم الخدمة ${sar(SVC().price)}`:""}. وحجز الصالات بدون غرف يُحسب باليوم. والمبنى كاملاً عليه خصم ${fmt(c.wholeAddonDisc)}% على المرافق والخدمات.</p></section>
+function vPrices(){const c=cfg(),P=c.prices;const show=k=>P[k]&&P[k].show!==false&&PR(k)>0;
+  const rowA=a=>`<tr><td>${esc(a.label)}${a.desc?`<small class="muted" style="display:block">${esc(a.desc)}</small>`:""}</td><td>${esc(a.unit)}</td><td class="price">${priced(a)?sar(a.price):"يُحدد عند الطلب"}</td></tr>`;
+  const core=[["whole","المقر كاملاً بجميع غرفه"],["roomSt",`أي غرفة من غرف الطلاب (${fmt(capInfo().stRooms)} غرف)`],["roomSup",`أي غرفة من غرف المشرفين (${fmt(capInfo().supRooms)} غرف)`],["common","مع حجز الغرف المحددة، غير حصري"],["hallMain","حجز مستقل وحصري"],["hallSmall","حجز مستقل وحصري"]].filter(([k])=>show(k));
+  const g=k=>visAddons().filter(a=>a.group===k&&a.show!==false);
+  return `<div class="grid"><div class="lbl">بالريال السعودي، ولا تشمل ضريبة القيمة المضافة ${fmt(c.vat)}% ${demoTag()}</div><h2 class="big">الأسعار</h2></div>
+  <section class="card sec"><h2>أسعار الإيجار</h2><p class="muted" style="margin:0">سعر موحد طوال أيام الأسبوع. الأصل تأجير المقر كاملاً، ويمكن حجز غرف محددة بحسب التوفر.</p>
+    <div class="tbl"><table class="t"><thead><tr><th>البند</th><th>الوصف</th><th>السعر</th></tr></thead><tbody>
+      ${core.map(([k,d])=>`<tr><td>${k==="whole"?"<b>":""}${esc(P[k].label)}${k==="whole"?"</b>":""}</td><td>${esc(P[k].desc||d)}</td><td class="price">${sar(PR(k))} لكل ${unitName(k)}</td></tr>`).join("")}
+      ${SVC().price?`<tr><td>${esc(SVC().label||"رسوم الخدمة")}</td><td>مرة واحدة لكل حجز مهما كانت مدته</td><td class="price">${sar(SVC().price)} للحجز</td></tr>`:""}</tbody></table></div>
+    <div class="note ok"><b>المقر كاملاً يشمل:</b> ${esc(c.wholeInc)}<br><b>برسوم إضافية:</b> ${esc(c.wholeExtra)}</div>
+    <div class="note info"><b>حجز غرف محددة:</b> ${esc(c.roomsNotice)}</div></section>
   <section class="grid g2">
     <div class="card"><h2>المرافق</h2><div class="tbl"><table class="t"><thead><tr><th>المرفق</th><th>الوحدة</th><th>السعر</th></tr></thead><tbody>${g("المرافق").map(rowA).join("")}</tbody></table></div></div>
-    <div class="card"><h2>الخدمات</h2><div class="tbl"><table class="t"><thead><tr><th>الخدمة</th><th>الوحدة</th><th>السعر</th></tr></thead><tbody>${g("الخدمات").map(rowA).join("")}</tbody></table></div><p class="muted" style="margin:8px 0 0">الحراسة والنظافة اليومية ضمن رسوم الخدمة، و«النظافة الإضافية» للفعاليات التي تحتاج تنظيفاً أكثر.</p></div>
+    <div class="card"><h2>الخدمات</h2><div class="tbl"><table class="t"><thead><tr><th>الخدمة</th><th>الوحدة</th><th>السعر</th></tr></thead><tbody>${g("الخدمات").map(rowA).join("")}</tbody></table></div></div>
   </section>
   <div class="note info">${INVESTOR_NOTE}</div>
-  <section class="sec"><h2>الخصومات</h2><div class="grid g3">
-    <div class="card"><h3>البرامج الداخلية لأقسام الفرع</h3><p class="price" style="font-size:1.5rem;margin:0">بدون إيجار</p><p class="muted">تُحسب رسوم التشغيل لكل ليلة (${c.internal.ops.map(o=>esc(o.label.replace(/^رسوم /,""))+" "+sar(o.price)).join("، ")})${c.internal.facilitiesFree?"، والمرافق مجانية":""}، والخدمات الإضافية بسعرها، مع تأمين مسترد ${sar(c.internal.insurance)}. بدون ضريبة أو عربون.</p></div>
-    <div class="card"><h3>منسوبو شركة الأندلس</h3><p class="price" style="font-size:1.5rem;margin:0">${fmt(c.orgDisc.staff)}%</p><p class="muted">على الإقامة${c.staffAddons?" والمرافق والخدمات":""}، بعد التحقق من الرقم الوظيفي، ولا يُجمع مع خصم آخر.</p></div>
-    <div class="card"><h3>حسب المدة</h3><table class="t">${c.durationTiers.map(t=>`<tr><td>${fmt(t.nights)} ليالٍ فأكثر</td><td class="price">${fmt(t.pct)}%</td></tr>`).join("")}</table></div>
-    <div class="card"><h3>حسب نوع الجهة</h3><table class="t">${Object.entries(c.orgDisc).filter(([k,p])=>p>0&&k!=="staff").map(([k,p])=>`<tr><td>${ORG[k]}</td><td class="price">${fmt(p)}%</td></tr>`).join("")}<tr><td>الحجز قبل ${fmt(c.earlyDays)} يوماً</td><td class="price">${fmt(c.earlyPct)}%</td></tr></table></div>
-  </div><div class="note info">تُجمع خصومات الإقامة (غير المنسوبين) بحد أعلى ${fmt(c.maxDisc)}%. يُدفع عربون ${fmt(c.depositPct)}% لتأكيد الحجز، وتأمين مسترد ${sar(c.insurance)} عند الدخول.</div></section>`}
+  <div class="note info">يُدفع عربون ${fmt(c.depositPct)}% لتأكيد الحجز، وتأمين مسترد ${sar(c.insurance)} عند الدخول.</div>`}
 
 function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTimeout(()=>{const g=document.querySelector("#app .grid");if(g&&!$("#fullForm"))g.insertAdjacentHTML("beforeend",`<div class="btns"><button class="btn sm ghost" type="button" id="fullForm">رجوع لعرض السعر التلقائي</button></div>`),$("#fullForm").onclick=()=>{S.fullForm=false;render()}},0);
   if(S.sent&&S.isAdmin){const b=S.sent,m=waMsg(b),ph=normPhone(b.form.phone).replace(/^0/,"966");return `<div class="card" style="max-width:680px;margin:0 auto;display:grid;gap:10px">
@@ -548,31 +543,29 @@ function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTim
         <div class="f"><span class="lbl">عدد الليالي</span><b class="num" style="font-size:1.5rem;color:var(--accent)">${fmt(q.n||0)}</b></div>`}
       </div>${availCal(f)}</fieldset>
     <fieldset><legend>2. طريقة التأجير</legend>
-      <div class="modes" role="radiogroup" aria-label="طريقة التأجير">${[["rooms","اختر الغرف والصالات",`غرفة الطلاب ${sar(PR("roomSt"))} · غرفة المشرفين ${sar(PR("roomSup"))} · الصالة الرئيسية ${sar(PR("hallMain"))} · الصالة الصغيرة ${sar(PR("hallSmall"))}`],["whole","المبنى كاملاً",`الغرف التسع والصالتان · ${sar(wholePrice())} لليلة`],...PKGS().filter(p=>p.active!==false).map(p=>[p.key,p.label,`${p.rooms.length>1?"الغرف":"الغرفة"} ${p.rooms.join("، ")}${p.areas?" مع "+p.areas:""} · ${sar(p.price.wd)} لليلة`])].map(([k,t,sx])=>`<label class="mode"><input type="radio" name="mode" value="${k}" ${f.mode===k?"checked":""}><b>${t}</b><span>${sx}</span></label>`).join("")}</div>
+      <div class="modes" role="radiogroup" aria-label="طريقة التأجير">${[["whole",c.prices.whole.label||"المقر كاملاً",`${sar(wholePrice())} لكل ${unitName("whole")} · ${c.prices.whole.desc||""}`],["rooms","غرف محددة أو صالة مستقلة",`غرفة الطلاب ${sar(PR("roomSt"))} · غرفة المشرفين ${sar(PR("roomSup"))} · الصالة الرئيسية ${sar(PR("hallMain"))} · الصالة الصغيرة ${sar(PR("hallSmall"))} (حجز مستقل)`]].map(([k,t,sx])=>`<label class="mode"><input type="radio" name="mode" value="${k}" ${f.mode===k?"checked":""}><b>${t}</b><span>${sx}</span></label>`).join("")}</div>
       <div class="fg">
         ${f.mode==="rooms"?`<div class="f" style="grid-column:1/-1"><span class="lbl">الغرف</span><div class="roompick">${(()=>{const fr=new Set(f.from&&f.to>f.from?freeRooms(f).map(r=>r.n):ROOMS().map(r=>r.n)),sel=selIds(f);return ROOMS().map(r=>{const busy=!fr.has(r.n),on=sel.includes(r.n);return `<label class="rp ${r.t}${busy?" busy":""}"><input type="checkbox" data-room="${r.n}" ${on?"checked":""} ${busy&&!on?"disabled":""}><b>غرفة ${r.n}</b><span>${r.t==="st"?"طلاب":"مشرفين"} · ${bedsTxt(r.beds)}</span>${busy?"<em>محجوزة في تواريخك</em>":""}</label>`}).join("")})()}</div>
           <span class="lbl" style="margin-top:8px">الصالات</span><div class="roompick">${(()=>{const busy=new Set();if(f.from&&f.to>f.from)blocksOver(f).forEach(b=>{if(b.whole)AREAS.forEach(a=>busy.add(a.k));(b.areas||[]).forEach(k=>busy.add(k))});const sel=areasOf(f);return AREAS.map(a=>{const bz=busy.has(a.k),on=sel.includes(a.k);return `<label class="rp sup${bz?" busy":""}"><input type="checkbox" data-area="${a.k}" ${on?"checked":""} ${bz&&!on?"disabled":""}><b>${a.label}</b><span>${a.inc||"جلسات صغيرة"} · ${sar(PR(a.p))}</span>${bz?"<em>محجوزة في تواريخك</em>":""}</label>`}).join("")})()}</div>
-          <small class="muted">للقاءات والفعاليات بدون مبيت اختر الصالة فقط، ويُحسب الحجز باليوم.</small></div>`:""}
+          <small class="muted">الصالات هنا حجز مستقل وحصري. للقاءات والفعاليات بدون مبيت اختر الصالة فقط، ويُحسب الحجز باليوم.</small>
+          ${(f.roomIds||[]).length&&!areasOf(f).includes("main")?`<label class="check"><input type="checkbox" id="shared" ${f.shared?"checked":""}><span>${esc(c.prices.common.label)}: ${sar(PR("common"))} لكل يوم (غير حصري)</span></label>`:""}
+          <div class="note info">${esc(c.roomsNotice)}</div></div>`:`<div class="note ok" style="grid-column:1/-1"><b>المشمول:</b> ${esc(c.wholeInc)}<br><b>برسوم إضافية:</b> ${esc(c.wholeExtra)}</div>`}
         ${dayMode(f)?num("guests","عدد الحضور التقريبي",f.guests,0,500,"اختياري"):`${num("students","عدد الطلاب",f.students,0,capInfo().stBeds,"")}
         ${num("supervisors","عدد المشرفين",f.supervisors,0,capInfo().supBeds,`مشرف لكل ${fmt(c.ratio)} طالباً على الأقل`)}`}
         <label class="f">الفئة<select id="gender">${["بنين","بنات","مختلط (عائلات أو كبار)"].map(x=>`<option ${f.gender===x?"selected":""}>${x}</option>`).join("")}</select></label>
         <label class="f">المرحلة أو العمر<input type="text" id="age" value="${esc(f.age)}" placeholder="مثال: متوسط، 13–15 سنة"></label>
       </div></fieldset>
     <fieldset><legend>3. المرافق والخدمات الإضافية</legend>
-      ${["المرافق","الخدمات"].map(gn=>`<div class="lbl">${gn}</div><div class="addons">${c.addons.filter(a=>a.group===gn).map(a=>`<div class="addon"><div><b>${esc(a.label)}</b><div class="u">${sar(a.price)} لكل ${esc(a.unit)} · اكتب إجمالي ${esc(a.unit==="ساعة"?"الساعات":a.unit==="يوم"?"الأيام":a.unit==="مشوار"?"المشاوير":a.unit==="وجبة"?"الوجبات":"المناوبات")}</div></div><input type="number" min="0" inputmode="numeric" id="ad-${a.key}" data-ad="${a.key}" value="${esc((f.addons||{})[a.key]||"")}" placeholder="0" aria-label="${esc(a.label)}"></div>`).join("")}</div>`).join("")}
+      ${addonsHTML(f)}
       <div class="note info">${INVESTOR_NOTE}</div>
-      ${(f.addons||{}).pool?`<div class="note bad pool-rule"><b>${POOL_RULE}</b></div>`:""}
-      ${f.mode==="whole"&&f.org!=="staff"?`<div class="note ok">المبنى كاملاً: خصم ${fmt(c.wholeAddonDisc)}% على المرافق والخدمات.</div>`:""}
     </fieldset>
-    ${S.isAdmin?extrasHTML(f)+(S.editId?`<div class="note">تعديل عرض السعر ${esc((findBk(S.editId)||{}).ref||"")}. <button class="btn sm ghost" type="button" id="cancelEdit">إلغاء التعديل</button></div>`:""):""}
+    ${S.isAdmin?adminFinHTML(f)+(S.editId?`<div class="note">تعديل عرض السعر ${esc((findBk(S.editId)||{}).ref||"")}. <button class="btn sm ghost" type="button" id="cancelEdit">إلغاء التعديل</button></div>`:""):""}
     <fieldset><legend>4. بيانات الجهة</legend><div class="fg">
-        <label class="f">نوع الجهة<select id="org">${Object.entries(ORG).map(([k,t])=>`<option value="${k}" ${f.org===k?"selected":""}>${t}${k==="internal"?" (معفى من الإيجار)":c.orgDisc[k]?` (خصم ${fmt(c.orgDisc[k])}%)`:""}</option>`).join("")}</select></label>
+        <label class="f">نوع الجهة<select id="org">${orgList().map(([k,t])=>`<option value="${k}" ${f.org===k?"selected":""}>${t}${k==="internal"?" (معفى من الإيجار)":""}</option>`).join("")}</select></label>
         <label class="f">${f.org==="staff"?"جهة العمل في الشركة":f.org==="internal"?"القسم المنظّم للبرنامج":"اسم الجهة"}<input type="text" id="orgName" value="${esc(f.orgName)}" autocomplete="organization" placeholder="${f.org==="staff"?"مثال: مدارس الأندلس - فرع المنار":""}"></label>
-        ${f.org==="staff"?`<label class="f">الرقم الوظيفي<input type="text" id="empNo" dir="ltr" value="${esc(f.empNo)}"></label>`:""}
         <label class="f">اسم المسؤول<input type="text" id="contact" value="${esc(f.contact)}" autocomplete="name"></label>
         <label class="f">جوال المسؤول<input type="tel" id="phone" dir="ltr" value="${esc(f.phone)}" placeholder="05xxxxxxxx" autocomplete="tel"></label>
         <label class="f">البريد الإلكتروني <small>اختياري</small><input type="email" id="email" dir="ltr" value="${esc(f.email)}" autocomplete="email"></label>
-        ${!["staff","internal"].includes(f.org)?`<label class="f">كود الخصم <small>اختياري</small><input type="text" id="promo" dir="ltr" value="${esc(f.promo)}"></label>`:""}
       </div>
       <label class="f">${dayMode(f)?"نوع اللقاء":"الغرض من الإقامة"}<input type="text" id="purpose" value="${esc(f.purpose)}" placeholder="مثال: معسكر تدريبي، مسابقة، رحلة مدرسية"></label>
       <label class="f">ملاحظات <small>اختياري</small><textarea id="notes">${esc(f.notes)}</textarea></label>
@@ -585,6 +578,23 @@ function vBook(){const f=S.form,c=cfg();if(S.isAdmin&&S.fullForm&&!S.sent)setTim
      <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>${S.editId?"حفظ التعديل وتحديث عرض السعر":S.isAdmin?"حفظ وإصدار عرض السعر":"إرسال طلب الحجز"}</button>
      <p class="muted" style="font-size:.8rem;margin:8px 0 0">السعر النهائي يُعتمد في عرض السعر الرسمي من الإدارة.</p></aside>
   </form>`}
+function addonsHTML(f){const L=visAddons();if(!L.length)return `<p class="muted">لا توجد خدمات إضافية متاحة حالياً.</p>`;
+  return ["المرافق","الخدمات"].map(gn=>{const it=L.filter(a=>a.group===gn);if(!it.length)return "";return `<div class="lbl">${gn}</div><div class="addons">${it.map(a=>{const ok=priced(a);
+    return `<div class="addon${ok?"":" off"}"><div><b>${esc(a.label)}</b>${a.desc?`<div class="u">${esc(a.desc)}</div>`:""}<div class="u">${ok?`${sar(a.price)} لكل ${esc(a.unit)}`:"السعر يُحدد عند الطلب، تواصل مع الإدارة"}</div></div>${ok?`<input type="number" min="0" step="any" inputmode="decimal" id="ad-${a.key}" data-ad="${a.key}" value="${esc((f.addons||{})[a.key]||"")}" placeholder="0" aria-label="${esc(a.label)}: عدد ${esc(a.unit)}">`:""}</div>`}).join("")}</div>`}).join("")
+  +((f.addons||{}).pool?`<div class="note bad pool-rule"><b>${POOL_RULE}</b></div>`:"")}
+function adminFinHTML(f){const D=Array.isArray(f.discounts)?f.discounts:[];const vx=f.vatEx||{};
+  return `<fieldset><legend>الخصم اليدوي <small>للإدارة فقط · المجموع لا يتجاوز ${fmt(cfg().maxManualDisc||20)}% قبل الضريبة</small></legend><div style="display:grid;gap:8px">
+   ${D.map((d,i)=>`<div class="exrow" style="display:grid;grid-template-columns:1.3fr 90px 80px 1.3fr auto;gap:6px;align-items:end">
+     <label class="f">اسم الخصم<input type="text" data-dc="name" data-i="${i}" value="${esc(d.name||"")}" placeholder="مثال: بتوجيه الرئيس التنفيذي"></label>
+     <label class="f">النوع<select data-dc="type" data-i="${i}"><option value="pct" ${d.type!=="amt"?"selected":""}>نسبة %</option><option value="amt" ${d.type==="amt"?"selected":""}>مبلغ ثابت</option></select></label>
+     <label class="f">القيمة<input type="number" min="0" step="any" data-dc="value" data-i="${i}" value="${esc(d.value??"")}"></label>
+     <label class="f">السبب أو مرجع الاعتماد<input type="text" data-dc="reason" data-i="${i}" value="${esc(d.reason||"")}"></label>
+     <button class="btn sm ghost" type="button" data-dcdel="${i}">حذف</button></div>`).join("")}
+   <button class="btn sm ghost" type="button" id="dcAdd" style="justify-self:start">+ إضافة خصم</button></div></fieldset>
+  <fieldset><legend>المعالجة الضريبية <small>للإدارة فقط</small></legend>
+   <label class="check"><input type="checkbox" id="vxOn" ${vx.on?"checked":""}><span>إعفاء أو معالجة ضريبية خاصة وفق مستند معتمد</span></label>
+   ${vx.on?`<div class="fg"><label class="f">السبب<input type="text" id="vxReason" value="${esc(vx.reason||"")}"></label><label class="f">رقم المستند أو مرجعه<input type="text" id="vxDoc" value="${esc(vx.doc||"")}"></label></div>`:""}</fieldset>
+  ${extrasHTML(f)}`}
 function extrasHTML(f){const X=Array.isArray(f.extras)?f.extras:[];
   return `<fieldset><legend>خدمات إضافية <small>عند الطلب، وتُضاف للفاتورة</small></legend><div id="exBox" style="display:grid;gap:8px">
    ${X.map((x,i)=>`<div class="exrow" style="display:grid;grid-template-columns:1fr 70px 90px auto;gap:6px;align-items:end">
@@ -599,10 +609,10 @@ function planHTML(P){const R=ROOMS(),b=n=>(R.find(r=>r.n===n)||{}).beds||0;
   const hl=(st,lbl)=>st==="inc"?`<span class="pchip ok">${lbl}: مشمولة في سعر الغرف</span>`:st==="pay"?`<span class="pchip">${lbl}: تُحسب تلقائياً</span>`:st==="busy"?`<span class="pchip bad">${lbl}: محجوزة لجهة أخرى في تواريخك</span>`:"";
   return `<div class="prow"><b>غرف الطلاب</b><div>${P.okSt?li(P.stIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
    <div class="prow"><b>غرف المشرفين</b><div>${S.form.supWithSt?`<span class="pchip ok">المشرفون مع الطلاب في نفس الغرف</span>`:P.okSup?li(P.supIds):`<span class="pchip bad">لا تكفي الغرف المتاحة</span>`}</div></div>
-   <div class="prow"><b>الصالات</b><div>${hl(P.main,"الصالة الرئيسية")}${hl(P.small,"الصالة الصغيرة (صالة المشرفين)")}${!P.main&&!P.small?`<span class="muted">—</span>`:""}</div></div>`}
+`}
 function vBookSimple(){const f=S.form,c=cfg();
   if(S.sent)return vBook();
-  const P=applyPlan(f);const v=validate(f),q=v.q;
+  if(!["whole","rooms"].includes(f.mode))f.mode="whole";const P=applyPlan(f);const v=validate(f),q=v.q;const W=f.mode==="whole";
   const num=(id,lbl,val,max,hint)=>`<label class="f">${lbl}<input type="number" id="${id}" inputmode="numeric" min="0" max="${max}" value="${esc(val)}">${hint?`<small>${hint}</small>`:""}</label>`;
   const A=S.isAdmin;if(A)f.agree=true;
   const ED=S.editId?findBk(S.editId):null;
@@ -612,32 +622,39 @@ function vBookSimple(){const f=S.form,c=cfg();
   ${!S.online?`<div class="note bad">تعذر الاتصال بالخادم الآن. تقدر تحسب السعر، وللإرسال تحقق من الاتصال وأعد فتح الصفحة.</div>`:""}
   <form class="book simple" id="bookForm" novalidate><div class="grid">
    <fieldset><legend>1. بيانات الجهة</legend><div class="fg">
-     <label class="f">نوع الجهة<select id="org">${Object.entries(ORG).map(([k,t])=>`<option value="${k}" ${f.org===k?"selected":""}>${t}</option>`).join("")}</select></label>
+     <label class="f">نوع الجهة<select id="org">${orgList().map(([k,t])=>`<option value="${k}" ${f.org===k?"selected":""}>${t}</option>`).join("")}</select></label>
      <label class="f">${f.org==="staff"?"جهة العمل في الشركة":f.org==="internal"?"القسم المنظّم للبرنامج":"اسم الجهة"}<input type="text" id="orgName" value="${esc(f.orgName)}" autocomplete="organization"></label>
-     ${f.org==="staff"?`<label class="f">الرقم الوظيفي<input type="text" id="empNo" dir="ltr" value="${esc(f.empNo)}"></label>`:""}
      <label class="f">اسم المسؤول<input type="text" id="contact" value="${esc(f.contact)}" autocomplete="name"></label>
      <label class="f">جوال المسؤول<input type="tel" id="phone" dir="ltr" value="${esc(f.phone)}" placeholder="05xxxxxxxx" autocomplete="tel"></label>
      <label class="f">البريد الإلكتروني <small>اختياري</small><input type="email" id="email" dir="ltr" value="${esc(f.email)}" autocomplete="email"></label>
      <label class="f">الفئة<select id="gender">${["بنين","بنات","مختلط (عائلات أو كبار)"].map(x=>`<option ${f.gender===x?"selected":""}>${x}</option>`).join("")}</select></label>
      <label class="f">الغرض من الإقامة <small>اختياري</small><input type="text" id="purpose" value="${esc(f.purpose)}" placeholder="مثال: معسكر، مسابقة، رحلة مدرسية"></label>
    </div></fieldset>
-   <fieldset><legend>2. العدد والمواعيد</legend><div class="fg">
+   <fieldset><legend>2. نوع الحجز</legend>
+     <div class="modes" role="radiogroup" aria-label="نوع الحجز">
+       <label class="mode"><input type="radio" name="scope" value="whole" ${W?"checked":""}><b>${esc(c.prices.whole.label||"استئجار المقر كاملاً")}</b><span>${sar(PR("whole"))} لكل ${unitName("whole")} · ${esc(c.prices.whole.desc||"")}</span></label>
+       <label class="mode"><input type="radio" name="scope" value="rooms" ${!W?"checked":""}><b>غرف محددة</b><span>غرفة الطلاب ${sar(PR("roomSt"))} · غرفة المشرفين ${sar(PR("roomSup"))} لكل ${unitName("roomSt")}، بحسب التوفر</span></label></div>
+     ${W?`<div class="note ok"><b>المشمول:</b> ${esc(c.wholeInc)}<br><b>برسوم إضافية:</b> ${esc(c.wholeExtra)}</div>`:`<div class="note info">${esc(c.roomsNotice)}</div>`}
+   </fieldset>
+   <fieldset><legend>3. العدد والمواعيد</legend><div class="fg">
      ${num("students","عدد الطلاب",f.students,capInfo().stBeds,"")}
      ${num("supervisors","عدد المشرفين",f.supervisors,capInfo().supBeds,`مشرف لكل ${fmt(c.ratio)} طالباً على الأقل`)}
      <label class="f">تاريخ الدخول<input type="date" id="from" min="${today()}" value="${esc(f.from)}"><small>${hijri(f.from)}</small></label>
      <label class="f">وقت الدخول<input type="time" id="inTime" value="${esc(f.inTime||c.checkIn)}"></label>
      <label class="f">تاريخ الخروج<input type="date" id="to" min="${esc(addDays(f.from||today(),1))}" value="${esc(f.to)}"><small>${hijri(f.to)}</small></label>
      <label class="f">وقت الخروج<input type="time" id="outTime" value="${esc(f.outTime||c.checkOut)}"></label>
-     <label class="check" style="grid-column:1/-1"><input type="checkbox" id="supWithSt" ${f.supWithSt?"checked":""}><span>المشرفون يقيمون مع الطلاب في نفس الغرف (بدون حجز غرف للمشرفين)</span></label>
+     ${W?"":`<label class="check" style="grid-column:1/-1"><input type="checkbox" id="supWithSt" ${f.supWithSt?"checked":""}><span>المشرفون يقيمون مع الطلاب في نفس الغرف (بدون حجز غرف للمشرفين)</span></label>`}
      <div class="f"><span class="lbl">عدد الليالي</span><b class="num" style="font-size:1.5rem;color:var(--accent)">${fmt(q.n||0)}</b></div>
    </div></fieldset>
-   <fieldset><legend>3. الغرف المخصصة لك تلقائياً</legend><div id="planBox">${planHTML(P)}</div>
-     <small class="muted">الصالة الرئيسية مشمولة إذا حُجزت كل غرف الطلاب، والصالة الصغيرة (صالة المشرفين) مشمولة إذا حُجزت غرفتا المشرفين معاً.</small></fieldset>
-   <fieldset><legend>4. الفاتورة</legend><div class="q" id="quote">${quoteHTML(q)}</div></fieldset>
-   ${A?extrasHTML(f):""}
+   ${W?"":`<fieldset><legend>4. الغرف المخصصة لك تلقائياً</legend><div id="planBox">${planHTML(P)}</div>
+     <label class="check"><input type="checkbox" id="shared" ${f.shared?"checked":""}><span>${esc(c.prices.common.label)}: ${sar(PR("common"))} لكل يوم، مرة واحدة للحجز مهما كان عدد الغرف (غير حصري)</span></label>
+     ${A?"":`<label class="check"><input type="checkbox" id="ackRooms" ${f.ackRooms?"checked":""}><span>قرأت ملاحظة حجز الغرف المحددة وأوافق عليها.</span></label>`}</fieldset>`}
+   <fieldset><legend>${W?"4":"5"}. المرافق والخدمات الإضافية <small>اختياري</small></legend>${addonsHTML(f)}</fieldset>
+   ${A?adminFinHTML(f):""}
+   <fieldset><legend>الفاتورة</legend><div class="q" id="quote">${quoteHTML(q)}</div></fieldset>
    ${A?`<fieldset><legend>ملاحظة للمستأجر <small>اختياري</small></legend><textarea id="notes" rows="2" placeholder="تظهر في الطلب">${esc(f.notes||"")}</textarea>
      <div class="errs" id="errs">${errsHTML(v)}</div>
-     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>${S.editId?"حفظ التعديل وتحديث عرض السعر":"حفظ وإصدار عرض السعر"}</button></fieldset>`:`<fieldset><legend>5. الشروط والسياسات</legend>
+     <button class="btn" type="submit" id="send" style="width:100%;margin-top:10px" ${S.online?"":"disabled"}>${S.editId?"حفظ التعديل وتحديث عرض السعر":"حفظ وإصدار عرض السعر"}</button></fieldset>`:`<fieldset><legend>الشروط والسياسات</legend>
      <div class="polbox">${vPolicies().replace(/^\s*<div class="grid">[\s\S]*?<\/h2><\/div>/,"")}</div>
      <label class="check"><input type="checkbox" id="agree" ${f.agree?"checked":""}><span>قرأت الشروط والسياسات وأوافق عليها، ومنها سياسة الإلغاء والتأمين المسترد، و<b style="color:var(--bad,#C0392B)">شرط السلامة في المسبح ومسؤولية الموقّع على العقد</b>.</span></label>
      <div class="errs" id="errs">${errsHTML(v)}</div>
@@ -650,7 +667,7 @@ function quoteHTML(q){const c=cfg();if(!q||!q.n)return `<p class="muted">حدّ�
   return `${q.L.map(([t,v])=>`<div class="row"><span>${esc(t)}</span><span>${sar(v)}</span></div>`).join("")}
    ${q.D.map(([t,v])=>`<div class="row disc"><span>${esc(t)}</span><span>− ${sar(v)}</span></div>`).join("")}
    <hr><div class="row"><span>المجموع قبل الضريبة</span><span>${sar(q.sub)}</span></div>
-   <div class="row"><span>${q.vatOn===false?(q.internal?"ضريبة القيمة المضافة (لا تُطبق على البرامج الداخلية)":"ضريبة القيمة المضافة (غير مطبقة على المنسوبين)"):`ضريبة القيمة المضافة ${fmt(c.vat)}%`}</span><span>${sar(q.vat)}</span></div>
+   <div class="row"><span>${q.vatOn===false?(q.internal?"ضريبة القيمة المضافة (لا تُطبق على البرامج الداخلية)":`ضريبة القيمة المضافة (معالجة خاصة${q.vatEx&&q.vatEx.reason?": "+esc(q.vatEx.reason):""})`):`ضريبة القيمة المضافة ${fmt(c.vat)}%`}</span><span>${sar(q.vat)}</span></div>
    <div class="row tot"><span>الإجمالي</span><span>${sar(q.total)}</span></div>
    ${q.internal?"":`<div class="row muted"><span>العربون لتأكيد الحجز ${fmt(c.depositPct)}%</span><span>${sar(q.deposit)}</span></div>`}
    <div class="row muted"><span>تأمين مسترد عند الدخول</span><span>${sar(q.insurance??c.insurance)}</span></div>`}
@@ -883,7 +900,7 @@ function docInvoice(b,kind){const f=b.form||{},q=b.quote||{},c=cfg(),paid=paidOf
   <table class="dl"><thead><tr><th>البيان</th><th>المبلغ (ر.س)</th></tr></thead><tbody>
    ${(q.L||[]).map(([t,v])=>`<tr><td>${esc(t)}</td><td class="n">${fmt(v,2)}</td></tr>`).join("")}
    ${(q.D||[]).map(([t,v])=>`<tr class="disc"><td>${esc(t)}</td><td class="n">− ${fmt(v,2)}</td></tr>`).join("")}</tbody>
-   <tfoot><tr><td>المجموع قبل الضريبة</td><td class="n">${fmt(q.sub,2)}</td></tr><tr><td>${q.vatOn===false?"ضريبة القيمة المضافة (غير مطبقة)":`ضريبة القيمة المضافة ${fmt(c.vat)}%`}</td><td class="n">${fmt(q.vat,2)}</td></tr>
+   <tfoot><tr><td>المجموع قبل الضريبة</td><td class="n">${fmt(q.sub,2)}</td></tr><tr><td>${q.vatOn===false?`ضريبة القيمة المضافة (غير مطبقة${q.vatEx&&q.vatEx.reason?": "+esc(q.vatEx.reason)+(q.vatEx.doc?" · مرجع "+esc(q.vatEx.doc):""):""})`:`ضريبة القيمة المضافة ${fmt(c.vat)}%`}</td><td class="n">${fmt(q.vat,2)}</td></tr>
    <tr class="tot"><td>الإجمالي</td><td class="n">${fmt(q.total,2)}</td></tr>
    ${q.internal?"":`<tr><td>العربون المطلوب لتأكيد الحجز (${fmt(c.depositPct)}%)</td><td class="n">${fmt(q.deposit,2)}</td></tr>`}
    ${P.length?`<tr><td>المدفوع حتى الآن</td><td class="n">${fmt(paid,2)}</td></tr><tr class="tot"><td>المتبقي</td><td class="n">${fmt(Math.max(0,(q.total||0)-paid),2)}</td></tr>`:""}
@@ -928,21 +945,40 @@ function vJoin(){const I=S.joinInfo;
 function settingsForm(){const c=cfg(),P=c.prices;const n=(id,l,v)=>`<label class="f">${l}<input type="number" id="${id}" min="0" step="1" value="${esc(v)}"></label>`;
   const pr=(k,l)=>n("s-"+k+"-wd",l,P[k].wd);
   return `<form class="grid" id="setForm" novalidate>
-   <fieldset><legend>أسعار الإيجار (سعر واحد طوال الأسبوع)</legend><div class="fg">${pr("roomSt","غرفة طلاب / ليلة")}${pr("roomSup","غرفة مشرفين / ليلة")}${pr("hallMain","الصالة الرئيسية / ليلة أو يوم")}${pr("hallSmall","الصالة الصغيرة / ليلة أو يوم")}</div><p class="muted" style="margin:0;font-size:.85rem">المبنى كاملاً يُحسب تلقائياً بمجموع الغرف والصالتين: ${sar(wholePrice())} لليلة.</p></fieldset>
-   <fieldset><legend>رسوم الخدمة (${svcTxt})</legend><div class="fg">${n("s-svc","المبلغ (ر.س)",SVC().price)}<label class="f">طريقة الحساب<select id="s-svcb"><option value="night" ${SVC().basis!=="booking"?"selected":""}>لكل ليلة أو يوم</option><option value="booking" ${SVC().basis==="booking"?"selected":""}>مرة واحدة للحجز</option></select></label>
-     <label class="check"><input type="checkbox" id="s-svch" ${SVC().onHallOnly?"checked":""}><span>تُحسب أيضاً على حجز الصالات بدون غرف</span></label></div><p class="muted" style="margin:0;font-size:.85rem">تظهر للمستأجر سطراً واحداً «رسوم الخدمة»، ولا يشملها خصم الإيجار، ولا تُحسب على البرامج الداخلية.</p></fieldset>
-   <fieldset><legend>المرافق والخدمات</legend><div class="fg">${c.addons.map(a=>n("s-ad-"+a.key,`${a.label} / ${a.unit}`,a.price)).join("")}</div></fieldset>
-   <fieldset><legend>البرامج الداخلية لأقسام الفرع</legend><div class="fg">${n("s-int-ins","التأمين المسترد (ر.س)",c.internal.insurance)}${c.internal.ops.map(o=>n("s-int-"+o.key,o.label+" / ليلة",o.price)).join("")}
-     <label class="check"><input type="checkbox" id="s-int-fac" ${c.internal.facilitiesFree?"checked":""}><span>المرافق مجانية للبرامج الداخلية</span></label></div><p class="muted" style="margin:0;font-size:.85rem">الإيجار معفى دائماً، ولا تُحسب ضريبة القيمة المضافة ولا عربون.</p></fieldset>
-   <fieldset><legend>المنسوبون</legend><div class="fg">${n("s-org-staff","خصم منسوبي الأندلس %",c.orgDisc.staff)}
-     <label class="check"><input type="checkbox" id="s-staffAdd" ${c.staffAddons?"checked":""}><span>يشمل الخصم المرافق والخدمات</span></label>
-     <label class="check"><input type="checkbox" id="s-staffVat" ${c.staffVat?"checked":""}><span>تُحتسب ضريبة القيمة المضافة على المنسوبين</span></label></div></fieldset>
-   <fieldset><legend>الخصومات والشروط المالية (%)</legend><div class="fg">
-     ${c.durationTiers.map((t,i)=>n("s-tier"+i,`إقامة ${fmt(t.nights)} ليالٍ فأكثر`,t.pct)).join("")}
-     ${Object.keys(ORG).filter(k=>k!=="staff").map(k=>n("s-org-"+k,ORG[k],c.orgDisc[k]||0)).join("")}
-     ${n("s-early",`الحجز المبكر (قبل ${fmt(c.earlyDays)} يوماً)`,c.earlyPct)}${n("s-wad","خصم المبنى كاملاً على المرافق والخدمات",c.wholeAddonDisc)}${n("s-max","الحد الأعلى لمجموع الخصومات",c.maxDisc)}
-     ${n("s-dep","العربون",c.depositPct)}${n("s-vat","ضريبة القيمة المضافة",c.vat)}${n("s-ins","التأمين المسترد (ر.س)",c.insurance)}${n("s-ratio","طلاب لكل مشرف (حد أدنى)",c.ratio)}
-     <label class="f">أكواد الخصم <small>كل سطر: الكود=النسبة</small><textarea id="s-promos" dir="ltr">${esc(Object.entries(c.promos).map(([k,v])=>k+"="+v).join("\n"))}</textarea></label></div></fieldset>
+   <fieldset><legend>بنود الإيجار (سعر موحد طوال الأسبوع)</legend><div class="pedit">
+     <div class="ph"><span>البند</span><span>الوصف</span><span>السعر</span><span>الوحدة</span><span>يظهر للمستأجر</span></div>
+     ${["whole","roomSt","roomSup","hallMain","hallSmall","common"].map(k=>{const x=P[k]||{};const fixed=k==="roomSt";return `<div class="pr">
+       <input type="text" id="sp-${k}-label" placeholder="اسم البند" value="${esc(x.label||"")}" aria-label="اسم البند">
+       <input type="text" id="sp-${k}-desc" placeholder="الوصف" value="${esc(x.desc||"")}" aria-label="الوصف">
+       <input type="number" min="0" step="any" id="sp-${k}-wd" value="${esc(x.wd??"")}" aria-label="السعر">
+       ${fixed||k==="common"?`<span class="muted">${k==="common"?"لكل يوم":"لكل ليلة"}</span>`:`<select id="sp-${k}-unit" aria-label="الوحدة"><option value="night" ${x.unit!=="day"?"selected":""}>لكل ليلة</option><option value="day" ${x.unit==="day"?"selected":""}>لكل يوم</option></select>`}
+       <label class="check"><input type="checkbox" id="sp-${k}-show" ${x.show!==false?"checked":""}><span>يظهر</span></label></div>`}).join("")}
+     <div class="pr"><input type="text" id="s-svcl" value="${esc(SVC().label||"رسوم الخدمة")}" aria-label="اسم رسوم الخدمة"><span class="muted">بند إجمالي واحد</span>${n("s-svc","",SVC().price).replace(/<label class="f">|<\/label>/g,"")}<span class="muted">مرة واحدة للحجز</span><span></span></div></div>
+     <p class="muted" style="margin:0;font-size:.85rem">«استخدام الصالة ومنطقة الترفيه» يُضاف لحجز الغرف المحددة مرة واحدة لكل يوم، وهو غير حصري. أما الصالتان هنا فحجز مستقل وحصري.</p></fieldset>
+   <fieldset><legend>المرافق والخدمات الإضافية</legend><div class="pedit" id="adEdit">
+     <div class="ph ad"><span>البند</span><span>الوصف</span><span>الوحدة</span><span>السعر</span><span>المجموعة</span><span>مفعّل</span><span>يظهر</span><span></span></div>
+     ${(S.adDraft||c.addons).map((x,i)=>`<div class="pr ad" data-adi="${i}">
+       <input type="text" data-af="label" placeholder="اسم البند" value="${esc(x.label||"")}" aria-label="اسم البند">
+       <input type="text" data-af="desc" placeholder="الوصف" value="${esc(x.desc||"")}" aria-label="الوصف">
+       <input type="text" data-af="unit" placeholder="وحدة الاحتساب" value="${esc(x.unit||"")}" list="unitList" aria-label="وحدة الاحتساب">
+       <input type="number" min="0" step="any" data-af="price" value="${esc(x.price??"")}" placeholder="السعر (غير محدد)" aria-label="السعر">
+       <select data-af="group" aria-label="المجموعة"><option ${x.group==="المرافق"?"selected":""}>المرافق</option><option ${x.group!=="المرافق"?"selected":""}>الخدمات</option></select>
+       <label class="check"><input type="checkbox" data-af="active" ${x.active!==false?"checked":""}><span>مفعّل</span></label>
+       <label class="check"><input type="checkbox" data-af="show" ${x.show!==false?"checked":""}><span>يظهر</span></label>
+       <button class="btn sm ghost" type="button" data-addel="${i}">حذف</button></div>`).join("")}
+     <datalist id="unitList"><option>ساعة</option><option>يوم</option><option>ليلة</option><option>وجبة</option><option>مشوار</option><option>تحددها الإدارة</option></datalist>
+     <button class="btn sm ghost" type="button" id="adNew" style="justify-self:start">+ إضافة بند</button></div>
+     <p class="muted" style="margin:0;font-size:.85rem">البند بدون سعر لا يُحتسب ويظهر للمستأجر «يُحدد عند الطلب». البند غير المفعّل لا يظهر ولا يُحتسب.</p></fieldset>
+   <fieldset><legend>نصوص الحجز</legend><div class="fg">
+     <label class="f" style="grid-column:1/-1">ملاحظة حجز الغرف المحددة<textarea id="s-rn" rows="3">${esc(c.roomsNotice)}</textarea></label>
+     <label class="f">المشمول في المقر كاملاً<textarea id="s-wi" rows="2">${esc(c.wholeInc)}</textarea></label>
+     <label class="f">ما يتطلب رسوماً إضافية<textarea id="s-we" rows="2">${esc(c.wholeExtra)}</textarea></label>
+     <label class="f">وقت الدخول<input type="time" id="s-cin" value="${esc(c.checkIn)}"></label><label class="f">وقت الخروج<input type="time" id="s-cout" value="${esc(c.checkOut)}"></label></div></fieldset>
+   <fieldset><legend>البرامج الداخلية لأقسام الفرع (للإدارة فقط)</legend><div class="fg">${n("s-int-ins","التأمين المسترد (ر.س)",c.internal.insurance)}${c.internal.ops.map(o=>n("s-int-"+o.key,o.label+" / ليلة",o.price)).join("")}
+     <label class="check"><input type="checkbox" id="s-int-fac" ${c.internal.facilitiesFree?"checked":""}><span>المرافق مجانية للبرامج الداخلية</span></label></div><p class="muted" style="margin:0;font-size:.85rem">لا يظهر هذا الخيار للمستأجر. الإيجار معفى، ولا ضريبة ولا عربون.</p></fieldset>
+   <fieldset><legend>الشروط المالية</legend><div class="fg">
+     ${n("s-dep","العربون %",c.depositPct)}${n("s-vat","ضريبة القيمة المضافة %",c.vat)}${n("s-ins","التأمين المسترد (ر.س)",c.insurance)}${n("s-ratio","طلاب لكل مشرف (حد أدنى)",c.ratio)}</div>
+     <p class="muted" style="margin:0;font-size:.85rem">لا توجد خصومات تلقائية. الخصم يُضاف يدوياً على كل حجز من نموذج الإدارة، بحد أعلى ${fmt(c.maxManualDisc||20)}% من قيمة الحجز قبل الضريبة. وسياسات الإلغاء والاسترداد تُعدّل من «الشروط والسياسات» أدناه.</p></fieldset>
    <fieldset><legend>التواصل والإطلاق</legend><div class="fg">
      <label class="f">جوال الإدارة<input type="tel" id="s-phone" dir="ltr" value="${esc(c.contact.phone)}"></label>
      <label class="f">اسم الموقِّع في الرسائل<input type="text" id="s-cname" value="${esc(c.contact.name)}"></label>
@@ -969,14 +1005,16 @@ function policyBody(){const t=String(cfg().policyText||"").trim();if(!t)return d
   const secs=t.split(/\n(?=#)/).map(x=>x.trim()).filter(Boolean);
   return `<div class="pol">${secs.map(sec=>{const L=sec.split("\n").map(x=>x.trim()).filter(Boolean);const h=L[0].startsWith("#")?L.shift().replace(/^#+\s*/,""):"";
     return `<div class="card">${h?`<h2>${esc(h)}</h2>`:""}<ul>${L.map(x=>x.startsWith("!")?`<li><b class="red">${esc(x.replace(/^!\s*/,""))}</b></li>`:`<li>${esc(x.replace(/^[-•]\s*/,""))}</li>`).join("")}</ul></div>`}).join("")}</div>`}
-function defaultPolicyHTML(){const c=cfg();return `
+function defaultPolicyHTML(){const c=cfg();const t12=x=>{const [h,m]=String(x||"").split(":").map(Number);if(isNaN(h))return esc(x);const pm=h>=12,hh=h%12||12;return `${hh}:${pad(m||0)} ${h===12&&!m?"ظهراً":pm?"مساءً":"صباحاً"}`};return `
   <div class="pol">
-   <div class="card"><h2>الحجز والتأكيد</h2><ol><li>يُعد الطلب مبدئياً حتى تعتمده الإدارة كتابياً.</li><li>يتأكد الحجز بعد سداد عربون ${fmt(c.depositPct)}% من الإجمالي خلال 3 أيام عمل من الاعتماد، وإلا يُلغى الاعتماد.</li><li>يُسدد المبلغ المتبقي قبل الدخول بـ 3 أيام على الأقل.</li><li>يُقدَّم كشف بأسماء النزلاء وأرقام هويات المشرفين قبل الوصول بيومين.</li><li>البرامج الداخلية لأقسام الفرع معفاة من الإيجار، ويُدفع لها تأمين مسترد ورسوم التشغيل والخدمات، ويُعتمد الطلب بعد تحقق الإدارة من القسم المنظّم.</li><li>خصم المنسوبين للموظفين على رأس العمل، ويُطلب ما يثبت ذلك.</li><li>أقصى مدة للحجز الواحد ${fmt(c.maxNights)} ليلة، والمدد الأطول باتفاق خاص.</li></ol></div>
-   <div class="card"><h2>الدخول والخروج</h2><ul><li>الدخول من الساعة ${esc(c.checkIn)}، والخروج حتى الساعة ${esc(c.checkOut)}.</li><li>يُسلَّم المبنى بمحضر استلام يوقعه مسؤول الجهة، ويُسترد بمحضر تسليم.</li><li>يُدفع تأمين مسترد ${sar(c.insurance)} عند الدخول، ويُعاد خلال 7 أيام عمل بعد التأكد من سلامة المرفق.</li><li>التأخير في الخروج بدون تنسيق يُحتسب نصف ليلة.</li><li>حجز الصالات بدون غرف يُحسب باليوم، وتُسلَّم نظيفة كما استُلمت.</li><li>رسوم الخدمة تشمل ${svcTxt}.</li></ul></div>
-   <div class="card"><h2>الإلغاء والتعديل</h2><ul><li>الإلغاء قبل الوصول بـ ${fmt(c.cancel.freeDays)} يوماً أو أكثر: استرداد العربون كاملاً.</li><li>الإلغاء قبل الوصول بـ ${fmt(c.cancel.halfDays)} إلى ${fmt(c.cancel.freeDays-1)} يوماً: استرداد 50% من العربون.</li><li>الإلغاء قبل الوصول بأقل من ${fmt(c.cancel.halfDays)} أيام: لا يُسترد العربون.</li><li>تعديل التواريخ أو العدد مرة واحدة بدون رسوم، حسب التوفر.</li><li>يحق للإدارة إلغاء الحجز لظروف قاهرة أو متطلبات تشغيلية للمدرسة، مع استرداد كامل المبلغ.</li></ul></div>
-   <div class="card"><h2>الإشراف والسلوك</h2><ul><li>مشرف واحد على الأقل لكل ${fmt(c.ratio)} طالباً، ويقيم المشرفون مع الطلاب طوال المدة.</li><li>الجهة المستأجرة مسؤولة عن سلوك نزلائها وسلامتهم داخل المرفق.</li><li>يُمنع التدخين وإشعال النار والطبخ داخل الغرف.</li><li>أوقات الهدوء من 11 مساءً حتى 6 صباحاً.</li><li>يُلتزم بالفصل بين البنين والبنات حسب أنظمة المدرسة.</li><li>دخول الزوار بإذن مسبق من الإدارة وبمرافقة المشرف.</li></ul></div>
-   <div class="card"><h2>المرافق والخدمات</h2><ul><li><b class="red">المسبح بحضور منقذ معتمد، أو بتعهد المستأجر بمسؤولية السلامة، وفي الأوقات المحددة فقط.</b></li><li>${INVESTOR_NOTE}</li><li>الحراسة والنظافة اليومية على الفرع ضمن رسوم الخدمة.</li><li>تُحجز المرافق والخدمات الإضافية مع الطلب أو قبل الاستخدام بـ 48 ساعة.</li><li>النقل بالباص والوانيت حسب جدول الحركة المتاح وبسائقي المدرسة.</li><li>تُحتسب الأضرار والتلفيات على الجهة المستأجرة حسب تقدير الصيانة.</li></ul></div>
-   <div class="card"><h2>السلامة والخصوصية</h2><ul><li>يُلتزم بتعليمات الإخلاء ونقاط التجمع المعلنة في المبنى.</li><li>تُبلَّغ الإدارة فوراً عن أي حالة صحية أو طارئة.</li><li>تُستخدم بيانات الطلب لإدارة الحجز فقط، ولا يطلع عليها إلا الإدارة، ويتابع مقدم الطلب طلبه برقمه وجواله.</li><li>يُمنع التصوير في غرف المبيت والمرافق الخاصة.</li></ul></div>
+   <div class="card"><h2>1. نطاق الإيجار</h2><ul><li>الأصل تأجير مقر بيت الطالب كاملاً بجميع غرفه، وتُحدد المساحات والخدمات المشمولة في تأكيد الحجز.</li><li>ويجوز استئجار غرفة أو غرف محددة بحسب التوفر. وفي هذه الحالة، يقتصر حق المستأجر على الغرف والمرافق المثبتة في حجزه، ويقر بعلمه وموافقته على أحقية المدرسة في تأجير الغرف الأخرى لمستفيدين آخرين خلال الفترة نفسها، دون أن يمنحه حجزه حق الاستخدام الحصري للمقر.</li></ul></div>
+   <div class="card"><h2>2. الصالة ومنطقة الترفيه والمناطق المشتركة</h2><ul><li>عند استئجار غرف محددة، تُتاح الاستفادة من الصالة ومنطقة الترفيه مقابل الرسوم اليومية الموضحة في قائمة الأسعار، وتُحتسب مرة واحدة عن كل يوم للحجز نفسه، مهما كان عدد الغرف المحجوزة.</li><li>وتكون هذه المناطق مشتركة بين المستفيدين المصرح لهم باستخدامها، وفق الأوقات والتنظيم المعتمد، ولا تعني رسوم استخدامها حجزها حصرياً.</li></ul></div>
+   <div class="card"><h2>3. الدخول والخروج وتسليم المقر</h2><ul><li>وقت الدخول الساعة ${t12(c.checkIn)}، ووقت الخروج الساعة ${t12(c.checkOut)}.</li><li>يتم تسليم الموقع واستلامه بموجب محضر دخول ومحضر خروج يوقعهما ممثل الجهة المستأجرة وممثل المدرسة.</li><li>يُدفع تأمين مسترد ${sar(c.insurance)} عند الدخول، ويُعاد خلال 7 أيام عمل بعد التأكد من سلامة المرفق.</li><li>التأخير في الخروج بدون تنسيق يُحتسب نصف ليلة.</li></ul></div>
+   <div class="card"><h2>4. الحجز والتأكيد والسداد</h2><ul><li>يُعد الطلب مبدئياً حتى تعتمده الإدارة كتابياً.</li><li>يتأكد الحجز بعد سداد عربون ${fmt(c.depositPct)}% من الإجمالي خلال 3 أيام عمل من الاعتماد، وإلا يُلغى الاعتماد.</li><li>يُسدد المبلغ المتبقي قبل الدخول بـ 3 أيام على الأقل.</li><li>تُحتسب رسوم الخدمة مرة واحدة لكل حجز مهما كانت مدته.</li><li>يُقدَّم كشف بأسماء النزلاء وأرقام هويات المشرفين قبل الوصول بيومين.</li><li>أقصى مدة للحجز الواحد ${fmt(c.maxNights)} ليلة، والمدد الأطول باتفاق خاص.</li></ul></div>
+   <div class="card"><h2>5. الإلغاء والتعديل والاسترداد</h2><ul><li>الإلغاء قبل الوصول بـ ${fmt(c.cancel.freeDays)} يوماً أو أكثر: استرداد العربون كاملاً.</li><li>الإلغاء قبل الوصول بـ ${fmt(c.cancel.halfDays)} إلى ${fmt(c.cancel.freeDays-1)} يوماً: استرداد 50% من العربون.</li><li>الإلغاء قبل الوصول بأقل من ${fmt(c.cancel.halfDays)} أيام: لا يُسترد العربون.</li><li>تعديل التواريخ أو العدد مرة واحدة بدون رسوم، حسب التوفر.</li><li>يحق للإدارة إلغاء الحجز لظروف قاهرة أو متطلبات تشغيلية للمدرسة، مع استرداد كامل المبلغ.</li></ul></div>
+   <div class="card"><h2>6. الإشراف والسلوك</h2><ul><li>مشرف واحد على الأقل لكل ${fmt(c.ratio)} طالباً طوال مدة الإقامة.</li><li>الجهة المستأجرة مسؤولة عن سلوك نزلائها وسلامتهم داخل المرفق.</li><li>يُمنع التدخين وإشعال النار والطبخ داخل الغرف.</li><li>أوقات الهدوء من 11 مساءً حتى 6 صباحاً.</li><li>يُلتزم بالفصل بين البنين والبنات حسب أنظمة المدرسة.</li><li>دخول الزوار بإذن مسبق من الإدارة وبمرافقة المشرف.</li></ul></div>
+   <div class="card"><h2>7. المرافق والخدمات</h2><ul><li><b class="red">المسبح بحضور منقذ معتمد، أو بتعهد المستأجر بمسؤولية السلامة، وفي الأوقات المحددة فقط.</b></li><li>${INVESTOR_NOTE}</li><li>تُحجز المرافق والخدمات الإضافية مع الطلب أو قبل الاستخدام بـ 48 ساعة، وتُحتسب بالوحدة الموضحة في قائمة الأسعار.</li><li>تُحتسب الأضرار والتلفيات على الجهة المستأجرة حسب تقدير الصيانة.</li></ul></div>
+   <div class="card"><h2>8. السلامة والخصوصية</h2><ul><li>يُلتزم بتعليمات الإخلاء ونقاط التجمع المعلنة في المبنى.</li><li>تُبلَّغ الإدارة فوراً عن أي حالة صحية أو طارئة.</li><li>تُستخدم بيانات الطلب لإدارة الحجز فقط، ولا يطلع عليها إلا الإدارة.</li><li>يُمنع التصوير في غرف المبيت والمرافق الخاصة.</li></ul></div>
   </div>`}
 
 /* ===================== الربط ===================== */
@@ -988,11 +1026,15 @@ function readForm(){const f=S.form;const v=id=>{const e=document.getElementById(
   if(f.mode==="beds")f.mode="rooms";if(f.mode==="hall"){f.mode="rooms";f.roomIds=[];f.areas=["main"]}
   const rb=document.querySelectorAll("[data-room]");if(rb.length)f.roomIds=[...rb].filter(x=>x.checked).map(x=>+x.dataset.room);
   const ab=document.querySelectorAll("[data-area]");if(ab.length)f.areas=[...ab].filter(x=>x.checked).map(x=>x.dataset.area);
-  document.querySelectorAll("[data-ad]").forEach(e=>{const q=Math.max(0,Math.floor(+e.value||0));if(q)f.addons[e.dataset.ad]=q;else delete f.addons[e.dataset.ad]});
+  document.querySelectorAll("[data-ad]").forEach(e=>{const q=Math.max(0,Math.round((+e.value||0)*100)/100);if(q)f.addons[e.dataset.ad]=q;else delete f.addons[e.dataset.ad]});
   const a=document.getElementById("agree");if(a)f.agree=a.checked;
   const sw=document.getElementById("supWithSt");if(sw)f.supWithSt=sw.checked;
+  const sc=document.querySelector('input[name="scope"]:checked');if(sc)f.mode=sc.value;
+  const sh=document.getElementById("shared");if(sh)f.shared=sh.checked;const ak=document.getElementById("ackRooms");if(ak)f.ackRooms=ak.checked;
+  const dcs=document.querySelectorAll("[data-dc]");if(dcs.length||document.getElementById("dcAdd")){const X=[];dcs.forEach(e=>{const i=+e.dataset.i;X[i]=X[i]||{};X[i][e.dataset.dc]=e.dataset.dc==="value"?(e.value===""?"":+e.value):e.value});f.discounts=X.filter(Boolean)}
+  const vo=document.getElementById("vxOn");if(vo){f.vatEx={on:vo.checked,reason:(document.getElementById("vxReason")||{}).value||(f.vatEx||{}).reason||"",doc:(document.getElementById("vxDoc")||{}).value||(f.vatEx||{}).doc||""}}
   const exs=document.querySelectorAll("[data-ex]");if(exs.length||document.getElementById("exAdd")){const X=[];exs.forEach(e=>{const i=+e.dataset.i;X[i]=X[i]||{};X[i][e.dataset.ex]=e.dataset.ex==="label"?e.value:(e.value===""?"":+e.value)});f.extras=X.filter(Boolean)}
-  if(f.org==="staff"||f.org==="internal")f.promo="";
+  f.promo="";
   if(!S.fullForm&&S.view==="book")applyPlan(f);if(S.isAdmin&&!S.fullForm)f.agree=true}
 function refreshQuote(){readForm();const v=validate(S.form);$("#quote").innerHTML=quoteHTML(v.q);$("#errs").innerHTML=errsHTML(v)}
 const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo({top:y})};
@@ -1000,10 +1042,13 @@ const keepScroll=fn=>{const y=window.scrollY;fn();window.scrollTo({top:y})};
 function wire(v){
   if(v==="book"){const nb=$("#newReq");if(nb)nb.onclick=()=>{S.sent=null;render()};const qc=$("#qCopy");if(qc)qc.onclick=()=>copyText($("#qMsg").value);if(S.sent&&S.isAdmin)quotePdf(S.sent).catch(()=>{});const cp=$("#cpRef");if(cp)cp.onclick=()=>copyText(S.sent.ref);
     const F=$("#bookForm");if(!F)return;
-    const structural=e=>e.target.matches('input[name="mode"],#from,#to,#hdays,#org,[data-room],[data-area]'+(S.fullForm?',#students,#supervisors':''));
+    const structural=e=>e.target.matches('input[name="mode"],input[name="scope"],#vxOn,#from,#to,#hdays,#org,[data-room],[data-area]'+(S.fullForm?',#students,#supervisors':''));
     const ff=$("#fullForm");if(ff)ff.onclick=()=>{readForm();S.fullForm=!S.fullForm;render()};
-    const ce=$("#cancelEdit");if(ce)ce.onclick=()=>{S.editId=null;S.editFrom=null;S.fullForm=false;S.form={...S.form,extras:[],notes:"",orgName:"",contact:"",phone:"",email:"",purpose:"",supWithSt:false};location.hash="admin"};
+    const ce=$("#cancelEdit");if(ce)ce.onclick=()=>{S.editId=null;S.editFrom=null;S.fullForm=false;S.form={...S.form,extras:[],discounts:[],vatEx:{on:false},addons:{},notes:"",orgName:"",contact:"",phone:"",email:"",purpose:"",supWithSt:false,shared:false};location.hash="admin"};
     const sw=$("#supWithSt");if(sw)sw.onchange=()=>{readForm();keepScroll(render)};
+    document.querySelectorAll('input[name="scope"],#vxOn').forEach(x=>x.onchange=()=>{readForm();keepScroll(render)});
+    const da=$("#dcAdd");if(da)da.onclick=()=>{readForm();(S.form.discounts=S.form.discounts||[]).push({name:"",type:"pct",value:"",reason:""});keepScroll(render)};
+    document.querySelectorAll("[data-dcdel]").forEach(bt=>bt.onclick=()=>{readForm();S.form.discounts.splice(+bt.dataset.dcdel,1);keepScroll(render)});
     const xa=$("#exAdd");if(xa)xa.onclick=()=>{readForm();(S.form.extras=S.form.extras||[]).push({label:"",qty:1,price:""});keepScroll(render)};
     document.querySelectorAll("[data-exdel]").forEach(bt=>bt.onclick=()=>{readForm();S.form.extras.splice(+bt.dataset.exdel,1);keepScroll(render)});
     document.querySelectorAll("[data-ex=qty],[data-ex=price],[data-ex=label]").forEach(inp=>inp.onchange=()=>{readForm();const qd=$("#quote");if(qd)qd.innerHTML=quoteHTML(validate(S.form).q)});
@@ -1019,7 +1064,7 @@ function wire(v){
       try{/* الخادم يتحقق ويحسب السعر النهائي ويولّد رقم الطلب */const {data:res,error}=S.editId?await S.sb.rpc("bait_update",{p_id:S.editId,p_form:form}):await S.sb.rpc("bait_submit",{p_form:form});if(error)throw error;
         if(!res||!res.ok){btn.disabled=false;btn.textContent="إرسال طلب الحجز";$("#errs").innerHTML=errsHTML({E:(res&&res.errors)||["تعذر الإرسال"],W:[]});$("#errs").scrollIntoView({behavior:"smooth",block:"center"});return}
         const rec=res.booking;
-        if(S.editId){S.editId=null;S.editFrom=null;S.fullForm=false;S.sent=rec;S.form={...S.form,extras:[],notes:"",orgName:"",contact:"",phone:"",email:"",purpose:"",supWithSt:false};await loadAdmin();render();window.scrollTo({top:0});toast("حُفظ التعديل وتحدّث عرض السعر");return}
+        if(S.editId){S.editId=null;S.editFrom=null;S.fullForm=false;S.sent=rec;S.form={...S.form,extras:[],discounts:[],vatEx:{on:false},addons:{},notes:"",orgName:"",contact:"",phone:"",email:"",purpose:"",supWithSt:false,shared:false};await loadAdmin();render();window.scrollTo({top:0});toast("حُفظ التعديل وتحدّث عرض السعر");return}
         const mine=lsGet("bait-mine",[]);mine.push({ref:rec.ref,phone:rec.form.phone});lsSet("bait-mine",mine);S.mine.push(rec);
         S.sent=rec;S.form={...S.form,addons:{},notes:"",agree:false,promo:"",extras:[],supWithSt:false};if(S.isAdmin){await loadAdmin();S.form={...S.form,orgName:"",contact:"",phone:"",email:"",purpose:""}}render();window.scrollTo({top:0});toast(S.isAdmin?"تم حفظ عرض السعر":"أُرسل طلب الحجز")}
       catch(err){console.error("bait_submit",err);btn.disabled=false;btn.textContent="إرسال طلب الحجز";toast("تعذر الإرسال. تحقق من الاتصال وأعد المحاولة")}}}
@@ -1034,6 +1079,8 @@ function wire(v){
     document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{S.adminFilter=b.dataset.f;render()});
     document.querySelectorAll("article.bk").forEach(el=>{const b=S.all.find(x=>x.id===el.dataset.bid);if(!b)return;el.querySelectorAll("[data-act]").forEach(btn=>btn.onclick=()=>adminAct(b,btn.dataset.act,el))});
     const SF=$("#setForm");if(SF)SF.onsubmit=saveSettings;
+    const an=$("#adNew");if(an)an.onclick=()=>{S.adDraft=readAdDraft();S.adDraft.push({key:"x"+Date.now().toString(36),label:"بند جديد",desc:"",unit:"ساعة",price:null,group:"الخدمات",active:true,show:true});keepScroll(render)};
+    document.querySelectorAll("[data-addel]").forEach(bt=>bt.onclick=()=>{S.adDraft=readAdDraft();S.adDraft.splice(+bt.dataset.addel,1);keepScroll(render)});
     document.querySelectorAll("[data-sec]").forEach(b=>b.onclick=()=>{if(S.adminSec==="pkgs"&&b.dataset.sec!=="pkgs")readPkgDraft();S.adminSec=b.dataset.sec;render()});wirePkgEditor();
     const IF=$("#invForm");if(IF)IF.onsubmit=async e=>{e.preventDefault();const m={name:$("#invName").value.trim(),phone:normPhone($("#invPhone").value),role:$("#invRole").value};
       const {data,error}=await S.sb.rpc("bait_team_invite",{p_name:m.name,p_phone:m.phone,p_role:m.role});if(error||!data||!data.ok){toast((data&&data.error)||"تعذر إنشاء الدعوة");return}
@@ -1066,17 +1113,22 @@ async function adminAct(b,a,el){const note=(el.querySelector("[data-note]")||{})
   toast("حُدّثت حالة الطلب: "+ST[next][0]);S.msgFor=b.id;await loadAdmin();await loadBlocks();keepScroll(render);
   if(next==="checkedin")openDoc(b.id,"hin");else if(next==="done")openDoc(b.id,"hout")}
 
+function readAdDraft(){const base=S.adDraft||cfg().addons;return [...document.querySelectorAll("[data-adi]")].map(row=>{const i=+row.dataset.adi,o=base[i]||{};const v=k=>row.querySelector(`[data-af="${k}"]`);
+  const pr=v("price").value.trim();return{key:o.key||("x"+Date.now().toString(36)+i),label:v("label").value.trim()||"بند",desc:v("desc").value.trim(),unit:v("unit").value.trim()||"تحددها الإدارة",price:pr===""?null:Math.max(0,+pr||0),group:v("group").value,active:v("active").checked,show:v("show").checked}}).filter(a=>a.label)}
 async function saveSettings(e){e.preventDefault();const c=structuredClone(cfg());const g=id=>{const el=document.getElementById(id);return el?Math.max(0,+el.value||0):0};
-  Object.keys(c.prices).forEach(k=>{if(document.getElementById("s-"+k+"-wd")){const v=g("s-"+k+"-wd");c.prices[k]={wd:v,we:v}}});c.service={price:g("s-svc"),basis:$("#s-svcb").value,onHallOnly:$("#s-svch").checked};
-  c.addons.forEach(a=>a.price=g("s-ad-"+a.key));c.durationTiers.forEach((t,i)=>t.pct=g("s-tier"+i));Object.keys(ORG).forEach(k=>c.orgDisc[k]=g("s-org-"+k));
-  c.internal={...c.internal,insurance:g("s-int-ins"),facilitiesFree:$("#s-int-fac").checked,ops:c.internal.ops.map(o=>({...o,price:g("s-int-"+o.key)}))};c.staffAddons=$("#s-staffAdd").checked;c.staffVat=$("#s-staffVat").checked;c.earlyPct=g("s-early");c.wholeAddonDisc=g("s-wad");c.maxDisc=g("s-max");c.depositPct=g("s-dep");c.vat=g("s-vat");c.insurance=g("s-ins");c.ratio=Math.max(1,g("s-ratio"));
-  c.promos={};String($("#s-promos").value||"").split(/\n+/).forEach(l=>{const [k,v]=l.split("=");if(k&&k.trim()&&+v>0)c.promos[k.trim().toUpperCase()]=+v});
+  ["whole","roomSt","roomSup","hallMain","hallSmall","common"].forEach(k=>{const v=g("sp-"+k+"-wd"),u=document.getElementById("sp-"+k+"-unit");c.prices[k]={...c.prices[k],wd:v,we:v,label:$("#sp-"+k+"-label").value.trim()||DEFAULTS.prices[k].label,desc:$("#sp-"+k+"-desc").value.trim(),unit:u?u.value:(k==="common"?"day":"night"),show:$("#sp-"+k+"-show").checked}});
+  c.service={price:g("s-svc"),basis:"booking",label:$("#s-svcl").value.trim()||"رسوم الخدمة"};
+  c.addons=readAdDraft();S.adDraft=null;c.pricingV4=true;c.maxManualDisc=20;c.durationTiers=[];c.orgDisc=structuredClone(DEFAULTS.orgDisc);c.earlyPct=0;c.promos={};c.wholeAddonDisc=0;c.staffAddons=false;
+  c.roomsNotice=$("#s-rn").value.trim()||DEFAULTS.roomsNotice;c.wholeInc=$("#s-wi").value.trim();c.wholeExtra=$("#s-we").value.trim();c.checkIn=$("#s-cin").value||c.checkIn;c.checkOut=$("#s-cout").value||c.checkOut;
+  c.internal={...c.internal,insurance:g("s-int-ins"),facilitiesFree:$("#s-int-fac").checked,ops:c.internal.ops.map(o=>({...o,price:g("s-int-"+o.key)}))};c.depositPct=g("s-dep");c.vat=g("s-vat");c.insurance=g("s-ins");c.ratio=Math.max(1,g("s-ratio"));
   c.contact={phone:$("#s-phone").value.trim(),name:$("#s-cname").value.trim()||DEFAULTS.contact.name};c.vatNo=$("#s-vatno").value.trim().slice(0,20);{const pt=($("#s-pol")||{}).value;if(pt!==undefined){const d0=defaultPolicyText().trim();c.policyText=pt.trim()===d0?"":pt.trim().slice(0,12000)}}c.bank={name:$("#s-bank").value.trim().slice(0,60),acc:$("#s-bacc").value.trim().slice(0,80),no:$("#s-bno").value.trim().slice(0,30),iban:$("#s-iban").value.trim().toUpperCase().slice(0,40)};c.demo=$("#s-demo").checked;
   const {data:res,error}=await S.sb.rpc("bait_save_config",{p_cfg:c});if(error||!res||!res.ok){toast((res&&res.error)||"تعذر حفظ الإعدادات");return}S.cfg=mergeCfg(res.config);toast("حُفظت الإعدادات");keepScroll(render)}
 
 /* ===================== البيانات ===================== */
-function mergeCfg(x){const c=structuredClone(DEFAULTS);if(!x)return c;for(const k of Object.keys(x))if(x[k]!==undefined)c[k]=x[k];
-  for(const k of Object.keys(c.prices)){const p=c.prices[k];if(typeof p==="number")c.prices[k]={wd:p,we:p}}c.orgDisc={...DEFAULTS.orgDisc,...(x.orgDisc||{})};if(Array.isArray(c.addons))DEFAULTS.addons.forEach(a=>{if(!c.addons.some(b=>b.key===a.key))c.addons.push(structuredClone(a))});if(!c.capacity||!Array.isArray(c.capacity.rooms))c.capacity=structuredClone(DEFAULTS.capacity);if(!c.prices.roomSt||!c.prices.hallMain)c.prices=structuredClone(DEFAULTS.prices);if(!c.service)c.service=structuredClone(DEFAULTS.service);c.addons=(c.addons||[]).filter(a=>a.key!=="guard");if(!Array.isArray(c.packages))c.packages=structuredClone(DEFAULTS.packages);if(!Array.isArray(c.presets))c.presets=structuredClone(DEFAULTS.presets);return c}
+function mergeCfg(x){const c=structuredClone(DEFAULTS);if(!x)return c;
+  if(!x.pricingV4){x={...x};["prices","service","addons","durationTiers","orgDisc","earlyPct","promos","wholeAddonDisc","staffAddons","checkIn","pricingV4","maxManualDisc"].forEach(k=>delete x[k])}
+  for(const k of Object.keys(x))if(x[k]!==undefined)c[k]=x[k];
+  for(const k of Object.keys(c.prices)){const p=c.prices[k];if(typeof p==="number")c.prices[k]={wd:p,we:p}}c.orgDisc={...DEFAULTS.orgDisc,...(x.orgDisc||{})};if(!c.capacity||!Array.isArray(c.capacity.rooms))c.capacity=structuredClone(DEFAULTS.capacity);if(!c.prices.roomSt||!c.prices.hallMain)c.prices=structuredClone(DEFAULTS.prices);for(const k of Object.keys(DEFAULTS.prices))c.prices[k]={...DEFAULTS.prices[k],...(c.prices[k]||{})};if(!c.service)c.service=structuredClone(DEFAULTS.service);c.addons=(c.addons||[]).filter(a=>!["guard","clean"].includes(a.key));if(!Array.isArray(c.packages))c.packages=structuredClone(DEFAULTS.packages);if(!Array.isArray(c.presets))c.presets=structuredClone(DEFAULTS.presets);return c}
 async function loadCfg(){const {data,error}=await S.sb.from("bait_config").select("data").eq("id","main").maybeSingle();if(error)throw error;S.cfg=mergeCfg(data&&data.data)}
 async function loadBlocks(){const {data,error}=await S.sb.rpc("bait_availability");if(!error&&Array.isArray(data))S.blocks=data}
 async function track(ref,phone){const {data,error}=await S.sb.rpc("bait_track",{p_ref:ref,p_phone:phone});if(error||!Array.isArray(data)||!data.length)return null;return data}
