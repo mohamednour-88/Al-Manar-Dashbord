@@ -2150,6 +2150,27 @@ function rChkHTML(r){const items=r.duty.items&&r.duty.items.length?r.duty.items:
 const OUT_TITLE="جولة متابعة المبنى من الخارج";
 const OUT_GATES=[["g2","بوابة 2","حسام"],["g3","بوابة 3","سهل البلوشي"],["g4","بوابة 4","محمد محمود السباعي"],["g5","بوابة 5","إسماعيل"],["g6","بوابة 6","نادر"]];
 let rSeeding=false;
+/* الإصدار 37: استبدال تقييم الحراس القديم بالجديد (فني/إداري/سلوكي) — مرة واحدة عند دخول مدير المنصة
+   المنار 1: نفس البوابات والحراس بنفس الترتيب، والمشرف عاصف — المنار 2: المشرف محمد بسيوني */
+let g3Busy=false;
+async function rGuard3Migrate(){
+  if(g3Busy||state.role!=="admin"||!db||!state.people.length||!state.routine.length)return;
+  if(state.routine.some(x=>x.id==="meta_guard3_v1")||!state.routine.some(x=>x.id==="meta_seed_outside_v1"))return;
+  const asif=state.people.find(p=>/عاصف/.test(p.name||"")),bas=state.people.find(p=>/بسيوني/.test(p.name||""));if(!asif)return;
+  g3Busy=true;const now=Date.now();
+  try{
+    let m1=state.routine.find(x=>x.kind==="duty"&&x.ownerId===asif.id&&(x.title===OUT_TITLE||x.mode==="rate")&&(x.targets||[]).length);
+    if(m1)await db.doc("routine/"+m1.id).update({mode:"guard3",title:"تقييم الحراس — المنار 1",category:"الأمن",note:"قيّم كل حارس في ثلاث مسارات من 5: فني حتى 7:30، إداري حتى 10:30، سلوكي الساعة 2:30",prevTitle:m1.title,updatedAt:now});
+    else await db.doc("routine/d_g3_"+asif.id).set({kind:"duty",ownerId:asif.id,title:"تقييم الحراس — المنار 1",category:"الأمن",freq:"daily",siteIds:[],order:1,mode:"guard3",targets:OUT_GATES.map(([key,label,name])=>({key,label,name})),createdAt:now,updatedAt:now});
+    if(bas){const old=state.routine.filter(x=>x.kind==="duty"&&x.ownerId===bas.id&&x.mode==="rate"&&(x.targets||[]).length);
+      for(const d of old)await db.doc("routine/"+d.id).update({mode:"guard3",title:"تقييم الحراس — المنار 2",category:"الأمن",prevTitle:d.title,updatedAt:now});
+      if(!old.length&&!state.routine.some(x=>x.kind==="duty"&&x.ownerId===bas.id&&x.mode==="guard3")){
+        const asg=rDocs("assign",bas.id).map(a=>{const w=state.routine.find(x=>x.id===a.workerId);const st=rSite(a.siteId);return w&&w.type!=="worker"&&w.type!=="fworker"?{label:st?rSiteName(st):"موقع",name:w.name}:null}).filter(Boolean);
+        const tg=(asg.length?asg:shGuards(bas.id).map(w=>({label:w.site||"حارس",name:w.name}))).map((t,i)=>({key:"m2g"+(i+1),...t}));
+        await db.doc("routine/d_g3_"+bas.id).set({kind:"duty",ownerId:bas.id,title:"تقييم الحراس — المنار 2",category:"الأمن",freq:"daily",siteIds:[],order:1,mode:"guard3",targets:tg,paused:!tg.length,createdAt:now,updatedAt:now})}}
+    await db.doc("routine/meta_guard3_v1").set({kind:"meta",at:now});
+  }catch(e){console.warn("guard3 migrate",e)}
+  g3Busy=false}
 async function rSeedOutside(){
   if(rSeeding||state.role!=="admin"||!db||!state.people.length)return;
   if(state.routine.some(x=>x.id==="meta_seed_outside_v1"))return;
@@ -3848,7 +3869,7 @@ async function startApp(user){
   db.collection("transreqs").onSnapshot(s=>{state.transReqs=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("trips").onSnapshot(s=>{state.trips=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("stock").onSnapshot(s=>{state.stockItems=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
-  db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender();rSeedOutside()});
+  db.collection("routine").onSnapshot(s=>{state.routine=s.docs.map(d=>({id:d.id,...d.data()}));safeRender();rSeedOutside();rGuard3Migrate()});
   db.collection("events").onSnapshot(s=>{state.eventsRaw=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("safety").onSnapshot(s=>{state.safety=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
   db.collection("loans").onSnapshot(s=>{state.loans=s.docs.map(d=>({id:d.id,...d.data()}));safeRender()});
