@@ -327,6 +327,8 @@ table.acc th{white-space:nowrap;font-size:.75rem}table.acc td.ck{text-align:cent
 .rtrow.ok{border-inline-start-color:var(--ok);background:var(--ok-soft)}.rtrow.no{border-inline-start-color:var(--late);background:var(--late-soft)}
 .rwho{display:inline-flex;gap:4px;align-items:center;margin-inline-start:8px}.rwho select{width:auto;min-width:130px;padding:2px 6px;font-size:.85rem}
 .rtbtns{display:flex;gap:6px;align-items:center}
+.rduty{padding:0;overflow:hidden}.rduty>*:not(.rdhead){margin-inline:12px}.rduty.open{padding-bottom:10px}.rdhead{display:grid;grid-template-columns:minmax(0,1fr) auto auto 20px;gap:10px;align-items:center;width:100%;background:none;border:0;font:inherit;color:inherit;text-align:start;padding:12px;cursor:pointer}.rdhead:hover{background:var(--sunk)}.rdhead .ct{font-weight:700}
+.gsum td,.gsum th{text-align:center}.gsum td:first-child{text-align:start}.gclick{cursor:pointer}.gclick:hover{background:var(--sunk)}.gsum .gs1,.gsum .gs2{color:var(--late);font-weight:700}.gsum .gs5,.gsum .gs4{color:var(--ok);font-weight:700}
 .fdet{background:var(--sunk);border-radius:10px;padding:10px;margin-top:6px;display:grid;gap:8px}
 .gtracks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:6px 0 10px}.gtk{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface);font-size:.85rem}.gtk.now{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}.gtk ul{margin:4px 0 0;padding-inline-start:16px}.gtk>.hint{display:block}
 .grate{flex-wrap:wrap}.gcols{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}.gcol{display:grid;gap:3px}.gl{font-size:.8rem;font-weight:700}.rkey.sm{min-width:36px;height:36px;font-size:.95rem}
@@ -2002,10 +2004,11 @@ function rScopeView(B){if(state.role!=="admin")return;const owners=rOwners();con
     row.querySelectorAll("input,select").forEach(x=>x.onchange=save)})}
 function rSite(id){return state.routine.find(x=>x.id===id)}
 function rSiteName(s){return s?(s.building?s.building+" — ":"")+s.name:""}
-function rOwners(){if(state.role!=="admin")return state.me?[state.me]:[];
-  const ids=new Set(state.routine.filter(x=>x.ownerId).map(x=>x.ownerId));
-  state.people.forEach(p=>{if(accessOf(p)==="supervisor"&&(p.groups||[]).includes("g-facilities"))ids.add(p.id)});
-  return state.people.filter(p=>ids.has(p.id)).map(p=>p.id)}
+/* الإصدار 39: القائمة فيها فقط من عنده أعمال دورية (مثل درة)، والمشرفة على القسم (مثل سهيلة) تشوف أعمالهم كدور إشرافي */
+function rOwners(){const duty=new Set(state.routine.filter(x=>x.kind==="duty"&&x.ownerId).map(x=>x.ownerId));
+  if(state.role!=="admin"){const out=[];if(state.me&&(duty.has(state.me)||!duty.size))out.push(state.me);state.people.forEach(p=>{if(p.id!==state.me&&duty.has(p.id))out.push(p.id)});if(!out.length&&state.me)out.push(state.me);return out}
+  return state.people.filter(p=>duty.has(p.id)).map(p=>p.id)}
+function rCanEdit(owner){return state.role==="admin"||owner===state.me}
 function rDueOn(d,dateStr){const dt=new Date(dateStr+"T12:00:00");const dow=dt.getDay();
   if(d.paused)return false;if(d.from&&dateStr<d.from)return false;if(d.until&&dateStr>d.until)return false;if(d.freq==="everyday")return true;
   if(d.freq==="weekly")return Number(d.weekday)===dow;
@@ -2019,7 +2022,7 @@ function rRows(owner,dateStr){const out=[];
     const sites=(d.siteIds&&d.siteIds.length)?d.siteIds:[""];
     for(const sid of sites){const lid=`l_${dateStr}_${d.id}_${sid||"x"}`;out.push({duty:d,siteId:sid,site:rSite(sid),lid,log:state.routine.find(x=>x.id===lid),worker:sid?rWorkerFor(owner,sid):""})}}
   return out}
-function routineDefaultOwner(){const o=rOwners();if(!state.rOwner||!o.includes(state.rOwner))state.rOwner=o[0]||"";return state.rOwner}
+function routineDefaultOwner(){const o=rOwners();if(state.role==="admin"&&state.rOwner==="")return"";if(!state.rOwner||!o.includes(state.rOwner))state.rOwner=state.role==="admin"?"":(o[0]||"");return state.rOwner}
 
 function renderRoutine(){
   const v=$("rtView");if(state.view!=="routine"){v.innerHTML="";return}
@@ -2028,44 +2031,72 @@ function renderRoutine(){
   if(owner&&rScope(owner).kind==="guards")subs.splice(3,0,["shift","جدول المناوبة"]);
   if(admin)subs.push(["sites","المواقع"]);
   if(!subs.some(s=>s[0]===state.rTab))state.rTab="today";
-  v.innerHTML=`<div class="phead"><div><h2>الأعمال الدورية</h2><div class="prole">${admin?"أعمال المشرفين الدورية: توزيع المسؤولين على الأدوار والبوابات، والسجل اليومي، والتقارير":"سجّل إنجاز أعمالك الدورية اليوم، ووزّع فريقك على الأدوار والبوابات"}</div></div></div>
-   ${admin?`<div class="filters">${owners.map(id=>{const p=person(id);return `<button type="button" class="chip" data-ro="${esc(id)}" aria-pressed="${owner===id}">${esc(p?p.name:id)}</button>`}).join("")||'<span class="hint">لا يوجد مشرفون بعد.</span>'}</div>`:""}
+  const sel=(admin||owners.length>1)?`<label class="st-wrap">${admin?"المشرف":"الأعمال"}<select id="rOwnSel">${admin?`<option value="" ${owner===""?"selected":""}>الملخص — كل المشرفين</option>`:""}${owners.map(id=>{const p=person(id);return `<option value="${esc(id)}" ${owner===id?"selected":""}>${esc(p?p.name:id)}${id!==state.me&&!admin?" (إشراف)":""}</option>`}).join("")}</select></label>`:"";
+  v.innerHTML=`<div class="phead"><div><h2>الأعمال الدورية</h2><div class="prole">${admin?"أعمال المشرفين الدورية: توزيع المسؤولين على الأدوار والبوابات، والسجل اليومي، والتقارير":"سجّل إنجاز أعمالك الدورية اليوم، ووزّع فريقك على الأدوار والبوابات"}</div></div>${sel?`<div class="filters">${sel}</div>`:""}</div>
    ${guardAlertHTML()}
-   <div class="filters">${subs.map(([k,l])=>`<button type="button" class="chip" data-rtab="${k}" aria-pressed="${state.rTab===k}">${l}</button>`).join("")}</div>
-   <div id="rtBody" class="panel"></div>`;
+   ${admin&&owner===""?`<div id="rtBody" class="panel"></div>`:`<div class="filters">${subs.map(([k,l])=>`<button type="button" class="chip" data-rtab="${k}" aria-pressed="${state.rTab===k}">${l}</button>`).join("")}</div>
+   <div id="rtBody" class="panel"></div>`}`;
   wireGuardAlert(v);
-  v.querySelectorAll("[data-ro]").forEach(b=>b.onclick=()=>{state.rOwner=b.dataset.ro;render()});
+  const os=v.querySelector("#rOwnSel");if(os)os.onchange=()=>{state.rOwner=os.value;state.rOpen={};render()};
+  if(admin&&owner===""){rSummary(v.querySelector("#rtBody"));return}
   v.querySelectorAll("[data-rtab]").forEach(b=>b.onclick=()=>{state.rTab=b.dataset.rtab;state.confirm=null;render()});
   const B=v.querySelector("#rtBody");
   if(!owner&&state.rTab!=="sites"){B.innerHTML=`<div class="empty"><strong>لا يوجد مشرف محدد</strong>${admin?"أعطِ المشرف صلاحية «مشرف» من الإعدادات، أو أضف له عملاً دورياً.":"حسابك غير مربوط بموظف."}</div>`;return}
   ({today:rToday,duties:rDuties,assign:rAssign,shift:rShift,team:rTeam,reports:rReports,sites:(b)=>{rSitesView(b);rScopeView(b)}})[state.rTab](B,owner);
 }
+/* ملخص مدير المنصة: كل حارس — تقييم اليوم لكل مسار، ومتوسط آخر عدد من التقييمات */
+function gHistory(d,tg){return state.routine.filter(x=>x.kind==="log"&&x.dutyId===d.id&&(x.targetKey===tg.key||x.id.endsWith("_t"+tg.key))&&x.scores).sort((a,b)=>(b.date||"").localeCompare(a.date||""))}
+function rSummary(B){const N=state.gN||5;const t=todayStr();const dayTxt=new Date(t+"T12:00:00").toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const G=state.routine.filter(x=>x.kind==="duty"&&x.mode==="guard3"&&!x.paused);const fmt=v=>v?num(+v.toFixed(1)):"—";
+  const avgOf=(H,k)=>{const v=H.map(l=>Number(l.scores[k])||0).filter(Boolean);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0};
+  const others=rOwners().map(o=>{const rows=rRows(o,t).filter(r=>r.duty.mode!=="guard3");return{o,rows,dn:rows.filter(r=>r.log&&r.log.status==="done").length}}).filter(x=>x.rows.length);
+  B.innerHTML=`<div class="filters" style="align-items:center"><b>${esc(dayTxt)}</b><label class="st-wrap" style="margin-inline-start:auto">المتوسط لآخر<select id="gN">${[3,5,7,10,15,20,30].map(n=>`<option ${n===N?"selected":""}>${n}</option>`).join("")}</select>تقييمات</label></div>
+   ${G.map(d=>`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(d.title)}</h3><span class="hint">${esc((person(d.ownerId)||{}).name||"")}</span></div>
+     <div class="ptab"><table class="dt gsum"><thead><tr><th rowspan="2">الحارس</th><th colspan="3">تقييم اليوم</th><th colspan="4">متوسط آخر ${num(N)} تقييمات</th></tr><tr>${GTRACKS.map(x=>`<th>${x.label}</th>`).join("")}${GTRACKS.map(x=>`<th>${x.label}</th>`).join("")}<th>العام</th></tr></thead><tbody>
+     ${(d.targets||[]).map(tg=>{const H=gHistory(d,tg);const td=H.find(l=>l.date===t);const last=H.slice(0,N);const ov=last.length?last.map(l=>gScore(l.scores)).reduce((a,b)=>a+b,0)/last.length:0;
+       return `<tr data-gt="${esc(d.id)}|${esc(tg.key)}" class="gclick"><td><b>${esc(tg.name||tg.label)}</b><span class="hint" style="display:block">${esc(tg.label)}</span></td>${GTRACKS.map(x=>{const v=td&&td.scores[x.key];return `<td class="gs${v||0}">${v?num(v):'<span class="hint">—</span>'}</td>`}).join("")}${GTRACKS.map(x=>`<td>${fmt(avgOf(last,x.key))}</td>`).join("")}<td><b>${fmt(ov)}</b> <span class="hint">(${num(last.length)})</span></td></tr>
+       ${state.gOpen===d.id+"|"+tg.key?`<tr><td colspan="8">${gDetailHTML(H.slice(0,Math.max(N,10)))}</td></tr>`:""}`}).join("")||'<tr><td colspan="8" class="hint">لا يوجد حراس — أضفهم من «الأعمال الدورية».</td></tr>'}</tbody></table></div><div class="hint">اضغط اسم الحارس لعرض تفاصيل تقييماته.</div></section>`).join("")||""}
+   ${others.length?`<section class="dcard"><h3>باقي الأعمال الدورية اليوم</h3><div class="clist">${others.map(x=>`<button type="button" class="crow" data-rgo="${esc(x.o)}"><span class="ct">${esc((person(x.o)||{}).name||"")}</span><span class="cs hm">${num(x.rows.length)} عمل</span><span><span class="pbar" style="width:80px"><span style="width:${Math.round(100*x.dn/x.rows.length)}%"></span></span></span><span class="pill ${x.dn===x.rows.length?"p-done":"p-req"}">${num(x.dn)} / ${num(x.rows.length)}</span><span class="hint hm">التفاصيل ←</span><span></span></button>`).join("")}</div></section>`:""}
+   ${!G.length&&!others.length?'<div class="empty"><strong>لا توجد أعمال دورية اليوم</strong></div>':""}`;
+  B.querySelector("#gN").onchange=e=>{state.gN=+e.target.value;render()};
+  B.querySelectorAll("[data-gt]").forEach(r=>r.onclick=()=>{state.gOpen=state.gOpen===r.dataset.gt?null:r.dataset.gt;render()});
+  B.querySelectorAll("[data-rgo]").forEach(b=>b.onclick=()=>{state.rOwner=b.dataset.rgo;state.rTab="today";render();window.scrollTo({top:0})})}
+function gDetailHTML(H){if(!H.length)return'<div class="hint">لا توجد تقييمات سابقة.</div>';
+  return `<table class="dt"><thead><tr><th>اليوم</th>${GTRACKS.map(x=>`<th>${x.label}</th>`).join("")}<th>المتوسط</th><th>بواسطة</th><th>ملاحظة</th></tr></thead><tbody>${H.map(l=>`<tr><td>${new Date(l.date+"T12:00:00").toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{weekday:"short",day:"numeric",month:"short"})}</td>${GTRACKS.map(x=>{const v=l.scores[x.key];const at=(l.times||{})[x.key];return `<td>${v?num(v):"—"}${at?`<span class="hint" style="display:block">${new Date(at).toLocaleTimeString("ar-SA-u-nu-latn",{hour:"numeric",minute:"2-digit"})}${gOnTime(x,at)?"":" · خارج الوقت"}</span>`:""}</td>`}).join("")}<td><b>${num(+gScore(l.scores).toFixed(1))}</b></td><td class="hint">${esc(l.by||"")}${l.editCount?` · ${num(l.editCount)} تعديل`:""}</td><td class="hint">${esc(l.note||"")}</td></tr>`).join("")}</tbody></table>`}
 /* أعمال اليوم */
 function rToday(B,owner){
   const date=state.rDate||todayStr();const rows=rRows(owner,date);
   const done=rows.filter(r=>r.log&&r.log.status==="done").length,miss=rows.filter(r=>r.log&&r.log.status==="miss").length;
   const pct=rows.length?Math.round(100*done/rows.length):null;const p=person(owner);
   const byDuty={};rows.forEach(r=>{(byDuty[r.duty.id]=byDuty[r.duty.id]||{d:r.duty,rows:[]}).rows.push(r)});
-  B.innerHTML=`<div class="filters" style="align-items:center"><label class="st-wrap">التاريخ<input type="date" id="rDate" value="${esc(date)}" style="width:auto"></label>
+  const ro=!rCanEdit(owner);state.rOpen=state.rOpen||{};
+  B.innerHTML=`${ro?`<div class="note">عرض إشرافي لأعمال ${esc((person(owner)||{}).name||"")} — للاطلاع والمتابعة فقط.</div>`:""}<div class="filters" style="align-items:center">${state.role==="admin"?`<label class="st-wrap">التاريخ<input type="date" id="rDate" value="${esc(date)}" style="width:auto"></label>`:`<b>${new Date(date+"T12:00:00").toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{weekday:"long",day:"numeric",month:"long"})}</b>`}
      <span class="pill ${pct===100?"p-done":"p-req"}">${rows.length?`المنجز ${num(done)} من ${num(rows.length)}${miss?` · لم يتم ${num(miss)}`:""}`:"لا توجد أعمال مجدولة لهذا اليوم"}</span>
      ${rows.length?`<span class="pbar" style="width:120px"><span style="width:${pct||0}%"></span></span>`:""}</div>
-   ${Object.values(byDuty).map(({d,rows})=>`<section class="dcard"><div class="row1"><h3 style="flex:1">${esc(d.title)}</h3><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.time?" · "+esc(d.time):""}</span></div>${d.rota?`<div class="pill p-req" style="margin:4px 0">${esc(rRotaTxt(d,date))}</div>`:""}
+   ${Object.values(byDuty).map(({d,rows})=>{const dn=rows.filter(r=>r.log&&r.log.status==="done").length;const op=!!state.rOpen[d.id];
+     return `<section class="dcard rduty ${op?"open":""}"><button type="button" class="rdhead" data-dopen="${esc(d.id)}" aria-expanded="${op}"><span class="ct">${esc(d.title)}</span><span class="pill ${dn===rows.length?"p-done":"p-req"}">${num(dn)} / ${num(rows.length)}</span><span class="pbar" style="width:80px"><span style="width:${Math.round(100*dn/rows.length)}%"></span></span><span class="hint">${op?"▴":"▾"}</span></button>
+     ${op?`<div class="row1"><span class="pill p-file">${esc(d.category||"")}</span><span class="pill p-who">${RFREQ[d.freq||"daily"]}${d.time?" · "+esc(d.time):""}</span></div>${d.rota?`<div class="pill p-req" style="margin:4px 0">${esc(rRotaTxt(d,date))}</div>`:""}
      ${d.note?`<div class="hint">${esc(d.note)}</div>`:""}
      ${d.mode==="guard3"?gTracksInfoHTML():""}
      <div class="rlist">${rows.map(r=>{const st=r.log&&r.log.status;if(r.target&&r.duty.mode==="guard3")return gRowHTML(r);if(r.target){const sc=r.log&&Number(r.log.score)||0;return `<div class="rtrow rrate ${sc?"ok":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.target.label)}</b> <span class="hint">· ${esc(r.target.name||"")}</span>${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
        <span class="rkeys" role="group" aria-label="تقييم ${esc(r.target.label)} — ${esc(r.target.name||"")}">${[1,2,3,4,5].map(n=>`<button type="button" class="rkey ${sc===n?"on s"+n:""}" data-score="${n}" aria-pressed="${sc===n}">${num(n)}</button>`).join("")}<button type="button" class="linkbtn" data-note>ملاحظة</button></span></div>`}return `<div class="rtrow ${st==="done"?"ok":st==="miss"?"no":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.site?rSiteName(r.site):"عام")}</b>${r.siteId?(()=>{const a=rDocs("assign",owner).find(x=>x.siteId===r.siteId);const ws=rDocs("worker",owner).filter(w=>rScope(owner).kind==="guards"?w.type!=="fworker"&&w.type!=="worker":w.type!=="guard").sort((x,y)=>(x.order||0)-(y.order||0));return ` <label class="hint rwho">المسؤول: <select data-who aria-label="المسؤول عن ${esc(rSiteName(r.site))}"><option value="">— اختر —</option>${ws.map(w=>`<option value="${esc(w.id)}" ${a&&a.workerId===w.id?"selected":""}>${esc(w.name)}</option>`).join("")}<option value="__new">+ اسم جديد…</option></select></label>`})():(r.worker?` <span class="hint">· المسؤول: ${esc(r.worker)}</span>`:"")}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
-       ${r.duty.mode==="checks"?rChkHTML(r):`<span class="rtbtns"><button type="button" class="btn sm ${st==="done"?"":"ghost"}" data-st="done">تم</button><button type="button" class="btn sm ${st==="miss"?"danger":"ghost"}" data-st="miss">لم يتم</button><button type="button" class="linkbtn" data-note>ملاحظة</button></span>`}</div>`}).join("")}</div></section>`).join("")||`<div class="empty"><strong>لا توجد أعمال مجدولة لهذا اليوم</strong>أضف الأعمال من «الأعمال الدورية» وحدد تكرارها والأماكن.</div>`}
+       ${r.duty.mode==="checks"?rChkHTML(r):`<span class="rtbtns"><button type="button" class="btn sm ${st==="done"?"":"ghost"}" data-st="done">تم</button><button type="button" class="btn sm ${st==="miss"?"danger":"ghost"}" data-st="miss">لم يتم</button><button type="button" class="linkbtn" data-note>ملاحظة</button></span>`}</div>`}).join("")}</div>`:""}</section>`}).join("")||`<div class="empty"><strong>لا توجد أعمال مجدولة لهذا اليوم</strong>أضف الأعمال من «الأعمال الدورية» وحدد تكرارها والأماكن.</div>`}
    ${rows.length?`<div class="acts"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${waNum(state.role==="admin"?(p&&p.phone):ADMIN_PHONE)}?text=${encodeURIComponent(rReportMsg(owner,date,rows))}">${state.role==="admin"?"إرسال ملخص اليوم للمشرف":"إرسال تقرير اليوم لـ م. محمد نور عمر"}</a></div>`:""}`;
-  B.querySelector("#rDate").onchange=e=>{state.rDate=e.target.value;render()};
+  const rdi=B.querySelector("#rDate");if(rdi)rdi.onchange=e=>{state.rDate=e.target.value;render()};
+  B.querySelectorAll("[data-dopen]").forEach(b=>b.onclick=()=>{const k=b.dataset.dopen;state.rOpen[k]=!state.rOpen[k];render()});
+  if(ro)B.querySelectorAll(".rlist button,.rlist select").forEach(x=>x.disabled=true);
   B.querySelectorAll(".rtrow").forEach(el=>{const r=rows.find(x=>x.lid===el.dataset.lid);
     const save=async patch=>{const base=r.log||{kind:"log",ownerId:owner,date,dutyId:r.duty.id,dutyTitle:r.duty.title+(r.duty.rota?"، "+rRotaName(r.duty,date):""),rotaName:r.duty.rota?rRotaName(r.duty,date):undefined,siteId:r.siteId,siteName:r.site?rSiteName(r.site):(r.target?r.target.label:""),worker:r.worker,createdAt:Date.now()};
       if(r.target)Object.assign(base,{rate:true,targetKey:r.target.key||"",targetLabel:r.target.label,targetName:r.target.name||""});
       try{await db.doc("routine/"+r.lid).set({...base,...patch,by:myName(),at:Date.now()});toast(patch.score&&r.target?`تم التقييم: ${r.target.label} — ${num(patch.score)} من ${num(5)}`:"حُفظ")}catch(e){toast("ليست لديك صلاحية أو تعذر الحفظ")}render()};
     el.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>save({status:b.dataset.st}));
     el.querySelectorAll("[data-score]").forEach(b=>b.onclick=()=>{el.querySelectorAll("[data-score]").forEach(x=>x.disabled=true);save({status:"done",score:Number(b.dataset.score)})});
-    el.querySelectorAll("[data-gs]").forEach(b=>b.onclick=()=>{const [tk,n]=b.dataset.gs.split(":");const now=Date.now();const sc={...((r.log&&r.log.scores)||{}),[tk]:Number(n)};const tm={...((r.log&&r.log.times)||{}),[tk]:now};
+    el.querySelectorAll("[data-gs]").forEach(b=>b.onclick=()=>{const [tk,n]=b.dataset.gs.split(":");const now=Date.now();const prev=(r.log&&r.log.scores)||{};
+      if(Number(prev[tk])===Number(n))return;const isEdit=!!prev[tk];const ec=Number(r.log&&r.log.editCount)||0;
+      if(isEdit&&state.role!=="admin"&&ec>=G_EDITS){toast(`وصلت للحد الأقصى لتعديل تقييم ${r.target.name||r.target.label} اليوم (${num(G_EDITS)} تعديلات)`);return}
+      const sc={...prev,[tk]:Number(n)};const tm={...((r.log&&r.log.times)||{}),[tk]:now};
       const all=GTRACKS.every(t=>sc[t.key]);el.querySelectorAll("[data-gs]").forEach(x=>x.disabled=true);
-      save({scores:sc,times:tm,score:Math.round(gScore(sc)*10)/10,status:all?"done":"",guard3:true})});
+      save({scores:sc,times:tm,score:Math.round(gScore(sc)*10)/10,status:all?"done":"",guard3:true,...(isEdit?{editCount:ec+1,editLog:[...((r.log&&r.log.editLog)||[]),{tk,from:prev[tk],to:Number(n),at:now,by:myName()}]}:{})})});
     el.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{const items=r.duty.items&&r.duty.items.length?r.duty.items:RCHK_DEF;const c={...((r.log&&r.log.checks)||{}),[b.dataset.ck]:Number(b.dataset.v)};
       const all=items.every(it=>c[it.key]===0||c[it.key]===1),ok=items.filter(it=>c[it.key]===1).length;el.querySelectorAll("[data-ck]").forEach(x=>x.disabled=true);
       save({checks:c,ok,total:items.length,status:all?(ok===items.length?"done":"miss"):""})});
@@ -2199,8 +2230,9 @@ async function rSeedOutside(){
   rSeeding=false;
 }
 function gTracksInfoHTML(){const cur=gTrackNow();return `<div class="gtracks">${GTRACKS.map(t=>`<div class="gtk ${cur&&cur.key===t.key?"now":""}"><b>${t.label} <span class="hint">من ${num(5)}</span></b><span class="hint">${esc(t.when)}</span><ul>${t.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div>`}
-function gRowHTML(r){const sc=(r.log&&r.log.scores)||{},tm=(r.log&&r.log.times)||{};const avg=gScore(sc);
-  return `<div class="rtrow grate ${GTRACKS.every(t=>sc[t.key])?"ok":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.target.label)}</b> <span class="hint">· ${esc(r.target.name||"")}</span>${avg?` <span class="pill p-who">المتوسط ${num(+avg.toFixed(1))} / ${num(5)}</span>`:""}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
+const G_EDITS=3;
+function gRowHTML(r){const sc=(r.log&&r.log.scores)||{},tm=(r.log&&r.log.times)||{};const avg=gScore(sc);const ec=Number(r.log&&r.log.editCount)||0;
+  return `<div class="rtrow grate ${GTRACKS.every(t=>sc[t.key])?"ok":""}" data-lid="${esc(r.lid)}"><span><b>${esc(r.target.label)}</b> <span class="hint">· ${esc(r.target.name||"")}</span>${avg?` <span class="pill p-who">المتوسط ${num(+avg.toFixed(1))} / ${num(5)}</span>`:""}${ec?` <span class="hint">تعديلات اليوم ${num(ec)} من ${num(G_EDITS)}</span>`:""}${r.log&&r.log.note?`<span class="hint" style="display:block">${esc(r.log.note)}</span>`:""}</span>
    <span class="gcols">${GTRACKS.map(t=>{const v=Number(sc[t.key])||0;const at=tm[t.key];return `<span class="gcol"><span class="gl">${t.label}${at?` <span class="hint">${new Date(at).toLocaleTimeString("ar-SA-u-nu-latn",{hour:"numeric",minute:"2-digit"})}${gOnTime(t,at)?"":" · خارج الوقت"}</span>`:""}</span><span class="rkeys" role="group" aria-label="${esc(t.label)} — ${esc(r.target.name||r.target.label)}">${[1,2,3,4,5].map(n=>`<button type="button" class="rkey sm ${v===n?"on s"+n:""}" data-gs="${t.key}:${n}" aria-pressed="${v===n}">${num(n)}</button>`).join("")}</span></span>`}).join("")}<button type="button" class="linkbtn" data-note>ملاحظة</button></span></div>`}
 /* لوحة البيانات: بطاقة تقييم البوابات */
 function rRateCards(){
