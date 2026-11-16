@@ -398,7 +398,8 @@ body.staff .main{grid-template-columns:minmax(0,1fr)}
       <div class="acctmenu" id="acctMenu" hidden role="menu"><div class="acid ltr" id="me-email"></div>
         <button type="button" role="menuitem" id="m-settings" hidden>⚙️ الإعدادات</button>
         <button type="button" role="menuitem" id="m-mail" hidden>✉️ إضافة بريدك المؤسسي</button>
-        <button type="button" role="menuitem" id="m-notif" hidden>🔔 تفعيل تنبيهات الجوال</button>
+        <button type="button" role="menuitem" id="m-notif">🔔 تفعيل تنبيهات الجوال</button>
+        <button type="button" role="menuitem" id="m-nprefs" hidden>🔔 إعدادات التنبيهات</button>
         <button type="button" role="menuitem" id="themeBtn" aria-label="تغيير المظهر">◐ تلقائي</button>
         <button type="button" role="menuitem" data-install hidden>📲 تثبيت التطبيق</button>
         <button type="button" role="menuitem" id="logout" class="lo">تسجيل الخروج</button></div></div></div>
@@ -553,7 +554,7 @@ function render(){
   renderTabs();renderRequests();renderPurchases();renderDash();renderFeed();renderTransport();renderStores();renderBuffets();renderSettings();renderRemind();renderRoutine();renderEvents();renderSafety();
   /* الإصدار 35: لوحة الأرقام العامة ما تظهر داخل الصفحات — أرقام المهام في صفحة المهام فقط، وأرقام الوحدات في لوحة البيانات */
   $("tstats").hidden=!(state.view==="tasks"&&canTab("tasks"));$("qstats").hidden=true;if(state.view!=="dash")$("remind").hidden=true;
-  $("m-settings").hidden=state.role!=="admin";$("m-notif").hidden=!("Notification" in window)||Notification.permission==="granted"||!(canTrans()||state.routine.some(x=>x.mode==="guard3"&&(state.role==="admin"||x.ownerId===state.me)));{const m=person(state.me);$("m-mail").hidden=!(m&&!INST.test(m.email||""))}
+  $("m-settings").hidden=state.role!=="admin";$("m-notif").hidden=!!state.pushOn;$("m-nprefs").hidden=!state.pushOn;{const m=person(state.me);$("m-mail").hidden=!(m&&!INST.test(m.email||""))}
   document.querySelectorAll(".stats .stat").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.f===state.filter)));
 }
 
@@ -1739,7 +1740,7 @@ function wireEvForm(v){const f=v.querySelector("#evform");if(!f)return;const d=s
     try{await ref.set(doc);state.evDraft=null;state.evOpen=false;state.evNotify=ref.id;state.evStatus="open";if(!evCanRoute())state.evScope="mine";toast("أُرسل الطلب");render()}catch(err){toast("تعذر إرسال الطلب")}};
 }
 function evCard(e){
-  const el=document.createElement("article");const open=evOpen(e);const me=state.me||null,admin=state.role==="admin",route=evCanRoute();
+  const el=document.createElement("article");el.dataset.id=e.id;const open=evOpen(e);const me=state.me||null,admin=state.role==="admin",route=evCanRoute();
   const isReq=e.requesterId===me,isCoord=e.coordId===me;const loans=evLoans(e);
   const late=open&&e.status!=="postponed"&&e.date&&e.date<todayStr();
   el.className="item "+(late?"s-late":"")+(!open?" s-done":"");const pend=refPending(e)&&!admin;const canPost=(admin||isCoord||isReq)&&["new","routed","ready","postponed"].includes(e.status);const lastCh=(e.dateLog||[]).slice(-1)[0];
@@ -2301,7 +2302,45 @@ function transNotifyTick(){try{if(!("Notification" in window)||Notification.perm
   for(const x of offHide(state.transReqs).filter(x=>x.status==="new")){const k="tn_"+x.id;if(localStorage.getItem(k))continue;localStorage.setItem(k,"1");if(Date.now()-(x.createdAt||0)>36e5)continue;
     const title="طلب نقل جديد",body=`${x.title||""} — ${x.requesterName||""}${x.date?" · "+x.date+(x.timeOut?" "+x.timeOut:""):""}`;
     if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(r=>r.showNotification(title,{body,tag:k,lang:"ar",dir:"rtl"})).catch(()=>{try{new Notification(title,{body})}catch(e){}});else new Notification(title,{body})}}catch(e){}}
-setInterval(()=>{try{guardNotifyTick();transNotifyTick();if(state.view==="routine"||state.view==="send")safeRender()}catch(e){}},60000);
+/* ===== الإصدار 40: إشعارات التطبيق (Web Push) ===== */
+const VAPID_PUBLIC="BH5FTyJq9uwdVbRuSbSQiL36JnUGiPAG5ziyckM_ly4q0HKERZDgWhrmc1Ng-CGEvMgVVCiAsDyGlPdvW-bGHwI";
+const PUSH_CATS=[["purchases","المشتريات"],["transport","الحركة والنقل"],["events","المناسبات"],["stores","المستودعات والتقنية"],["referral","طلبات بانتظار إحالتي"],["requests","الطلبات بين الموظفين"],["comments","الردود والملاحظات"],["guards","تذكير تقييم الحراس"],["digest","ملخص المتأخرات الصباحي"],["system","طلبات تفعيل الحسابات"]];
+function u8(b64){b64=b64.replace(/-/g,"+").replace(/_/g,"/");while(b64.length%4)b64+="=";const r=atob(b64);return Uint8Array.from(r,c=>c.charCodeAt(0))}
+function pushSupported(){return "serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window}
+async function pushEnable(silent){
+  if(!pushSupported()){if(!silent)toast(isIOS()?"على الآيفون: ثبّت التطبيق أولاً (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة":"هذا المتصفح لا يدعم الإشعارات");return false}
+  if(isIOS()&&!isStandalone()){if(!silent)toast("على الآيفون: ثبّت التطبيق أولاً (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة، ثم فعّل التنبيهات");return false}
+  try{const perm=silent?Notification.permission:await Notification.requestPermission();if(perm!=="granted"){if(!silent)toast("ما تم السماح بالتنبيهات — فعّلها من إعدادات المتصفح للموقع");return false}
+    const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+    if(sub&&sub.options&&sub.options.applicationServerKey){const k=new Uint8Array(sub.options.applicationServerKey);const want=u8(VAPID_PUBLIC);if(k.length!==want.length||k.some((x,i)=>x!==want[i])){await sub.unsubscribe();sub=null}}
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID_PUBLIC)});
+    const j=sub.toJSON();const {data,error}=await sb.rpc("push_subscribe",{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_ua:navigator.userAgent});
+    if(error||!data||!data.ok)throw error||new Error("subscribe");state.pushOn=true;if(!silent){toast("فُعّلت التنبيهات على هذا الجهاز ✓");render()}return true}
+  catch(e){if(!silent)toast("تعذر تفعيل التنبيهات — تأكد أنك شغّلت ملف upgrade-v40.sql");return false}}
+async function pushEnsure(){if(pushSupported()&&Notification.permission==="granted"&&(!isIOS()||isStandalone()))await pushEnable(true);try{render()}catch(e){}}
+async function pushDisable(){try{const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub){await sb.rpc("push_unsubscribe",{p_endpoint:sub.endpoint});await sub.unsubscribe()}state.pushOn=false;toast("أُوقفت التنبيهات على هذا الجهاز");render()}catch(e){toast("تعذر الإيقاف")}}
+async function pushPrefsDialog(){let off=[];try{const {data}=await sb.from("push_prefs").select("off").maybeSingle();off=(data&&data.off)||[]}catch(e){}
+  const ov=document.createElement("div");ov.className="rsn-ov";
+  ov.innerHTML=`<div class="rsn" role="dialog" aria-modal="true" aria-label="إعدادات التنبيهات"><h3>إعدادات التنبيهات</h3><div class="hint">اختر وش يوصلك على الجوال. التنبيهات توصلك فقط للطلبات اللي تخصك.</div>
+   <div style="display:grid;gap:6px">${PUSH_CATS.map(([k,l])=>`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" value="${k}" ${off.includes(k)?"":"checked"}> ${l}</label>`).join("")}</div>
+   <div class="acts"><button class="btn sm" type="button" data-ok>حفظ</button><button class="btn ghost sm" type="button" data-test>إرسال تنبيه تجريبي</button><button class="linkbtn mute" type="button" data-off>إيقاف التنبيهات على هذا الجهاز</button><button class="linkbtn mute" type="button" data-no>إغلاق</button></div></div>`;
+  document.body.appendChild(ov);const q=s=>ov.querySelector(s);
+  q("[data-no]").onclick=()=>ov.remove();ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  q("[data-ok]").onclick=async()=>{const o=PUSH_CATS.map(c=>c[0]).filter(k=>!ov.querySelector(`input[value="${k}"]`).checked);const {error}=await sb.rpc("push_set_prefs",{p_off:o});toast(error?"تعذر الحفظ":"حُفظت إعدادات التنبيهات");if(!error)ov.remove()};
+  q("[data-test]").onclick=async()=>{const {error}=await sb.rpc("push_test");toast(error?"تعذر الإرسال":"أُرسل — المفروض يوصلك خلال ثواني")};
+  q("[data-off]").onclick=()=>{ov.remove();pushDisable()}}
+/* الروابط المباشرة من الإشعار: #purchases/المعرف … تفتح الطلب نفسه */
+function applyHash(noRender){const [v,id]=(location.hash||"").slice(1).split("/");if(!v)return;
+  const ok=["send","tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"];if(!ok.includes(v))return;state.view=v;
+  if(v==="purchases"){state.purScope="all";state.purStatus="any";state.purDetail=id||null;if(id)state.openThreads["p:"+id]=true}
+  else if(v==="transport"){state.trTab="requests";if(id){state.trStatus="any";state.trScope="all";state.openThreads["tr:"+id]=true;state.flashId=id}}
+  else if(v==="events"){if(id){state.evStatus="any";state.evScope="all";state.openThreads["ev:"+id]=true;state.flashId=id}}
+  else if(v==="stores"&&id){const l=state.loans.find(x=>x.id===id);if(l){state.whSel=l.warehouseId;state.whTab="loans";state.ldStatus="any";state.openThreads["ld:"+id]=true;state.flashId=id}}
+  else if(v==="routine"){state.rTab="today"}
+  else if(v==="settings"){state.setTab="accounts"}
+  if(!noRender){render();setTimeout(()=>{const el=state.flashId&&document.querySelector(`[data-id="${CSS.escape(state.flashId)}"],[data-vid="${CSS.escape(state.flashId)}"]`);if(el)el.scrollIntoView({block:"center"});else window.scrollTo({top:0})},300)}}
+window.addEventListener("hashchange",()=>{try{applyHash()}catch(e){}});
+setInterval(()=>{try{if(!state.pushOn){guardNotifyTick();transNotifyTick()}if(state.view==="routine"||state.view==="send")safeRender()}catch(e){}},60000);
 function remindList(){
   const now=Date.now(),H24=864e5,me=state.me,admin=state.role==="admin";const out=[];
   const push=(kind,id,title,due,who,phone,view,extra)=>{if(!due)return;const left=due-now;if(left>0)return;out.push({kind,id,title,due,late:left<0,who,phone,view,...(extra||{})})};
@@ -2849,7 +2888,7 @@ function trNotifyHTML(x){const bs=state.transContacts.filter(b=>waNum(b.phone));
   if(!bs.length)return `<div class="hint">لم يُحدَّد مسؤول الحركة والنقل برقم واتساب بعد.</div>`;
   return bs.map(b=>`<a class="btn wa sm" target="_blank" rel="noopener" href="https://wa.me/${waNum(b.phone)}?text=${encodeURIComponent(trMessage(x,b))}" data-wa>تنبيه ${esc(b.name)} على الواتساب</a>`).join(" ")}
 function trCard(x){
-  const el=document.createElement("article");const open=trOpen(x);
+  const el=document.createElement("article");el.dataset.id=x.id;const open=trOpen(x);
   el.className="item"+(open?"":" s-done");el.dataset.tr=x.id;
   const can=canTrans()&&(state.role==="admin"||!refPending(x));const th=threadOf("trans",x.id);const k="tr:"+x.id;const openT=!!state.openThreads[k];
   const files=th.filter(c=>c.type==="file").length,replies=th.filter(c=>c.type!=="status"&&c.type!=="file").length;
@@ -3477,7 +3516,7 @@ async function loanClose(l,cond,note){cond=cond||"سليم";const wasOut=l.statu
   await db.doc("loans/"+l.id).update(p);
   try{await addComment("loan",l.id,`أُغلق الطلب: رجعت الأصناف (${cond})`+(note?` — ملاحظة على المستعير: ${note}`:""),"status")}catch(e){}}
 function loanCard(l,w){
-  const el=document.createElement("article");const open=loanOpen(l),late=loanLate(l);
+  const el=document.createElement("article");el.dataset.id=l.id;const open=loanOpen(l),late=loanLate(l);
   el.className="item"+(open?"":" s-done")+(late?" s-late":"");
   const keep=isKeeper(l.warehouseId);const k="ld:"+l.id,openT=!!state.openThreads[k];
   const th=threadOf("loan",l.id);const files=th.filter(c=>c.type==="file").length,replies=th.filter(c=>c.type!=="status"&&c.type!=="file").length;
@@ -3867,7 +3906,8 @@ $("m-mail").onclick=async()=>{$("acctMenu").hidden=true;const e=await askReason(
   const {data,error}=await sb.rpc("set_my_email",{p_email:e});if(error||!data||!data.ok){toast((data&&data.error)||"تعذر الحفظ");return}
   try{await sb.auth.updateUser({email:e.trim().toLowerCase()})}catch(x){}
   toast("سُجّل بريدك المؤسسي. إذا وصلك بريد تأكيد افتحه، وبعدها تقدر تدخل بالبريد");db.refreshAll()};
-$("m-notif").onclick=async()=>{$("acctMenu").hidden=true;try{const r=await Notification.requestPermission();toast(r==="granted"?"فُعّلت التنبيهات — توصلك والتطبيق مفتوح أو مثبّت":"ما تم تفعيل التنبيهات من المتصفح");render()}catch(e){toast("المتصفح ما يدعم التنبيهات")}};
+$("m-notif").onclick=async()=>{$("acctMenu").hidden=true;await pushEnable(false)};
+$("m-nprefs").onclick=()=>{$("acctMenu").hidden=true;pushPrefsDialog()};
 $("m-settings").onclick=()=>{$("acctMenu").hidden=true;state.view="settings";try{history.replaceState(null,"",location.pathname+"#settings")}catch(e){}render();window.scrollTo({top:0})};
 $("logout").onclick=async()=>{try{await sb.auth.signOut()}catch(e){}location.replace(here())};
 
@@ -3883,7 +3923,8 @@ async function startApp(user){
   state.isTransport=!!me.transport;state.srvVehicles=Array.isArray(me.vehicles)?me.vehicles:[];state.srvStores=Array.isArray(me.stores)?me.stores:[];state.myVehicles=state.srvVehicles.slice();state.myStores=state.srvStores.slice();
   try{state.lastSeen=+localStorage.getItem("manar-seen")||0}catch(e){}state.feedSeenAt=state.lastSeen;
   state.reqFilter=admin?"all":"in";
-  {const hv=(location.hash||"").slice(1);if(["send","tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"].includes(hv))state.view=hv;else if(admin)state.view="dash";}
+  {const hv=(location.hash||"").slice(1).split("/")[0];if(["send","tasks","requests","purchases","dash","feed","transport","stores","buffets","settings","routine","events","safety"].includes(hv))applyHash(true);else if(admin)state.view="dash";}
+  setTimeout(()=>pushEnsure(),1500);
   document.body.classList.toggle("staff",state.role==="staff");
   document.body.classList.toggle("supervisor",sup);
   if(mgr)window.__hsub="تقارير فريقك وملاحظاتك لهم — كل ملاحظة تصل نسخة منها لـ م. محمد نور عمر";
