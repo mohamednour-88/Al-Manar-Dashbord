@@ -2155,20 +2155,30 @@ let rSeeding=false;
 let g3Busy=false;
 async function rGuard3Migrate(){
   if(g3Busy||state.role!=="admin"||!db||!state.people.length||!state.routine.length)return;
-  if(state.routine.some(x=>x.id==="meta_guard3_v1")||!state.routine.some(x=>x.id==="meta_seed_outside_v1"))return;
+  if(state.routine.some(x=>x.id==="meta_guard3_v2")||!state.routine.some(x=>x.id==="meta_seed_outside_v1"))return;
   const asif=state.people.find(p=>/عاصف/.test(p.name||"")),bas=state.people.find(p=>/بسيوني/.test(p.name||""));if(!asif)return;
-  g3Busy=true;const now=Date.now();
+  g3Busy=true;const now=Date.now();const NOTE="قيّم كل حارس في ثلاث مسارات من 5: فني حتى 7:30، إداري حتى 10:30، سلوكي الساعة 2:30";
+  const isG=d=>/الحراس|حراس/.test((d.title||"")+" "+(d.category||""));
   try{
-    let m1=state.routine.find(x=>x.kind==="duty"&&x.ownerId===asif.id&&(x.title===OUT_TITLE||x.mode==="rate")&&(x.targets||[]).length);
-    if(m1)await db.doc("routine/"+m1.id).update({mode:"guard3",title:"تقييم الحراس — المنار 1",category:"الأمن",note:"قيّم كل حارس في ثلاث مسارات من 5: فني حتى 7:30، إداري حتى 10:30، سلوكي الساعة 2:30",prevTitle:m1.title,updatedAt:now});
-    else await db.doc("routine/d_g3_"+asif.id).set({kind:"duty",ownerId:asif.id,title:"تقييم الحراس — المنار 1",category:"الأمن",freq:"daily",siteIds:[],order:1,mode:"guard3",targets:OUT_GATES.map(([key,label,name])=>({key,label,name})),createdAt:now,updatedAt:now});
+    const mine=state.routine.filter(x=>x.kind==="duty"&&x.ownerId===asif.id);
+    const oldG=mine.filter(d=>d.mode==="rate"&&isG(d)&&(d.targets||[]).length);
+    const v1=mine.find(d=>d.mode==="guard3"&&d.prevTitle);
+    if(oldG.length){
+      await db.doc("routine/"+oldG[0].id).update({mode:"guard3",title:"تقييم الحراس — المنار 1",category:"الأمن",note:NOTE,prevTitle:oldG[0].title,paused:false,updatedAt:now});
+      for(const d of oldG.slice(1))await db.doc("routine/"+d.id).update({paused:true,updatedAt:now});
+      if(v1&&!isG({title:v1.prevTitle}))await db.doc("routine/"+v1.id).update({mode:"rate",title:v1.prevTitle,paused:true,updatedAt:now});
+      for(const d of mine.filter(d=>d.mode==="guard3"&&d.id!==oldG[0].id&&d!==v1))await db.doc("routine/"+d.id).update({paused:true,updatedAt:now});
+    }else if(!mine.some(d=>d.mode==="guard3")){
+      await db.doc("routine/d_g3_"+asif.id).set({kind:"duty",ownerId:asif.id,title:"تقييم الحراس — المنار 1",category:"الأمن",freq:"daily",siteIds:[],order:1,mode:"guard3",note:NOTE,targets:OUT_GATES.map(([key,label,name])=>({key,label,name})),createdAt:now,updatedAt:now})}
+    /* جولة المبنى من الخارج (1–5) يغطيها الآن المسار الفني «النظافة الخارجية» — تُوقف مؤقتاً، وتقدر تشغّلها من «الأعمال الدورية» */
+    for(const d of mine.filter(d=>d.mode==="rate"&&d.title===OUT_TITLE&&!d.paused))await db.doc("routine/"+d.id).update({paused:true,updatedAt:now});
     if(bas){const old=state.routine.filter(x=>x.kind==="duty"&&x.ownerId===bas.id&&x.mode==="rate"&&(x.targets||[]).length);
-      for(const d of old)await db.doc("routine/"+d.id).update({mode:"guard3",title:"تقييم الحراس — المنار 2",category:"الأمن",prevTitle:d.title,updatedAt:now});
-      if(!old.length&&!state.routine.some(x=>x.kind==="duty"&&x.ownerId===bas.id&&x.mode==="guard3")){
+      if(old.length){await db.doc("routine/"+old[0].id).update({mode:"guard3",title:"تقييم الحراس — المنار 2",category:"الأمن",note:NOTE,prevTitle:old[0].title,paused:false,updatedAt:now});for(const d of old.slice(1))await db.doc("routine/"+d.id).update({paused:true,updatedAt:now})}
+      else if(!state.routine.some(x=>x.kind==="duty"&&x.ownerId===bas.id&&x.mode==="guard3")){
         const asg=rDocs("assign",bas.id).map(a=>{const w=state.routine.find(x=>x.id===a.workerId);const st=rSite(a.siteId);return w&&w.type!=="worker"&&w.type!=="fworker"?{label:st?rSiteName(st):"موقع",name:w.name}:null}).filter(Boolean);
         const tg=(asg.length?asg:shGuards(bas.id).map(w=>({label:w.site||"حارس",name:w.name}))).map((t,i)=>({key:"m2g"+(i+1),...t}));
-        await db.doc("routine/d_g3_"+bas.id).set({kind:"duty",ownerId:bas.id,title:"تقييم الحراس — المنار 2",category:"الأمن",freq:"daily",siteIds:[],order:1,mode:"guard3",targets:tg,paused:!tg.length,createdAt:now,updatedAt:now})}}
-    await db.doc("routine/meta_guard3_v1").set({kind:"meta",at:now});
+        await db.doc("routine/d_g3_"+bas.id).set({kind:"duty",ownerId:bas.id,title:"تقييم الحراس — المنار 2",category:"الأمن",freq:"daily",siteIds:[],order:1,mode:"guard3",note:NOTE,targets:tg,paused:!tg.length,createdAt:now,updatedAt:now})}}
+    await db.doc("routine/meta_guard3_v2").set({kind:"meta",at:now});
   }catch(e){console.warn("guard3 migrate",e)}
   g3Busy=false}
 async function rSeedOutside(){
