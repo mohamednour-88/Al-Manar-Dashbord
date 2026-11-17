@@ -185,7 +185,7 @@ header .hright{justify-self:end;justify-items:end}
 @media (max-width:520px){.hlogo{height:58px}.sitefoot img{height:56px}}
 /* الإصدار 35: قائمة الحساب يسار الصفحة */
 .hacct{position:relative}.acctbtn{font:inherit;display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:99px;padding:6px 14px;cursor:pointer;min-height:40px}.acctbtn:hover{background:var(--sunk)}.acav{font-size:1rem}
-.acctmenu{position:absolute;inset-inline-end:0;top:calc(100% + 6px);z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);min-width:230px;padding:6px;display:grid;gap:2px}
+.acctmenu{position:absolute;left:0;right:auto;top:calc(100% + 6px);max-width:calc(100vw - 24px);z-index:50;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);min-width:230px;padding:6px;display:grid;gap:2px}
 .acctmenu .acid{font-size:.8rem;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--line);margin-bottom:4px;word-break:break-all}
 .acctmenu button{font:inherit;text-align:start;background:none;border:0;color:inherit;padding:9px 10px;border-radius:8px;cursor:pointer;min-height:40px}.acctmenu button:hover{background:var(--sunk)}.acctmenu .lo{color:var(--late)}
 header .hright{display:grid;gap:6px;justify-items:end}
@@ -2322,7 +2322,7 @@ async function pushDisable(){try{const reg=await navigator.serviceWorker.ready;c
 async function pushPrefsDialog(){let off=[];try{const {data}=await sb.from("push_prefs").select("off").maybeSingle();off=(data&&data.off)||[]}catch(e){}
   const ov=document.createElement("div");ov.className="rsn-ov";
   ov.innerHTML=`<div class="rsn" role="dialog" aria-modal="true" aria-label="إعدادات التنبيهات"><h3>إعدادات التنبيهات</h3><div class="hint">اختر وش يوصلك على الجوال. التنبيهات توصلك فقط للطلبات اللي تخصك.</div>
-   <div style="display:grid;gap:6px">${PUSH_CATS.map(([k,l])=>`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" value="${k}" ${off.includes(k)?"":"checked"}> ${l}</label>`).join("")}</div>
+   <div style="display:grid;gap:6px">${PUSH_CATS.map(([k,l])=>`<label style="display:flex;flex-direction:row;gap:10px;align-items:center;font-weight:500"><input type="checkbox" value="${k}" ${off.includes(k)?"":"checked"} style="width:20px;height:20px;flex:none;margin:0"> <span>${l}</span></label>`).join("")}</div>
    <div class="acts"><button class="btn sm" type="button" data-ok>حفظ</button><button class="btn ghost sm" type="button" data-test>إرسال تنبيه تجريبي</button><button class="linkbtn mute" type="button" data-off>إيقاف التنبيهات على هذا الجهاز</button><button class="linkbtn mute" type="button" data-no>إغلاق</button></div></div>`;
   document.body.appendChild(ov);const q=s=>ov.querySelector(s);
   q("[data-no]").onclick=()=>ov.remove();ov.onclick=e=>{if(e.target===ov)ov.remove()};
@@ -3717,7 +3717,7 @@ function rOwnerDetail(o,days){const by={};
 function reportBuilder(U){const ov=document.createElement("div");ov.className="rsn-ov";
   ov.innerHTML=`<div class="rsn" role="dialog" aria-modal="true" aria-label="تقرير مخصص"><h3>تقرير مخصص</h3>
    <div class="hint">اختر الوحدات والفترة، ويطلع لك تقرير بالأرقام والرسوم تقدر تطبعه أو تحفظه PDF.</div>
-   <div style="display:grid;gap:4px">${U.map(u=>`<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" value="${u.k}" checked> ${esc(u.label)}</label>`).join("")}</div>
+   <div style="display:grid;gap:4px">${U.map(u=>`<label style="display:flex;flex-direction:row;gap:10px;align-items:center;font-weight:500"><input type="checkbox" value="${u.k}" checked style="width:20px;height:20px;flex:none;margin:0"> <span>${esc(u.label)}</span></label>`).join("")}</div>
    <label>الفترة<select data-p>${PERS.map(([k,l])=>`<option value="${k}" ${state.dashPer===k?"selected":""}>${l}</option>`).join("")}<option value="custom">فترة محددة…</option></select></label>
    <div class="fgrid" data-cust hidden><label>من<input type="date" data-f></label><label>إلى<input type="date" data-t></label></div>
    <div class="acts"><button class="btn sm" type="button" data-ok>عرض التقرير</button><button class="linkbtn mute" type="button" data-no>إغلاق</button></div></div>`;
@@ -3900,7 +3900,8 @@ $("authform").onsubmit=async e=>{e.preventDefault();const rawId=$("a-email").val
   }catch(err){authMsg(trAuthErr(err))}finally{go.disabled=false}};
 document.querySelectorAll("#a-tabs button").forEach(b=>b.onclick=()=>setAuthMode(b.dataset.m));
 $("a-forgot").onclick=()=>setAuthMode("reset");
-$("acctBtn").onclick=e=>{e.stopPropagation();const m=$("acctMenu");m.hidden=!m.hidden;$("acctBtn").setAttribute("aria-expanded",String(!m.hidden))};
+$("acctBtn").onclick=e=>{e.stopPropagation();const m=$("acctMenu");m.hidden=!m.hidden;$("acctBtn").setAttribute("aria-expanded",String(!m.hidden));
+  if(!m.hidden){m.style.left="0";m.style.right="auto";const r=m.getBoundingClientRect();if(r.right>innerWidth-8){m.style.left="auto";m.style.right="0"}const r2=m.getBoundingClientRect();if(r2.left<8){m.style.left=(8-r2.left)+"px"}}};
 document.addEventListener("click",e=>{const m=$("acctMenu");if(m&&!m.hidden&&!e.target.closest(".hacct")){m.hidden=true;$("acctBtn").setAttribute("aria-expanded","false")}});
 $("m-mail").onclick=async()=>{$("acctMenu").hidden=true;const e=await askReason("إضافة بريدك المؤسسي","مثال: name@as.edu.sa");if(e===null)return;
   const {data,error}=await sb.rpc("set_my_email",{p_email:e});if(error||!data||!data.ok){toast((data&&data.error)||"تعذر الحفظ");return}
