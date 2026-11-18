@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>خرائط الإخلاء والسلامة — مدارس الأندلس</title>
+<meta name="theme-color" content="#212178">
+<link rel="icon" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="خرائط الإخلاء">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--n:#212178;--n2:#2e2e95;--b:#0099DD;--g:#BC9C42;--gr:#BBBDBE;--ink:#20233f;--mut:#676b82;--line:#e3e4ee;--bg:#f4f5fa;--card:#fff;--ok:#1E8E3E;--warn:#C47F00;--bad:#C62828;--sel:#0099DD;--r:14px}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{font-family:Mada,"Segoe UI",Tahoma,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+/* top bar */
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;height:64px;padding:0 18px;background:var(--n);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.top .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;white-space:nowrap}
+.top .brand img{height:34px}
+.top nav{display:flex;gap:4px;margin-inline-start:12px;flex:1;overflow:auto}
+.top nav button{background:none;border:0;color:#d7d8f3;padding:10px 14px;border-radius:10px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:7px}
+.top nav button.on{background:rgba(255,255,255,.14);color:#fff}
+.top nav button svg{width:19px;height:19px}
+.top .who{display:flex;align-items:center;gap:8px;font-size:13px;color:#d7d8f3;white-space:nowrap}
+.top .who b{color:#fff}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:30px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.st-draft{background:#eef0f7;color:#4a4f6b}.st-review{background:#fff3d6;color:#8a5a00}.st-approved{background:#e2f3e8;color:var(--ok)}.st-none{background:#f1f1f4;color:#9a9caf}
+main{max-width:1280px;margin:0 auto;padding:22px 18px 60px}
+main.full{max-width:none;padding:0}
+h1.pg{font-size:24px;margin:4px 0 4px;color:var(--n)}p.pgs{margin:0 0 18px;color:var(--mut)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 15px;font-weight:600;min-height:42px}
+.btn:hover{border-color:#c8cae0}
+.btn.pri{background:var(--n);border-color:var(--n);color:#fff}.btn.pri:hover{background:var(--n2)}
+.btn.gold{background:var(--g);border-color:var(--g);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.danger{color:var(--bad)}
+.btn.sm{min-height:34px;padding:6px 11px;font-size:13.5px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn svg{width:18px;height:18px;flex:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.grid{display:grid;gap:16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:14px}
+input.in,select.in,textarea.in{border:1px solid #d6d8e6;border-radius:10px;padding:9px 12px;background:#fff;min-height:42px;width:100%}
+input.in:focus,select.in:focus,textarea.in:focus{outline:2px solid #bfe6f8;border-color:var(--b)}
+.muted{color:var(--mut)}.small{font-size:13px}
+.empty{padding:40px 20px;text-align:center;color:var(--mut)}
+.empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}
+/* tree */
+.br{margin-bottom:18px}
+.br-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.br-h h2{margin:0;font-size:19px;color:var(--n)}
+.bld{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden}
+.bld-h{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fafbfe;border-bottom:1px solid var(--line)}
+.bld-h b{font-size:16px}
+.fl{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f0f1f6}
+.fl:last-child{border-bottom:0}
+.fl .nm{font-weight:700}
+@media (max-width:760px){.fl{grid-template-columns:1fr auto}.fl .hide-s{display:none}}
+/* steps */
+.steps{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:7px;padding:6px 12px 6px 14px;border-radius:30px;background:#eef0f7;color:#585d7a;font-weight:600;font-size:13.5px;border:0}
+.step i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#fff;font-size:12px;font-weight:800}
+.step.on{background:var(--n);color:#fff}.step.on i{color:var(--n)}
+.step.done i{background:var(--ok);color:#fff}
+/* editor */
+.ed{display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:auto auto minmax(0,1fr);height:calc(100vh - 64px);height:calc(100dvh - 64px)}
+.ed-bar{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ed-bar .loc{font-weight:800;color:var(--n);font-size:16px}
+.save{font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.save i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.save.busy i{background:var(--warn)}.save.off i{background:var(--bad)}
+.tools{grid-column:1/2;display:flex;gap:6px;padding:8px 10px;background:#fbfbfe;border-bottom:1px solid var(--line);overflow-x:auto;align-items:stretch}
+.tool{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:78px;min-height:66px;border:1px solid transparent;background:none;border-radius:12px;font-size:11.5px;font-weight:600;line-height:1.2;text-align:center;padding:5px 3px;color:var(--ink)}
+.tool:hover{background:#fff;border-color:var(--line)}
+.tool.on{background:#e6f5fc;border-color:var(--b);color:#00618d}
+.tool svg{width:30px;height:30px}
+.tool:disabled{opacity:.35}
+.tsep{width:1px;background:var(--line);margin:4px 2px;flex:none}
+.canvas{grid-column:1/2;position:relative;overflow:hidden;background:#e9eaf2;touch-action:none;user-select:none;-webkit-user-select:none}
+.canvas svg.board{position:absolute;inset:0;width:100%;height:100%;display:block}
+.canvas.mode-place{cursor:crosshair}.canvas.mode-route{cursor:crosshair}.canvas.panning{cursor:grabbing}
+.zoom{position:absolute;bottom:14px;left:14px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.zoom button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:20px;font-weight:700;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+.zoom button svg{width:20px;height:20px}
+.hint{position:absolute;top:12px;right:50%;transform:translateX(50%);background:rgba(33,33,120,.94);color:#fff;padding:9px 16px;border-radius:12px;font-size:14px;z-index:4;max-width:min(560px,90%);text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.hint button{background:none;border:0;color:#bfe6f8;font-weight:700;margin-inline-start:8px}
+.banner{position:absolute;top:12px;right:12px;left:12px;z-index:4;padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px;display:flex;gap:10px;align-items:center}
+.banner.appr{background:#e2f3e8;color:#155e2c;border:1px solid #bfe3cb}
+.banner.rev{background:#fff3d6;color:#7a4f00;border:1px solid #f1dda3}
+.banner.ret{background:#fde8e8;color:#8c1d1d;border:1px solid #f5c2c2}
+.side{grid-column:2/3;grid-row:2/4;background:#fff;border-inline-start:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;padding:12px 6px;font-weight:700;color:var(--mut);border-bottom:3px solid transparent;font-size:14px}
+.tabs button.on{color:var(--n);border-color:var(--n)}
+.side .lst{flex:1;overflow:auto;padding:8px}
+.it{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:10px;border:1px solid transparent;cursor:pointer}
+.it:hover{background:#f6f7fc}
+.it.sel{background:#e6f5fc;border-color:#9fd7f1}
+.it .ic{width:30px;height:30px;flex:none}
+.it .nm{flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it .sub{font-size:12px;color:var(--mut);font-weight:500}
+.it .x{border:0;background:none;color:#a2a4b6;padding:4px;border-radius:7px}
+.it .x:hover{color:var(--bad);background:#fdeaea}
+.grp{font-size:12.5px;font-weight:800;color:var(--mut);padding:10px 8px 4px}
+.props{border-top:1px solid var(--line);padding:12px;background:#fbfbfe;display:grid;gap:10px}
+.props h4{margin:0;font-size:14px;color:var(--n)}
+.seg{display:flex;border:1px solid #d6d8e6;border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:#fff;padding:8px;font-weight:600;font-size:13.5px}
+.seg button.on{background:var(--n);color:#fff}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;padding:3px 0}
+.chk input{width:18px;height:18px}
+.layers{position:absolute;top:12px;left:12px;z-index:3}
+.pop{position:absolute;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(20,20,60,.16);padding:10px 12px;z-index:20;min-width:210px}
+/* dialogs */
+.ov{position:fixed;inset:0;background:rgba(15,16,45,.45);display:grid;place-items:center;z-index:100;padding:16px}
+.dlg{background:#fff;border-radius:18px;max-width:640px;width:100%;max-height:calc(100dvh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.dlg.wide{max-width:1100px}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dlg-h h3{margin:0;font-size:18px;color:var(--n);flex:1}
+.dlg-b{padding:18px 20px;overflow:auto;display:grid;gap:14px}
+.dlg-f{display:flex;gap:10px;justify-content:flex-start;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.x-btn{border:0;background:#f1f2f7;width:36px;height:36px;border-radius:10px;font-size:20px}
+.warn{background:#fff6e0;border:1px solid #f1dda3;color:#6d4a00;padding:10px 14px;border-radius:11px;font-size:14px}
+.warn ul{margin:6px 0 0;padding-inline-start:18px}
+.info{background:#eef7fc;border:1px solid #c7e6f6;color:#0c4a68;padding:10px 14px;border-radius:11px;font-size:14px}
+.err{background:#fdeaea;border:1px solid #f5c2c2;color:#8c1d1d;padding:10px 14px;border-radius:11px;font-size:14px}
+table.tb{width:100%;border-collapse:collapse;font-size:14px}
+.tb th{text-align:right;font-size:12.5px;color:var(--mut);font-weight:700;padding:8px 10px;border-bottom:2px solid var(--line);white-space:nowrap}
+.tb td{padding:9px 10px;border-bottom:1px solid #f0f1f6;vertical-align:middle}
+.tb tr:hover td{background:#fafbfe}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1d1f3d;color:#fff;padding:11px 18px;border-radius:12px;z-index:200;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90%}
+.prog{height:8px;background:#eceef6;border-radius:8px;overflow:hidden}.prog i{display:block;height:100%;background:var(--b);width:0;transition:width .2s}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.thumbs button{border:2px solid var(--line);border-radius:12px;background:#fff;padding:6px;display:flex;flex-direction:column;gap:6px;align-items:center;font-weight:600}
+.thumbs button.on{border-color:var(--b);background:#e6f5fc}
+.thumbs img{width:100%;height:120px;object-fit:contain;background:#f6f6f9;border-radius:8px}
+.drop{border:2px dashed #c3c6dc;border-radius:16px;padding:40px 20px;text-align:center;background:#fff;cursor:pointer}
+.drop.over{border-color:var(--b);background:#eef8fd}
+.drop svg{width:52px;height:52px;color:var(--n)}
+.prev-wrap{background:#e9eaf2;border-radius:12px;padding:12px;display:grid;place-items:center}
+.prev-wrap canvas{max-width:100%;max-height:68vh;box-shadow:0 4px 18px rgba(0,0,0,.18);background:#fff}
+.login{max-width:420px;margin:8vh auto;padding:30px}
+.login img{height:70px;display:block;margin:0 auto 14px}
+.symgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.symgrid button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;font-weight:600}
+.symgrid button svg{width:40px;height:40px}
+@media (max-width:980px){.ed{grid-template-columns:minmax(0,1fr) 270px}.top .brand span{display:none}}
+@media (max-width:700px){.ed{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) 38%}.side{grid-column:1;grid-row:4}.top nav button span{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="logo-w.png" alt=""><span>خرائط الإخلاء والسلامة</span></div>
+  <nav id="nav"></nav>
+  <div class="who" id="who"></div>
+</header>
+<main id="main"><div class="empty"><b>جاري التحميل…</b></div></main>
+<div id="layer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
+<script>
+"use strict";
+/* ======================= إعدادات ======================= */
+const SUPABASE_URL="https://psrmudbwmqjtvondcqzt.supabase.co";
+const SUPABASE_KEY="sb_publishable_4KHvoUKfTJ-0J5OWmVRP-A_PPMFXpjQ";
+const BUCKET="safety-maps";
+const LIB={pdfjs:"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs",pdfWorker:"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs",jszip:"https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"};
+const LOCAL=new URLSearchParams(location.search).has("local");
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>crypto.randomUUID?crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c=="x"?r:(r&3|8)).toString(16)});
+const clone=o=>JSON.parse(JSON.stringify(o));
+const pad=(n,l=2)=>String(n).padStart(l,"0");
+const fmtDate=d=>{if(!d)return"—";const x=new Date(d);return x.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn",{year:"numeric",month:"long",day:"numeric"})};
+const fmtDT=d=>{if(!d)return"—";const x=new Date(d);return x.toLocaleString("ar-SA-u-ca-gregory-nu-latn",{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})};
+const ROLE={admin:"مدير النظام",editor:"مسؤول السلامة",reviewer:"المراجع والمعتمد"};
+const STATUS={draft:"مسودة",review:"قيد المراجعة",approved:"معتمدة"};
+const ACT={submit:"إرسال للمراجعة",approve:"اعتماد",return:"إرجاع للتعديل",new_version:"إنشاء نسخة جديدة",withdraw:"سحب من المراجعة",save_version:"حفظ نسخة",cancel_version:"إلغاء إصدار",uncancel_version:"إعادة تفعيل إصدار",plan:"رفع مخطط",restore:"استعادة نسخة"};
+const PAPER={A4:[297,210],A3:[420,297],A2:[594,420]};
+
+/* ======================= الرموز ======================= */
+// رموز مرسومة خصيصًا (100×100) — أخضر: سلامة ومخارج، أحمر: معدات الحريق، أصفر: تحذير
+const G="#1E8E3E",R="#D32F2F",Y="#F2B705";
+const sq=(c,inner)=>`<rect x="3" y="3" width="94" height="94" rx="14" fill="${c}"/><g fill="#fff" stroke="#fff">${inner}</g>`;
+const SYM={
+ exit:{n:"مخرج الطوارئ",c:"safe",svg:sq(G,`<rect x="56" y="18" width="26" height="64" rx="2" fill="none" stroke-width="5"/><circle cx="38" cy="22" r="7" stroke="none"/><path d="M38 31 L30 52 L42 58 L36 80 M30 52 L20 60 M36 38 L50 46 M42 58 L52 74" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`)},
+ assembly:{n:"نقطة التجمع",c:"safe",svg:sq(G,`<circle cx="50" cy="50" r="9" stroke="none"/><path d="M50 14v14M50 72v14M14 50h14M72 50h14" stroke-width="6" stroke-linecap="round"/><path d="M43 22l7 8 7-8M43 78l7-8 7 8M22 43l8 7-8 7M78 43l-8 7 8 7" fill="none" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>`)},
+ stairs:{n:"سلم الطوارئ",c:"safe",svg:sq(G,`<path d="M16 80h18V64h16V48h16V32h18" fill="none" stroke-width="7" stroke-linejoin="round"/><path d="M60 20l18-2-2 18" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M78 18 L58 38" stroke-width="5" stroke-linecap="round"/>`)},
+ firstaid:{n:"إسعافات أولية",c:"safe",svg:sq(G,`<path d="M40 18h20v22h22v20H60v22H40V60H18V40h22z" stroke="none"/>`)},
+ clinic:{n:"العيادة",c:"safe",svg:sq(G,`<circle cx="50" cy="50" r="32" fill="none" stroke-width="6"/><path d="M43 30h14v13h13v14H57v13H43V57H30V43h13z" stroke="none"/>`)},
+ aed:{n:"جهاز الصدمات AED",c:"safe",svg:sq(G,`<path d="M50 82 L20 52 C8 40 18 18 34 20 C42 21 47 26 50 31 C53 26 58 21 66 20 C82 18 92 40 80 52 Z" stroke="none"/><path d="M55 30 L42 52 H56 L45 72" fill="none" stroke="${G}" stroke-width="6" stroke-linejoin="round"/>`)},
+ safe_area:{n:"منطقة آمنة",c:"safe",svg:sq(G,`<path d="M50 14 L82 26 V50 C82 70 66 82 50 88 C34 82 18 70 18 50 V26 Z" fill="none" stroke-width="6" stroke-linejoin="round"/><path d="M36 50 L46 60 L66 40" fill="none" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`)},
+ extinguisher:{n:"طفاية حريق",c:"fire",svg:sq(R,`<rect x="38" y="34" width="24" height="50" rx="9" stroke="none"/><rect x="45" y="22" width="10" height="14" stroke="none"/><path d="M55 26 H70 L76 34" fill="none" stroke-width="5" stroke-linecap="round"/><path d="M40 28 H32 C24 28 22 36 22 44" fill="none" stroke-width="4" stroke-linecap="round"/>`)},
+ hose:{n:"خرطوم حريق",c:"fire",svg:sq(R,`<circle cx="44" cy="52" r="26" fill="none" stroke-width="6"/><circle cx="44" cy="52" r="14" fill="none" stroke-width="5"/><circle cx="44" cy="52" r="4" stroke="none"/><path d="M70 52 H80 V80" fill="none" stroke-width="6" stroke-linecap="round"/><path d="M74 80h12" stroke-width="6" stroke-linecap="round"/>`)},
+ alarm:{n:"إنذار الحريق",c:"fire",svg:sq(R,`<path d="M30 66 V48 C30 34 38 26 50 26 C62 26 70 34 70 48 V66 Z" stroke="none"/><rect x="24" y="66" width="52" height="8" rx="3" stroke="none"/><circle cx="50" cy="80" r="5" stroke="none"/><path d="M18 34 C20 26 24 21 30 17 M82 34 C80 26 76 21 70 17" fill="none" stroke-width="5" stroke-linecap="round"/>`)},
+ smoke:{n:"كاشف دخان",c:"fire",svg:sq(R,`<circle cx="50" cy="50" r="12" stroke="none"/><path d="M28 40 A24 24 0 0 0 28 60 M72 40 A24 24 0 0 1 72 60 M18 32 A36 36 0 0 0 18 68 M82 32 A36 36 0 0 1 82 68" fill="none" stroke-width="5" stroke-linecap="round"/>`)},
+ blanket:{n:"بطانية حريق",c:"fire",svg:sq(R,`<rect x="28" y="18" width="44" height="22" rx="4" stroke="none"/><path d="M34 40 L28 82 H72 L66 40" stroke="none"/><path d="M40 52 C44 60 40 66 46 74 M56 50 C52 58 58 64 54 74" fill="none" stroke="${R}" stroke-width="4" stroke-linecap="round"/>`)},
+ phone:{n:"هاتف الطوارئ",c:"fire",svg:sq(R,`<path d="M30 22 C24 24 20 30 22 38 C28 62 40 74 62 80 C70 82 76 78 78 72 L70 62 C68 60 64 60 62 62 L56 66 C46 61 39 54 34 44 L38 38 C40 36 40 32 38 30 Z" stroke="none"/>`)},
+ power:{n:"فصل الكهرباء",c:"warn",svg:`<rect x="3" y="3" width="94" height="94" rx="14" fill="${Y}"/><path d="M56 12 L28 56 H48 L40 88 L72 40 H52 Z" fill="#1d1d1d"/>`},
+ warning:{n:"علامة تحذير",c:"warn",svg:`<path d="M50 6 L96 88 H4 Z" fill="${Y}" stroke="#1d1d1d" stroke-width="5" stroke-linejoin="round"/><rect x="45" y="34" width="10" height="30" rx="4" fill="#1d1d1d"/><circle cx="50" cy="74" r="6" fill="#1d1d1d"/>`},
+ gas:{n:"محبس الغاز",c:"warn",svg:`<rect x="3" y="3" width="94" height="94" rx="14" fill="${Y}"/><path d="M50 16 C62 34 72 44 72 60 C72 74 62 84 50 84 C38 84 28 74 28 60 C28 48 36 40 40 30 C44 40 48 42 50 46 C54 38 54 26 50 16 Z" fill="#1d1d1d"/>`},
+ noelev:{n:"لا تستخدم المصعد",c:"warn",svg:`<rect x="3" y="3" width="94" height="94" rx="14" fill="#fff" stroke="${R}" stroke-width="6"/><rect x="28" y="22" width="44" height="58" rx="3" fill="none" stroke="#1d1d1d" stroke-width="5"/><path d="M50 22 V80" stroke="#1d1d1d" stroke-width="4"/><path d="M18 18 L82 82" stroke="${R}" stroke-width="8" stroke-linecap="round"/>`},
+};
+const QUICK=["exit","assembly","extinguisher","hose","alarm","firstaid","clinic","stairs","power","warning"];
+const CATN={safe:"المخارج والسلامة",fire:"معدات الحريق",warn:"تحذير وتنبيه"};
+const HERE_SVG=`<circle cx="50" cy="50" r="46" fill="#D32F2F"/><circle cx="50" cy="50" r="46" fill="none" stroke="#fff" stroke-width="6"/><circle cx="50" cy="38" r="11" fill="#fff"/><path d="M30 78 C30 60 38 54 50 54 C62 54 70 60 70 78 Z" fill="#fff"/>`;
+const symSvg=(k,attrs="")=>`<svg viewBox="0 0 100 100" ${attrs}>${k==="here"?HERE_SVG:SYM[k]?SYM[k].svg:""}</svg>`;
+const ICO={
+ tree:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4"/></svg>`,
+ edit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>`,
+ maps:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`,
+ admin:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>`,
+ sel:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 7-6 2-2 6z"/></svg>`,
+ route:`<svg viewBox="0 0 24 24" fill="none" stroke="#1E8E3E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19 C8 19 8 12 12 12 S16 6 20 6"/><path d="M16 4l4 2-2 4"/></svg>`,
+ undo:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>`,
+ redo:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/></svg>`,
+ more:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg>`,
+ eye:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+ fit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`,
+ upload:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>`,
+ print:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2"/><rect x="6" y="14" width="12" height="7"/></svg>`,
+ hist:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/></svg>`,
+ copy:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 00-2-2H5a2 2 0 00-2 2v9a2 2 0 002 2h3"/></svg>`,
+ trash:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`,
+};
+
+/* ======================= أدوات واجهة ======================= */
+function toast(m,ms=2600){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
+function dialog({title,body,foot,wide,onClose}){const ov=document.createElement("div");ov.className="ov";ov.innerHTML=`<div class="dlg ${wide?"wide":""}" role="dialog" aria-modal="true"><div class="dlg-h"><h3>${esc(title)}</h3><button class="x-btn" aria-label="إغلاق">×</button></div><div class="dlg-b"></div>${foot!==false?'<div class="dlg-f"></div>':""}</div>`;
+ const b=ov.querySelector(".dlg-b");if(typeof body==="string")b.innerHTML=body;else if(body)b.appendChild(body);
+ const close=()=>{ov.remove();document.removeEventListener("keydown",k);onClose&&onClose()};const k=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",k);
+ ov.querySelector(".x-btn").onclick=close;ov.addEventListener("pointerdown",e=>{if(e.target===ov)ov.dataset.dn=1});ov.addEventListener("click",e=>{if(e.target===ov&&ov.dataset.dn)close();delete ov.dataset.dn});
+ $("#layer").appendChild(ov);return{el:ov,body:b,foot:ov.querySelector(".dlg-f"),close}}
+function confirmBox(title,msg,okText="تأكيد",danger){return new Promise(res=>{const d=dialog({title,body:`<div>${msg}</div>`,onClose:()=>res(false)});d.foot.innerHTML=`<button class="btn ${danger?"danger":"pri"}" data-ok>${esc(okText)}</button><button class="btn" data-no>إلغاء</button>`;d.foot.querySelector("[data-ok]").onclick=()=>{res(true);d.el.remove()};d.foot.querySelector("[data-no]").onclick=()=>{res(false);d.el.remove()}})}
+function promptBox(title,label,val="",extra=""){return new Promise(res=>{const d=dialog({title,body:`<label class="f">${esc(label)}<input class="in" value="${esc(val)}"></label>${extra}`,onClose:()=>res(null)});const i=d.body.querySelector("input");setTimeout(()=>{i.focus();i.select()},30);
+ const ok=()=>{const v=i.value.trim();if(!v){i.focus();return}res(v);d.el.remove()};i.onkeydown=e=>{if(e.key==="Enter")ok()};d.foot.innerHTML=`<button class="btn pri">حفظ</button><button class="btn">إلغاء</button>`;d.foot.children[0].onclick=ok;d.foot.children[1].onclick=()=>{res(null);d.el.remove()}})}
+const loadScript=src=>new Promise((res,rej)=>{if($(`script[src="${src}"]`))return res();const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("تعذر تحميل مكتبة: "+src));document.head.appendChild(s)});
+let _pdfjs=null;async function pdfjs(){if(_pdfjs)return _pdfjs;_pdfjs=await import(LIB.pdfjs);_pdfjs.GlobalWorkerOptions.workerSrc=LIB.pdfWorker;return _pdfjs}
+const tipSeen=k=>{try{return localStorage.getItem("sm_tip_"+k)}catch(e){return 1}},tipDone=k=>{try{localStorage.setItem("sm_tip_"+k,"1")}catch(e){}};
+
+/* ======================= طبقة البيانات ======================= */
+const TABLES=["sm_branches","sm_buildings","sm_floors","sm_plans","sm_projects","sm_versions","sm_log","sm_members","sm_settings","sm_installs"];
+// --- الوضع المحلي (للتجربة دون اتصال): IndexedDB ---
+const IDB={db:null,async open(){if(this.db)return this.db;this.db=await new Promise((res,rej)=>{const r=indexedDB.open("andalus-safety-local",1);r.onupgradeneeded=()=>{r.result.createObjectStore("t");r.result.createObjectStore("f")};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});return this.db},
+ async get(s,k){const db=await this.open();return new Promise((res,rej)=>{const q=db.transaction(s).objectStore(s).get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+ async put(s,k,v){const db=await this.open();return new Promise((res,rej)=>{const t=db.transaction(s,"readwrite");t.objectStore(s).put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)})}};
+const LocalDB={kind:"local",me:{email:"local@demo",name:"مستخدم تجريبي",role:"admin",branch_ids:null,active:true},
+ async rows(t){return (await IDB.get("t",t))||[]},async save(t,rows){await IDB.put("t",t,rows)},
+ async list(t,f={}){let r=await this.rows(t);for(const[k,v]of Object.entries(f))r=r.filter(x=>x[k]===v);return clone(r)},
+ async insert(t,row){const r=await this.rows(t);row=Object.assign({id:uid(),created_at:new Date().toISOString()},row);if(t==="sm_projects"){Object.assign(row,{status:"draft",version:1,prepared_by:this.me.email,updated_at:row.created_at,updated_by:this.me.email})}if(t==="sm_log")row.id=Date.now()+Math.random();r.push(row);await this.save(t,r);return clone(row)},
+ async update(t,id,patch,key="id"){const r=await this.rows(t);const i=r.findIndex(x=>x[key]===id);if(i<0)throw new Error("غير موجود");
+  if(t==="sm_projects"&&!patch.__rpc){if(r[i].status!=="draft"&&("data"in patch||"plan_id"in patch))throw new Error("الخريطة "+STATUS[r[i].status]+" — لا يمكن تعديلها مباشرة؛ أنشئ نسخة جديدة للتعديل");patch.updated_at=new Date().toISOString();patch.updated_by=this.me.email}
+  delete patch.__rpc;Object.assign(r[i],patch);await this.save(t,r);return clone(r[i])},
+ async remove(t,id,key="id"){const r=await this.rows(t);await this.save(t,r.filter(x=>x[key]!==id));
+  const casc={sm_branches:[["sm_buildings","branch_id"],["sm_floors","branch_id"],["sm_projects","branch_id"],["sm_plans","branch_id"]],sm_buildings:[["sm_floors","building_id"]],sm_floors:[["sm_projects","floor_id"],["sm_plans","floor_id"]]}[t]||[];for(const[ct,ck]of casc){const rr=await this.rows(ct);await this.save(ct,rr.filter(x=>x[ck]!==id))}},
+ async upsertInstall(row){const r=await this.rows("sm_installs");const i=r.findIndex(x=>x.project_id===row.project_id&&x.point_id===row.point_id);row=Object.assign({id:uid(),at:new Date().toISOString(),by_email:this.me.email},row);if(i<0)r.push(row);else r[i]=Object.assign(r[i],row);await this.save("sm_installs",r)},
+ async delInstall(pid,ptid){const r=await this.rows("sm_installs");await this.save("sm_installs",r.filter(x=>!(x.project_id===pid&&x.point_id===ptid)))},
+ async upsertMember(m){const r=await this.rows("sm_members");const i=r.findIndex(x=>x.email===m.email);if(i<0)r.push(m);else r[i]=Object.assign(r[i],m);await this.save("sm_members",r)},
+ async putFile(path,blob){await IDB.put("f",path,blob)},async getFile(path){const b=await IDB.get("f",path);if(!b)throw new Error("الملف غير موجود");return b},
+ async settings(){const r=await this.rows("sm_settings");return (r[0]&&r[0].data)||{}},async saveSettings(d){await this.save("sm_settings",[{id:"main",data:d}])},
+ async transition(pid,action,note){const p=(await this.rows("sm_projects")).find(x=>x.id===pid);const who=this.me.email;let patch={};
+  if(action==="submit"){if(p.status!=="draft")throw new Error("الخريطة ليست مسودة");patch={status:"review",return_note:null}}
+  else if(action==="approve"){if(p.status!=="review")throw new Error("الخريطة ليست قيد المراجعة");patch={status:"approved",reviewed_by:who,approved_by:who,approved_at:new Date().toISOString()}}
+  else if(action==="return"){if(p.status!=="review")throw new Error("الخريطة ليست قيد المراجعة");patch={status:"draft",reviewed_by:who,return_note:note}}
+  else if(action==="new_version"){if(p.status!=="approved")throw new Error("النسخة الجديدة تُنشأ من خريطة معتمدة");patch={status:"draft",version:p.version+1,approved_by:null,approved_at:null,reviewed_by:null,return_note:null}}
+  else if(action==="withdraw"){patch={status:"draft"}}
+  const np=await this.update("sm_projects",pid,Object.assign(patch,{__rpc:1}));
+  if(action==="submit"||action==="approve")await this.snapshot(np,note||ACT[action]);
+  await this.insert("sm_log",{project_id:pid,branch_id:p.branch_id,action,note:note||null,by_email:who,at:new Date().toISOString()});return np},
+ async snapshot(p,note){await this.insert("sm_versions",{project_id:p.id,branch_id:p.branch_id,version:p.version,status:p.status,data:clone(p.data),plan_id:p.plan_id,approved_by:p.approved_by,approved_at:p.approved_at,cancelled:false,note,created_by:this.me.email})},
+ async saveVersion(pid,note){const p=(await this.rows("sm_projects")).find(x=>x.id===pid);await this.snapshot(p,note);await this.note(pid,"save_version",note)},
+ async cancelVersion(vid,c){await this.update("sm_versions",vid,{cancelled:c})},
+ async note(pid,action,note){const p=(await this.rows("sm_projects")).find(x=>x.id===pid);await this.insert("sm_log",{project_id:pid,branch_id:p&&p.branch_id,action,note,by_email:this.me.email,at:new Date().toISOString()})},
+};
+// --- الوضع المركزي: Supabase (الصلاحيات تُفرض من الخادم) ---
+const RemoteDB={kind:"remote",sb:null,me:null,
+ chk(r){if(r.error){const m=r.error.message||String(r.error);throw new Error(/row-level security|permission/i.test(m)?"لا تملك صلاحية لهذا الإجراء":m)}return r.data},
+ async list(t,f={}){let q=this.sb.from(t).select("*");for(const[k,v]of Object.entries(f))q=q.eq(k,v);if(t==="sm_log")q=q.order("at",{ascending:false}).limit(500);if(t==="sm_versions")q=q.order("created_at",{ascending:false});return this.chk(await q)||[]},
+ async insert(t,row){return this.chk(await this.sb.from(t).insert(row).select().single())},
+ async update(t,id,patch,key="id"){return this.chk(await this.sb.from(t).update(patch).eq(key,id).select().single())},
+ async remove(t,id,key="id"){this.chk(await this.sb.from(t).delete().eq(key,id))},
+ async upsertMember(m){this.chk(await this.sb.from("sm_members").upsert(m,{onConflict:"email"}))},
+ async upsertInstall(row){row=Object.assign({by_email:this.me.email,at:new Date().toISOString()},row);this.chk(await this.sb.from("sm_installs").upsert(row,{onConflict:"project_id,point_id"}))},
+ async delInstall(pid,ptid){this.chk(await this.sb.from("sm_installs").delete().eq("project_id",pid).eq("point_id",ptid))},
+ async putFile(path,blob){this.chk(await this.sb.storage.from(BUCKET).upload(path,blob,{contentType:blob.type||"application/octet-stream",upsert:true}))},
+ async getFile(path){return this.chk(await this.sb.storage.from(BUCKET).download(path))},
+ async settings(){const r=this.chk(await this.sb.from("sm_settings").select("data").eq("id","main").maybeSingle());return (r&&r.data)||{}},
+ async saveSettings(d){this.chk(await this.sb.from("sm_settings").update({data:d,updated_at:new Date().toISOString()}).eq("id","main"))},
+ async transition(pid,action,note){return this.chk(await this.sb.rpc("sm_transition",{p_project:pid,p_action:action,p_note:note||null}))},
+ async saveVersion(pid,note){this.chk(await this.sb.rpc("sm_save_version",{p_project:pid,p_note:note}))},
+ async cancelVersion(vid,c){this.chk(await this.sb.rpc("sm_cancel_version",{p_version:vid,p_cancel:c}))},
+ async note(pid,action,note){this.chk(await this.sb.rpc("sm_note",{p_project:pid,p_action:action,p_note:note}))},
+};
+let DB=null;
+
+/* ======================= الحالة العامة ======================= */
+const S={view:"tree",me:null,branches:[],buildings:[],floors:[],projects:[],plans:[],settings:{},sel:{branch:null,building:null,floor:null},
+ can(b,need){const m=S.me;if(!m)return false;if(m.role==="admin")return true;if(m.branch_ids&&b&&!m.branch_ids.includes(b))return false;if(need==="read")return true;if(need==="edit")return m.role==="editor";if(need==="review")return m.role==="reviewer";return false},
+ get admin(){return S.me&&S.me.role==="admin"}};
+async function loadAll(){const [br,bl,fl,pr,pl]=await Promise.all(["sm_branches","sm_buildings","sm_floors","sm_projects","sm_plans"].map(t=>DB.list(t)));
+ const so=(a)=>a.sort((x,y)=>(x.sort||0)-(y.sort||0)||String(x.created_at).localeCompare(String(y.created_at)));
+ S.branches=so(br);S.buildings=so(bl);S.floors=so(fl);S.projects=pr;S.plans=pl;S.settings=await DB.settings()}
+const projOf=fid=>S.projects.find(p=>p.floor_id===fid);
+const planOf=p=>p&&S.plans.find(x=>x.id===p.plan_id);
+const nameOf=(arr,id)=>(arr.find(x=>x.id===id)||{}).name||"—";
+const flInfo=fid=>{const f=S.floors.find(x=>x.id===fid)||{};const b=S.buildings.find(x=>x.id===f.building_id)||{};const br=S.branches.find(x=>x.id===f.branch_id)||{};return{floor:f,building:b,branch:br}};
+const boardNo=(fid,pt)=>{const {floor,building,branch}=flInfo(fid);return [branch.code,building.code,floor.code].filter(Boolean).concat(pad(pt.no||0)).join("-")};
+
+/* ======================= التنقل ======================= */
+const VIEWS=[["tree","الفروع والمباني","tree"],["setup","إعداد الخرائط","edit"],["ready","الخرائط الجاهزة","maps"],["admin","الإدارة","admin"]];
+function renderNav(){$("#nav").innerHTML=VIEWS.filter(v=>v[0]!=="admin"||S.admin).map(([k,t,i])=>`<button data-v="${k}" class="${S.view===k?"on":""}">${ICO[i]}<span>${t}</span></button>`).join("");
+ $$("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+ $("#who").innerHTML=S.me?`<span>${esc(S.me.name||S.me.email)}</span><span class="chip" style="background:rgba(255,255,255,.14);color:#fff">${ROLE[S.me.role]}</span>${DB.kind==="local"?'<span class="chip" style="background:#BC9C42;color:#fff">وضع تجريبي محلي</span>':'<button class="btn sm" id="logout" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)">خروج</button>'}`:"";
+ const lo=$("#logout");if(lo)lo.onclick=async()=>{if(ED&&ED.dirty)await ED.flush();await RemoteDB.sb.auth.signOut();location.reload()}}
+async function go(v,opts={}){if(ED&&v!=="setup"){await ED.flush();ED.destroy();ED=null}S.view=v;renderNav();const m=$("#main");m.className="";
+ if(v==="tree")return viewTree();if(v==="setup")return viewSetup(opts);if(v==="ready")return viewReady();if(v==="admin")return viewAdmin()}
+
+/* ======================= 1) الفروع والمباني ======================= */
+function statusChip(p){return p?`<span class="chip st-${p.status}">${STATUS[p.status]}${p.version>1?" — الإصدار "+p.version:""}</span>`:`<span class="chip st-none">لم يُبدأ</span>`}
+async function viewTree(){await loadAll();const m=$("#main");
+ const adm=S.admin;let h=`<div class="row"><div><h1 class="pg">الفروع والمباني</h1><p class="pgs">جميع الفروع ومبانيها وأدوارها، وحالة خرائط كل دور.</p></div><span class="sp"></span>${adm?`<button class="btn pri" id="addBr">+ فرع جديد</button>`:""}</div>`;
+ if(!S.branches.length)h+=`<div class="card empty"><b>لا توجد فروع بعد</b>${adm?"ابدأ بإضافة الفرع الأول، ثم مبانيه وأدواره.":"لم تُمنح صلاحية على أي فرع بعد. تواصل مع مدير النظام."}</div>`;
+ for(const br of S.branches){const bls=S.buildings.filter(b=>b.branch_id===br.id);
+  h+=`<section class="br"><div class="br-h"><h2>${esc(br.name)}</h2>${br.code?`<span class="chip st-draft">${esc(br.code)}</span>`:""}<span class="sp"></span>${adm?`<button class="btn sm" data-addbl="${br.id}">+ مبنى</button><button class="btn sm" data-edbr="${br.id}">تعديل</button><button class="btn sm danger" data-delbr="${br.id}">حذف</button>`:""}</div>`;
+  if(!bls.length)h+=`<div class="card muted small">لا توجد مبانٍ في هذا الفرع.</div>`;
+  for(const bl of bls){const fls=S.floors.filter(f=>f.building_id===bl.id);
+   h+=`<div class="bld"><div class="bld-h"><b>${esc(bl.name)}</b>${bl.code?`<span class="chip st-draft">${esc(bl.code)}</span>`:""}<span class="muted small">${fls.length} أدوار</span><span class="sp"></span>${adm?`<button class="btn sm" data-addfl="${bl.id}">+ دور</button><button class="btn sm" data-edbl="${bl.id}">تعديل</button><button class="btn sm danger" data-delbl="${bl.id}">حذف</button>`:""}</div>`;
+   for(const f of fls){const p=projOf(f.id);const d=p?p.data:{};
+    h+=`<div class="fl"><div><span class="nm">${esc(f.name)}</span>${f.code?` <span class="muted small">(${esc(f.code)})</span>`:""}</div><div class="hide-s">${statusChip(p)}</div><div class="hide-s muted small">${p?`${(d.points||[]).length} لوحة · ${(d.markers||[]).length} علامة`:"لا يوجد مخطط"}</div><div class="row" style="justify-content:flex-end"><button class="btn sm pri" data-open="${f.id}">${p?"فتح الخرائط":"إعداد الخرائط"}</button>${adm?`<button class="btn sm" data-edfl="${f.id}">تعديل</button><button class="btn sm danger" data-delfl="${f.id}" aria-label="حذف">${ICO.trash}</button>`:""}</div></div>`}
+   if(!fls.length)h+=`<div class="fl muted small"><div>لا توجد أدوار بعد.</div></div>`;
+   h+=`</div>`}
+  h+=`</section>`}
+ m.innerHTML=h;
+ const bind=(a,f)=>m.querySelectorAll(`[${a}]`).forEach(b=>b.onclick=()=>f(b.getAttribute(a)));
+ const nm=async(t,l,v="",code="")=>{return new Promise(res=>{const d=dialog({title:t,body:`<label class="f">${esc(l)}<input class="in" id="n1" value="${esc(v)}"></label><label class="f">رمز مختصر (يظهر في رقم اللوحة) <input class="in" id="n2" value="${esc(code)}" placeholder="مثال: M2"></label>`,onClose:()=>res(null)});setTimeout(()=>d.body.querySelector("#n1").focus(),30);
+  d.foot.innerHTML=`<button class="btn pri">حفظ</button><button class="btn">إلغاء</button>`;d.foot.children[1].onclick=()=>{d.el.remove();res(null)};d.foot.children[0].onclick=()=>{const n=d.body.querySelector("#n1").value.trim();if(!n)return;d.el.remove();res({name:n,code:d.body.querySelector("#n2").value.trim()})}})};
+ const act=async fn=>{try{await fn();viewTree()}catch(e){toast(e.message)}};
+ const ab=$("#addBr");if(ab)ab.onclick=async()=>{const r=await nm("فرع جديد","اسم الفرع");if(r)act(()=>DB.insert("sm_branches",{name:r.name,code:r.code,sort:S.branches.length}))};
+ bind("data-addbl",async id=>{const r=await nm("مبنى جديد","اسم المبنى");if(r)act(()=>DB.insert("sm_buildings",{branch_id:id,name:r.name,code:r.code,sort:S.buildings.length}))});
+ bind("data-addfl",async id=>{const bl=S.buildings.find(b=>b.id===id);const r=await nm("دور جديد","اسم الدور");if(r)act(()=>DB.insert("sm_floors",{building_id:id,branch_id:bl.branch_id,name:r.name,code:r.code,sort:S.floors.length}))});
+ bind("data-edbr",async id=>{const x=S.branches.find(b=>b.id===id);const r=await nm("تعديل الفرع","اسم الفرع",x.name,x.code);if(r)act(()=>DB.update("sm_branches",id,r))});
+ bind("data-edbl",async id=>{const x=S.buildings.find(b=>b.id===id);const r=await nm("تعديل المبنى","اسم المبنى",x.name,x.code);if(r)act(()=>DB.update("sm_buildings",id,r))});
+ bind("data-edfl",async id=>{const x=S.floors.find(b=>b.id===id);const r=await nm("تعديل الدور","اسم الدور",x.name,x.code);if(r)act(()=>DB.update("sm_floors",id,r))});
+ const del=async(t,id,what)=>{if(await confirmBox("تأكيد الحذف",`سيُحذف ${what} وكل ما يتبعه من مخططات وخرائط نهائيًا. هل أنت متأكد؟`,"حذف نهائي",true))act(()=>DB.remove(t,id))};
+ bind("data-delbr",id=>del("sm_branches",id,"الفرع «"+nameOf(S.branches,id)+"»"));
+ bind("data-delbl",id=>del("sm_buildings",id,"المبنى «"+nameOf(S.buildings,id)+"»"));
+ bind("data-delfl",id=>del("sm_floors",id,"الدور «"+nameOf(S.floors,id)+"»"));
+ bind("data-open",id=>{const f=S.floors.find(x=>x.id===id);S.sel={branch:f.branch_id,building:f.building_id,floor:f.id};go("setup")})}
+
+/* ======================= 2) إعداد الخرائط ======================= */
+const STEPS=["اختيار الموقع","رفع المخطط","مواقع السلامة","مواقع «أنت هنا»","إصدار الخرائط"];
+function stepsHTML(cur,done=[]){return `<div class="steps">${STEPS.map((s,i)=>`<button class="step ${i===cur?"on":""} ${done.includes(i)?"done":""}" data-step="${i}"><i>${done.includes(i)&&i!==cur?"✓":i+1}</i>${s}</button>`).join("")}</div>`}
+async function viewSetup(opts={}){await loadAll();const m=$("#main");const sel=S.sel;
+ if(sel.floor&&S.floors.find(f=>f.id===sel.floor)){const p=projOf(sel.floor);if(p&&planOf(p)&&!opts.upload)return openEditor(sel.floor,opts.step);return viewUpload(sel.floor)}
+ const brs=S.branches;const opt=(arr,v,ph)=>`<option value="">${ph}</option>`+arr.map(x=>`<option value="${x.id}" ${x.id===v?"selected":""}>${esc(x.name)}</option>`).join("");
+ m.innerHTML=`<h1 class="pg">إعداد الخرائط</h1><p class="pgs">خمس خطوات: اختر الموقع، ارفع المخطط، ضع رموز السلامة، حدّد مواقع اللوحات، ثم أصدر الخرائط.</p>${stepsHTML(0)}
+ <div class="card" style="margin-top:16px;max-width:720px"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">
+ <label class="f">الفرع<select class="in" id="sBr">${opt(brs,sel.branch,"اختر الفرع")}</select></label>
+ <label class="f">المبنى<select class="in" id="sBl">${opt(S.buildings.filter(b=>b.branch_id===sel.branch),sel.building,"اختر المبنى")}</select></label>
+ <label class="f">الدور<select class="in" id="sFl">${opt(S.floors.filter(f=>f.building_id===sel.building),null,"اختر الدور")}</select></label></div>
+ ${!brs.length?`<div class="info" style="margin-top:14px">لا توجد فروع بعد. ${S.admin?"أضفها من «الفروع والمباني».":"تواصل مع مدير النظام لمنحك صلاحية."}</div>`:""}
+ <div class="row" style="margin-top:16px"><button class="btn pri" id="sGo" disabled>متابعة</button></div></div>`;
+ const br=$("#sBr"),bl=$("#sBl"),fl=$("#sFl"),goB=$("#sGo");
+ br.onchange=()=>{S.sel={branch:br.value||null,building:null,floor:null};viewSetup()};
+ bl.onchange=()=>{S.sel.building=bl.value||null;S.sel.floor=null;viewSetup()};
+ fl.onchange=()=>{goB.disabled=!fl.value};
+ goB.onclick=()=>{S.sel.floor=fl.value;viewSetup()}}
+
+/* ---------- رفع المخطط ---------- */
+async function viewUpload(fid,replace){const m=$("#main");const {floor,building,branch}=flInfo(fid);const p=projOf(fid);
+ const canEdit=S.can(floor.branch_id,"edit");
+ m.innerHTML=`<div class="row"><div><h1 class="pg">${esc(branch.name)} ← ${esc(building.name)} ← ${esc(floor.name)}</h1><p class="pgs">${replace?"استبدال المخطط المعماري لهذا الدور":"ارفع المخطط المعماري لهذا الدور بصيغة PDF أو صورة (PNG/JPG)."}</p></div><span class="sp"></span><button class="btn" id="back">رجوع</button></div>${stepsHTML(1,[0])}
+ <div style="margin-top:16px;max-width:820px">${canEdit?`<label class="drop" id="drop"><input type="file" id="file" accept=".pdf,image/png,image/jpeg,application/pdf" hidden>${ICO.upload}<div style="font-size:18px;font-weight:700;margin-top:8px">اسحب الملف هنا أو اضغط للاختيار</div><div class="muted small" style="margin-top:6px">PDF (بصفحة أو عدة صفحات) أو صورة PNG / JPG — يُحفظ الملف الأصلي كما هو دون تعديل</div></label><div id="upArea" style="margin-top:14px"></div>`:`<div class="card empty"><b>لم يُرفع مخطط لهذا الدور بعد</b>رفع المخططات من صلاحية مسؤول السلامة.</div>`}</div>`;
+ $("#back").onclick=()=>{if(replace)return openEditor(fid);S.sel.floor=null;go("setup")};
+ if(!canEdit)return;const inp=$("#file"),drop=$("#drop");
+ drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("over")});drop.addEventListener("dragleave",()=>drop.classList.remove("over"));
+ drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+ inp.onchange=()=>inp.files[0]&&handleFile(inp.files[0]);
+ async function handleFile(file){const area=$("#upArea");area.innerHTML=`<div class="card"><div class="row"><b>جاري قراءة الملف…</b></div><div class="prog" style="margin-top:10px"><i style="width:30%"></i></div></div>`;
+  try{let pages=[];const isPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name);
+   if(isPdf){const lib=await pdfjs();const doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;
+    for(let i=1;i<=doc.numPages;i++){const pg=await doc.getPage(i);const v=pg.getViewport({scale:1});const sc=Math.min(240/v.width,240/v.height);const c=document.createElement("canvas");const vv=pg.getViewport({scale:sc});c.width=vv.width;c.height=vv.height;await pg.render({canvasContext:c.getContext("2d"),viewport:vv}).promise;pages.push({i,thumb:c.toDataURL("image/png"),w:v.width,h:v.height})}
+    if(pages.length===1)return finish(await renderPdfPage(doc,1),1);
+    area.innerHTML=`<div class="card"><b>الملف يحتوي على ${pages.length} صفحات — اختر صفحة المخطط</b><div class="thumbs" style="margin-top:12px">${pages.map(p=>`<button data-pg="${p.i}"><img src="${p.thumb}" alt=""><span>صفحة ${p.i}</span></button>`).join("")}</div></div>`;
+    area.querySelectorAll("[data-pg]").forEach(b=>b.onclick=async()=>{area.innerHTML=`<div class="card"><b>جاري تجهيز الصفحة ${b.dataset.pg} بدقة عالية…</b></div>`;finish(await renderPdfPage(doc,+b.dataset.pg),+b.dataset.pg)})}
+   else{const img=await blobImage(file);const MAX=7000;let {width:w,height:h}=img;const k=Math.min(1,MAX/Math.max(w,h));const c=document.createElement("canvas");c.width=Math.round(w*k);c.height=Math.round(h*k);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);finish(c,null)}
+  }catch(e){console.error(e);area.innerHTML=`<div class="err">تعذر قراءة الملف: ${esc(e.message)}</div>`}
+  async function finish(canvas,page){area.innerHTML=`<div class="card"><b>جاري حفظ المخطط…</b><div class="prog" style="margin-top:10px"><i style="width:70%"></i></div></div>`;
+   try{await savePlan(fid,file,canvas,page,replace);toast("تم رفع المخطط");await loadAll();openEditor(fid,2)}catch(e){console.error(e);area.innerHTML=`<div class="err">تعذر حفظ المخطط: ${esc(e.message)}</div>`}}}}
+async function renderPdfPage(doc,n){const pg=await doc.getPage(n);const v=pg.getViewport({scale:1});const target=6000;let sc=target/Math.max(v.width,v.height);sc=Math.min(sc,Math.sqrt(36e6/(v.width*v.height)));const vv=pg.getViewport({scale:sc});const c=document.createElement("canvas");c.width=Math.round(vv.width);c.height=Math.round(vv.height);const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);await pg.render({canvasContext:x,viewport:vv,background:"#ffffff"}).promise;return c}
+const blobImage=b=>new Promise((res,rej)=>{const u=URL.createObjectURL(b);const i=new Image();i.onload=()=>{res(i)};i.onerror=()=>rej(new Error("صورة غير صالحة"));i.src=u});
+const canvasBlob=(c,type="image/jpeg",q=.92)=>new Promise(r=>c.toBlob(r,type,q));
+async function savePlan(fid,file,canvas,page,replace){const {floor}=flInfo(fid);const b=floor.branch_id;const id=uid();
+ const img=await canvasBlob(canvas,"image/jpeg",.93);const ext=(file.name.split(".").pop()||"bin").toLowerCase();
+ const ip=`${b}/${fid}/${id}-plan.jpg`,op=`${b}/${fid}/${id}-original.${ext}`;
+ await DB.putFile(ip,img);await DB.putFile(op,file);
+ const plan=await DB.insert("sm_plans",{id,floor_id:fid,branch_id:b,image_path:ip,original_path:op,file_name:file.name,page,width:canvas.width,height:canvas.height,created_by:S.me.email});
+ let p=projOf(fid);
+ if(!p){p=await DB.insert("sm_projects",{floor_id:fid,branch_id:b,plan_id:plan.id,data:{markers:[],points:[],routes:[]}});await DB.note(p.id,"plan","رفع المخطط: "+file.name);return}
+ const old=planOf(p);let data=clone(p.data||{markers:[],points:[],routes:[]});
+ const has=(data.markers||[]).length+(data.points||[]).length+(data.routes||[]).length>0;
+ if(has){await DB.saveVersion(p.id,"قبل استبدال المخطط");
+  const sameRatio=old&&Math.abs(old.width/old.height-canvas.width/canvas.height)/(old.width/old.height)<0.01;
+  if(sameRatio){const k=canvas.width/old.width;const sc=a=>a.map(v=>v*k);data.markers.forEach(m=>{m.x*=k;m.y*=k});data.points.forEach(m=>{m.x*=k;m.y*=k});data.routes.forEach(r=>r.pts=r.pts.map(sc));toast("المخطط الجديد بنفس الأبعاد — نُقلت العلامات إليه، راجعها قبل الاعتماد",4500)}
+  else{data={markers:[],points:[],routes:[]};toast("أبعاد المخطط الجديد مختلفة — لم تُنقل العلامات تلقائيًا، وحُفظت النسخة السابقة في السجل",5500)}}
+ await DB.update("sm_projects",p.id,{plan_id:plan.id,data});await DB.note(p.id,"plan","استبدال المخطط: "+file.name)}
+
+/* ======================= المحرر ======================= */
+let ED=null;
+async function openEditor(fid,step){const m=$("#main");m.className="full";await loadAll();const p=projOf(fid);const plan=planOf(p);const {floor,building,branch}=flInfo(fid);
+ m.innerHTML=`<div class="empty"><b>جاري فتح المخطط…</b></div>`;
+ let blob;try{blob=await DB.getFile(plan.image_path)}catch(e){m.innerHTML=`<div class="err" style="margin:20px">تعذر تحميل المخطط: ${esc(e.message)}</div>`;return}
+ const url=URL.createObjectURL(blob);const img=await blobImage(blob);
+ ED=new Editor({fid,project:p,plan,url,img,floor,building,branch,step});ED.mount(m)}
+
+class Editor{
+ constructor(o){Object.assign(this,o);this.data=clone(this.project.data||{});for(const k of["markers","points","routes"])this.data[k]=this.data[k]||[];
+  this.W=this.plan.width;this.H=this.plan.height;this.base=Math.max(this.W,this.H)*0.022;
+  this.mode="select";this.sel=new Set();this.undo=[];this.redo=[];this.tab="items";this.hidden=new Set();this.view={k:1,x:0,y:0};this.saveState="ok";this.dirty=false;this.route=null;this.vsel=null;
+  this.step=this.step??(this.data.points.length?3:2);this.checkLocal()}
+ get ro(){return this.project.status!=="draft"||!S.can(this.project.branch_id,"edit")}
+ lsKey(){return "sm_pending_"+this.project.id}
+ checkLocal(){try{const raw=localStorage.getItem(this.lsKey());if(!raw)return;const loc=JSON.parse(raw);if(new Date(loc.at)>new Date(this.project.updated_at||0)&&JSON.stringify(loc.data)!==JSON.stringify(this.data)&&!this.ro){this.pendingLocal=loc}else localStorage.removeItem(this.lsKey())}catch(e){}}
+ mount(root){this.root=root;const p=this.project;
+  root.innerHTML=`<div class="ed"><div class="ed-bar"><button class="btn sm" data-a="back">→ رجوع</button><span class="loc">${esc(this.branch.name)} ← ${esc(this.building.name)} ← ${esc(this.floor.name)}</span><span id="stChip"></span><span class="save" id="save"><i></i><span>محفوظ</span></span><span class="sp"></span><span id="stepsBox"></span><span class="sp"></span><span id="wf" class="row"></span>
+   <button class="btn sm" data-a="hist">${ICO.hist}السجل والإصدارات</button><button class="btn sm" data-a="replace">${ICO.upload}استبدال المخطط</button><button class="btn sm gold" data-a="export">${ICO.print}إصدار الخرائط</button></div>
+   <div class="tools" id="tools"></div><div class="canvas" id="cv"><svg class="board" id="board" xmlns="http://www.w3.org/2000/svg"><defs id="defs"></defs><g id="vp"><image id="pl" href="${this.url}" x="0" y="0" width="${this.W}" height="${this.H}" preserveAspectRatio="none"/><g id="gR"></g><g id="gM"></g><g id="gP"></g><g id="gH"></g></g></svg>
+   <div class="zoom"><button data-z="in" title="تكبير">+</button><button data-z="out" title="تصغير">−</button><button data-z="fit" title="ملاءمة الشاشة">${ICO.fit}</button></div>
+   <div class="layers"><button class="btn sm" id="lyB">${ICO.eye}إظهار وإخفاء</button></div><div id="hint" class="hint hidden"></div><div id="banner" class="banner hidden"></div></div>
+   <aside class="side"><div class="tabs" id="tabs"></div><div class="lst" id="lst"></div><div class="props" id="props"></div></aside></div>`;
+  this.svg=$("#board");this.vp=$("#vp");this.cv=$("#cv");this.defs();
+  root.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>this.action(b.dataset.a));
+  root.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>this.zoomBtn(b.dataset.z));
+  $("#lyB").onclick=e=>this.layersPop(e);
+  this.bindCanvas();this.keys=e=>this.onKey(e);document.addEventListener("keydown",this.keys);
+  this.unload=e=>{if(this.dirty){this.flush();e.preventDefault();e.returnValue=""}};window.addEventListener("beforeunload",this.unload);
+  this.ro_=this.ro;this.renderAll();requestAnimationFrame(()=>this.fit());
+  if(this.pendingLocal)setTimeout(async()=>{if(await confirmBox("تعديلات غير محفوظة",`وُجدت تعديلات محفوظة على هذا الجهاز بتاريخ ${fmtDT(this.pendingLocal.at)} لم تصل للخادم (ربما بسبب انقطاع الاتصال). هل تريد استعادتها؟`,"استعادة التعديلات")){this.pushUndo();this.data=this.pendingLocal.data;this.renderAll();this.changed()}else{localStorage.removeItem(this.lsKey())}},200)}
+ destroy(){document.removeEventListener("keydown",this.keys);window.removeEventListener("beforeunload",this.unload);clearTimeout(this.saveT)}
+ defs(){$("#defs").innerHTML=Object.keys(SYM).map(k=>`<symbol id="s-${k}" viewBox="0 0 100 100">${SYM[k].svg}</symbol>`).join("")+`<symbol id="s-here" viewBox="0 0 100 100">${HERE_SVG}</symbol>`}
+ /* ---------- العرض ---------- */
+ renderAll(){this.renderBar();this.renderTools();this.renderRoutes();this.renderMarkers();this.renderPoints();this.renderSide();this.renderBanner()}
+ renderBar(){const p=this.project;$("#stChip").innerHTML=statusChip(p);
+  const done=[0,1];if(this.data.markers.length)done.push(2);if(this.data.points.length)done.push(3);
+  $("#stepsBox").innerHTML=stepsHTML(this.step,done);$("#stepsBox").querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>this.goStep(+b.dataset.step));
+  const b=p.branch_id,wf=[];
+  if(p.status==="draft"&&S.can(b,"edit"))wf.push(`<button class="btn sm ok" data-w="submit">إرسال للمراجعة</button>`);
+  if(p.status==="review"&&S.can(b,"review"))wf.push(`<button class="btn sm ok" data-w="approve">اعتماد</button><button class="btn sm" data-w="return">إرجاع للتعديل</button>`);
+  if(p.status==="review"&&S.can(b,"edit"))wf.push(`<button class="btn sm" data-w="withdraw">سحب من المراجعة</button>`);
+  if(p.status==="approved"&&S.can(b,"edit"))wf.push(`<button class="btn sm pri" data-w="new_version">إنشاء نسخة جديدة للتعديل</button>`);
+  $("#wf").innerHTML=wf.join("");$("#wf").querySelectorAll("[data-w]").forEach(x=>x.onclick=()=>this.workflow(x.dataset.w));
+  this.root.querySelector('[data-a="replace"]').classList.toggle("hidden",this.ro)}
+ renderBanner(){const p=this.project,bn=$("#banner");bn.className="banner hidden";
+  if(p.status==="approved"){bn.className="banner appr";bn.innerHTML=`✓ خرائط معتمدة — الإصدار ${p.version}، اعتُمدت ${fmtDate(p.approved_at)} بواسطة ${esc(p.approved_by||"")}. للتعديل أنشئ نسخة جديدة.`}
+  else if(p.status==="review"){bn.className="banner rev";bn.innerHTML=`الخرائط قيد المراجعة — التعديل متوقف حتى الاعتماد أو الإرجاع.`}
+  else if(p.return_note){bn.className="banner ret";bn.innerHTML=`أُعيدت للتعديل: ${esc(p.return_note)}`}
+  else if(!S.can(p.branch_id,"edit")){bn.className="banner rev";bn.innerHTML=`عرض فقط — لا تملك صلاحية التعديل في هذا الفرع.`}}
+ renderTools(){const ro=this.ro;const t=(id,label,icon,on,dis)=>`<button class="tool ${on?"on":""}" data-t="${id}" ${dis?"disabled":""} title="${esc(label)}">${icon}<span>${label}</span></button>`;
+  let h=t("select","تحديد وتحريك",ICO.sel,this.mode==="select")+`<span class="tsep"></span>`;
+  h+=t("place:here","أنت هنا",symSvg("here"),this.mode==="place:here",ro);
+  h+=t("route","مسار الإخلاء",ICO.route,this.mode==="route",ro)+`<span class="tsep"></span>`;
+  for(const k of QUICK)h+=t("place:"+k,SYM[k].n,symSvg(k),this.mode==="place:"+k,ro);
+  const extra=this.extraSym;if(extra&&!QUICK.includes(extra))h+=t("place:"+extra,SYM[extra].n,symSvg(extra),this.mode==="place:"+extra,ro);
+  h+=t("lib","رموز أخرى",ICO.more,false,ro)+`<span class="tsep"></span>`+t("undo","تراجع",ICO.undo,false,ro||!this.undo.length)+t("redo","إعادة",ICO.redo,false,ro||!this.redo.length);
+  $("#tools").innerHTML=h;$("#tools").querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>this.tool(b.dataset.t));
+  this.cv.classList.toggle("mode-place",this.mode.startsWith("place"));this.cv.classList.toggle("mode-route",this.mode==="route")}
+ sz(m){return this.base*(m.s||1)}
+ renderMarkers(){const g=$("#gM");g.innerHTML=this.data.markers.filter(m=>!this.hidden.has(SYM[m.t]?SYM[m.t].c:"x")&&!this.hidden.has("t:"+m.t)).map(m=>{const s=this.sz(m),sel=this.sel.has(m.id);
+  return `<g data-m="${m.id}" transform="translate(${m.x},${m.y})" style="cursor:${this.ro?"default":"move"}">${sel?`<rect x="${-s/2-s*.14}" y="${-s/2-s*.14}" width="${s*1.28}" height="${s*1.28}" rx="${s*.2}" fill="rgba(0,153,221,.18)" stroke="#0099DD" stroke-width="${s*.06}"/>`:""}<use href="#s-${m.t}" x="${-s/2}" y="${-s/2}" width="${s}" height="${s}"/></g>`}).join("")}
+ renderPoints(){const g=$("#gP");if(this.hidden.has("here")){g.innerHTML="";return}g.innerHTML=this.data.points.map(p=>{const s=this.base*1.15*(p.s||1),sel=this.sel.has(p.id);const fs=s*.42;
+  return `<g data-p="${p.id}" transform="translate(${p.x},${p.y})" style="cursor:${this.ro?"pointer":"move"}">${sel?`<circle r="${s*.68}" fill="rgba(0,153,221,.2)" stroke="#0099DD" stroke-width="${s*.06}"/>`:""}<use href="#s-here" x="${-s/2}" y="${-s/2}" width="${s}" height="${s}"/><g transform="translate(0,${s*.5+fs*1.1})"><rect x="${-fs*Math.max(3,p.name.length*.33)}" y="${-fs*.9}" width="${fs*2*Math.max(3,p.name.length*.33)}" height="${fs*1.35}" rx="${fs*.3}" fill="#fff" stroke="#D32F2F" stroke-width="${fs*.08}"/><text text-anchor="middle" y="${fs*.12}" font-size="${fs}" font-weight="700" fill="#B71C1C" font-family="Mada,sans-serif">${esc(p.name)}</text></g></g>`}).join("")}
+ routeW(){return Math.max(this.W,this.H)*0.0045}
+ renderRoutes(){const g=$("#gR");const w=this.routeW();let h="";
+  for(const r of this.data.routes){if(this.hidden.has("route:"+r.type))continue;const pts=r.rev?[...r.pts].reverse():r.pts;if(pts.length<2&&r!==this.route){continue}
+   const sel=this.sel.has(r.id);const col=r.type==="alt"?"#E07B00":"#1E8E3E";const d="M"+pts.map(p=>p.join(",")).join(" L");
+   h+=`<g data-r="${r.id}">${sel?`<path d="${d}" fill="none" stroke="rgba(0,153,221,.35)" stroke-width="${w*3.2}" stroke-linecap="round" stroke-linejoin="round"/>`:""}<path d="${d}" fill="none" stroke="#fff" stroke-width="${w*1.9}" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/><path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${r.type==="alt"?`stroke-dasharray="${w*2.6} ${w*1.6}"`:""}/><path d="${d}" fill="none" stroke="transparent" stroke-width="${w*5}" style="cursor:pointer"/>${arrows(pts,w,col)}`;
+   if(sel&&!this.ro)h+=r.pts.map((p,i)=>`<circle data-v="${r.id}:${i}" cx="${p[0]}" cy="${p[1]}" r="${w*1.5}" fill="${this.vsel===r.id+":"+i?"#0099DD":"#fff"}" stroke="#0099DD" stroke-width="${w*.45}" style="cursor:move"/>`).join("");
+   h+=`</g>`}
+  if(this.route&&this.route.pts.length){const r=this.route;const d="M"+r.pts.map(p=>p.join(",")).join(" L")+(this.mouse?` L${this.mouse.join(",")}`:"");h+=`<path d="${d}" fill="none" stroke="${r.type==="alt"?"#E07B00":"#1E8E3E"}" stroke-width="${w}" stroke-dasharray="${w*1.5} ${w}" stroke-linecap="round"/>`+r.pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="${w*1.2}" fill="#fff" stroke="#1E8E3E" stroke-width="${w*.4}"/>`).join("")}
+  g.innerHTML=h}
+ renderSide(){const tabs=[["items","العلامات",this.data.markers.length],["points","أنت هنا",this.data.points.length],["routes","المسارات",this.data.routes.length]];
+  $("#tabs").innerHTML=tabs.map(([k,t,n])=>`<button data-tab="${k}" class="${this.tab===k?"on":""}">${t} (${n})</button>`).join("");$("#tabs").querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{this.tab=b.dataset.tab;this.renderSide()});
+  const L=$("#lst");let h="";const x=id=>this.ro?"":`<button class="x" data-del="${id}" title="حذف">${ICO.trash}</button>`;
+  if(this.tab==="items"){if(!this.data.markers.length)h=`<div class="empty small"><b>لا توجد علامات بعد</b>اختر رمزًا من الشريط ثم اضغط على موقعه في المخطط.</div>`;
+   const byT={};this.data.markers.forEach(m=>(byT[m.t]=byT[m.t]||[]).push(m));
+   for(const[k,arr]of Object.entries(byT)){h+=`<div class="grp">${esc(SYM[k]?SYM[k].n:k)} — ${arr.length}</div>`;h+=arr.map(m=>`<div class="it ${this.sel.has(m.id)?"sel":""}" data-sel="${m.id}">${symSvg(m.t,'class="ic"')}<div class="nm">${esc(m.name||SYM[m.t].n)}</div>${x(m.id)}</div>`).join("")}}
+  if(this.tab==="points"){if(!this.data.points.length)h=`<div class="empty small"><b>لا توجد مواقع لوحات بعد</b>اختر أداة «أنت هنا» واضغط على كل موقع ستُركّب فيه لوحة إخلاء.</div>`;
+   h+=this.data.points.map(p=>{const rc=this.data.routes.filter(r=>(r.links||[]).includes(p.id)).length;return `<div class="it ${this.sel.has(p.id)?"sel":""}" data-sel="${p.id}">${symSvg("here",'class="ic"')}<div class="nm">${esc(p.name)}<div class="sub">لوحة ${esc(boardNo(this.fid,p))} · ${rc?rc+" مسار":"<span style='color:#C47F00'>بلا مسار</span>"}</div></div><button class="btn sm" data-prev="${p.id}">معاينة</button>${x(p.id)}</div>`}).join("")}
+  if(this.tab==="routes"){if(!this.data.routes.length)h=`<div class="empty small"><b>لا توجد مسارات بعد</b>اختر «مسار الإخلاء» واضغط على النقاط عبر الممرات حتى المخرج، ثم اضغط مرتين أو «إنهاء».</div>`;
+   h+=this.data.routes.map(r=>`<div class="it ${this.sel.has(r.id)?"sel":""}" data-sel="${r.id}"><svg class="ic" viewBox="0 0 30 30"><path d="M4 22 L14 12 L26 12" fill="none" stroke="${r.type==="alt"?"#E07B00":"#1E8E3E"}" stroke-width="4" ${r.type==="alt"?'stroke-dasharray="5 3"':""}/></svg><div class="nm">${esc(r.name||"مسار")}<div class="sub">${r.type==="alt"?"بديل":"رئيسي"} · ${(r.links||[]).length?`مرتبط بـ ${(r.links||[]).length} موقع`:"يظهر في جميع الخرائط"}</div></div>${x(r.id)}</div>`).join("")}
+  L.innerHTML=h;
+  L.querySelectorAll("[data-sel]").forEach(e=>e.onclick=ev=>{if(ev.target.closest("[data-del],[data-prev]"))return;this.select(e.dataset.sel,ev.shiftKey||ev.ctrlKey||ev.metaKey);this.centerOn(e.dataset.sel)});
+  L.querySelectorAll("[data-del]").forEach(e=>e.onclick=()=>{this.sel=new Set([e.dataset.del]);this.deleteSel()});
+  L.querySelectorAll("[data-prev]").forEach(e=>e.onclick=()=>previewPoint(this.ctx(),e.dataset.prev));
+  this.renderProps()}
+ renderProps(){const P=$("#props");const ids=[...this.sel];const ro=this.ro;
+  if(!ids.length){P.innerHTML=`<div class="muted small">${ro?"اختر عنصرًا لعرض تفاصيله.":"اختر عنصرًا لتعديله. للتحديد المتعدد اضغط Shift. اسحب المخطط لتحريكه، واستخدم عجلة الفأرة أو الإصبعين للتكبير."}</div>`;return}
+  if(ids.length>1){P.innerHTML=`<h4>${ids.length} عناصر محددة</h4>${ro?"":`<div class="row"><button class="btn sm" data-p="sz-">تصغير</button><button class="btn sm" data-p="sz+">تكبير</button><button class="btn sm" data-p="dup">${ICO.copy}تكرار</button><button class="btn sm danger" data-p="del">${ICO.trash}حذف</button></div>`}`}
+  else{const o=this.find(ids[0]);if(!o){P.innerHTML="";return}const k=o.kind,it=o.item;
+   if(k==="m")P.innerHTML=`<h4>${esc(SYM[it.t].n)}</h4><label class="f small">وصف اختياري<input class="in" data-p="name" value="${esc(it.name||"")}" placeholder="${esc(SYM[it.t].n)}" ${ro?"disabled":""}></label>${ro?"":`<div class="row"><span class="small muted">الحجم</span><button class="btn sm" data-p="sz-">−</button><button class="btn sm" data-p="sz+">+</button><span class="sp"></span><button class="btn sm" data-p="dup" title="Ctrl+D">${ICO.copy}تكرار</button><button class="btn sm danger" data-p="del">${ICO.trash}</button></div>`}`;
+   if(k==="p")P.innerHTML=`<h4>موقع لوحة — رقم ${esc(boardNo(this.fid,it))}</h4><label class="f small">اسم الموقع<input class="in" data-p="name" value="${esc(it.name)}" ${ro?"disabled":""}></label><div class="row"><button class="btn sm pri" data-p="prev">معاينة خريطته</button>${ro?"":`<button class="btn sm" data-p="sz-">−</button><button class="btn sm" data-p="sz+">+</button><button class="btn sm danger" data-p="del">${ICO.trash}</button>`}</div>`;
+   if(k==="r"){const pts=this.data.points;P.innerHTML=`<h4>مسار الإخلاء</h4><label class="f small">الاسم<input class="in" data-p="name" value="${esc(it.name||"")}" ${ro?"disabled":""}></label>
+    <div class="seg"><button data-p="type:main" class="${it.type!=="alt"?"on":""}" ${ro?"disabled":""}>رئيسي</button><button data-p="type:alt" class="${it.type==="alt"?"on":""}" ${ro?"disabled":""}>بديل</button></div>
+    ${ro?"":`<div class="row"><button class="btn sm" data-p="rev">عكس الاتجاه</button><button class="btn sm" data-p="extend">إضافة نقاط</button>${this.vsel?`<button class="btn sm danger" data-p="delv">حذف النقطة المحددة</button>`:""}<button class="btn sm danger" data-p="del">${ICO.trash}</button></div>`}
+    <div class="small"><b>يظهر في خرائط:</b> ${pts.length?"":"<span class='muted'>أضف مواقع «أنت هنا» أولًا</span>"}</div><div style="max-height:150px;overflow:auto">${pts.map(p=>`<label class="chk"><input type="checkbox" data-link="${p.id}" ${(it.links||[]).includes(p.id)?"checked":""} ${ro?"disabled":""}>${esc(p.name)}</label>`).join("")}</div><div class="muted small">إذا لم تختر أي موقع، يظهر المسار في جميع خرائط هذا الدور.</div>`}}
+  P.querySelectorAll("[data-p]").forEach(e=>{const a=e.dataset.p;if(e.tagName==="INPUT"){e.onchange=()=>this.prop(a,e.value);e.onkeydown=ev=>{if(ev.key==="Enter")e.blur()}}else e.onclick=()=>this.prop(a)});
+  P.querySelectorAll("[data-link]").forEach(e=>e.onchange=()=>{const r=this.find(ids[0]).item;this.pushUndo();r.links=r.links||[];if(e.checked)r.links.push(e.dataset.link);else r.links=r.links.filter(x=>x!==e.dataset.link);this.changed();this.renderSide()})}
+ /* ---------- العمليات ---------- */
+ find(id){let i=this.data.markers.find(x=>x.id===id);if(i)return{kind:"m",item:i};i=this.data.points.find(x=>x.id===id);if(i)return{kind:"p",item:i};i=this.data.routes.find(x=>x.id===id);if(i)return{kind:"r",item:i};return null}
+ select(id,add){if(!add)this.sel=new Set();if(id){if(add&&this.sel.has(id))this.sel.delete(id);else this.sel.add(id)}this.vsel=null;const o=id&&this.find(id);if(o&&!add)this.tab=o.kind==="m"?"items":o.kind==="p"?"points":"routes";this.renderRoutes();this.renderMarkers();this.renderPoints();this.renderSide()}
+ prop(a,v){const ids=[...this.sel];if(a==="prev")return previewPoint(this.ctx(),ids[0]);if(this.ro)return;
+  if(a==="extend"){this.route=this.find(ids[0]).item;this.extending=true;this.setMode("route");return}
+  this.pushUndo();
+  for(const id of ids){const o=this.find(id);if(!o)continue;const it=o.item;
+   if(a==="name")it.name=v.trim()||(o.kind==="p"?it.name:"");
+   if(a==="sz+"&&o.kind!=="r")it.s=Math.min(4,(it.s||1)*1.2);if(a==="sz-"&&o.kind!=="r")it.s=Math.max(.3,(it.s||1)/1.2);
+   if(a.startsWith("type:"))it.type=a.slice(5);if(a==="rev")it.rev=!it.rev;
+   if(a==="delv"&&this.vsel){const[rid,i]=this.vsel.split(":");const r=this.find(rid).item;if(r.pts.length>2){r.pts.splice(+i,1)}else toast("المسار يحتاج نقطتين على الأقل");this.vsel=null}}
+  if(a==="del")return this.deleteSel(true);if(a==="dup")return this.duplicate(true);
+  this.changed();this.renderAll()}
+ deleteSel(noUndo){if(this.ro||!this.sel.size)return;if(!noUndo)this.pushUndo();const s=this.sel;
+  this.data.markers=this.data.markers.filter(x=>!s.has(x.id));this.data.routes=this.data.routes.filter(x=>!s.has(x.id));
+  const dp=this.data.points.filter(x=>s.has(x.id)).map(x=>x.id);this.data.points=this.data.points.filter(x=>!s.has(x.id));this.data.routes.forEach(r=>r.links=(r.links||[]).filter(l=>!dp.includes(l)));
+  this.sel=new Set();this.changed();this.renderAll()}
+ duplicate(noUndo){if(this.ro||!this.sel.size)return;if(!noUndo)this.pushUndo();const off=this.base*.9,ns=new Set();
+  for(const id of this.sel){const o=this.find(id);if(!o)continue;const c=clone(o.item);c.id=uid();
+   if(o.kind==="m"){c.x+=off;c.y+=off;this.data.markers.push(c)}
+   if(o.kind==="p"){c.x+=off;c.y+=off;c.no=this.nextNo();c.name=this.nextName();this.data.points.push(c)}
+   if(o.kind==="r"){c.pts=c.pts.map(p=>[p[0]+off,p[1]+off]);c.name=(c.name||"مسار")+" (نسخة)";this.data.routes.push(c)}ns.add(c.id)}
+  this.sel=ns;this.changed();this.renderAll()}
+ nextNo(){return this.data.points.reduce((m,p)=>Math.max(m,p.no||0),0)+1}
+ nextName(){let n=this.data.points.length+1;const names=new Set(this.data.points.map(p=>p.name));while(names.has("الموقع "+pad(n)))n++;return "الموقع "+pad(n)}
+ pushUndo(){this.undo.push(JSON.stringify(this.data));if(this.undo.length>100)this.undo.shift();this.redo=[]}
+ doUndo(){if(this.ro||!this.undo.length)return;this.redo.push(JSON.stringify(this.data));this.data=JSON.parse(this.undo.pop());this.sel=new Set();this.changed();this.renderAll()}
+ doRedo(){if(this.ro||!this.redo.length)return;this.undo.push(JSON.stringify(this.data));this.data=JSON.parse(this.redo.pop());this.sel=new Set();this.changed();this.renderAll()}
+ changed(){this.dirty=true;try{localStorage.setItem(this.lsKey(),JSON.stringify({at:new Date().toISOString(),data:this.data}))}catch(e){}this.setSave("busy");clearTimeout(this.saveT);this.saveT=setTimeout(()=>this.flush(),1200);this.renderTools();this.renderBar()}
+ setSave(s,msg){const e=$("#save");if(!e)return;e.className="save "+(s==="ok"?"":s);e.querySelector("span").textContent=msg||(s==="ok"?"تم الحفظ":s==="busy"?"جاري الحفظ…":"غير متصل — محفوظ على هذا الجهاز")}
+ async flush(){clearTimeout(this.saveT);if(!this.dirty||this.ro)return;const snap=JSON.stringify(this.data);
+  try{const np=await DB.update("sm_projects",this.project.id,{data:JSON.parse(snap)});this.project=Object.assign(this.project,np);const i=S.projects.findIndex(p=>p.id===np.id);if(i>=0)S.projects[i]=np;
+   if(JSON.stringify(this.data)===snap){this.dirty=false;try{localStorage.removeItem(this.lsKey())}catch(e){}this.setSave("ok")}}
+  catch(e){console.warn(e);this.setSave("off",/صلاحية|معتمدة|المراجعة/.test(e.message)?e.message:null);clearTimeout(this.saveT);this.saveT=setTimeout(()=>this.flush(),8000)}}
+ setMode(m){if(this.mode==="route"&&m!=="route")this.finishRoute();this.mode=m;this.renderTools();this.showHint()}
+ tool(t){if(t==="undo")return this.doUndo();if(t==="redo")return this.doRedo();if(t==="lib")return this.symLib();
+  if(t.startsWith("place:")){this.goStepSilent(t==="place:here"?3:2)}
+  if(t==="route"&&this.mode!=="route"){this.route=null;this.extending=false}
+  this.setMode(this.mode===t&&t!=="select"?"select":t)}
+ goStepSilent(n){if(this.step!==n){this.step=n;this.renderBar()}}
+ goStep(n){if(n===0){return this.action("back")}if(n===1){return this.action("replace")}this.step=n;if(n===2){this.tab="items";this.setMode("select")}if(n===3){this.tab="points";this.setMode(this.ro?"select":"place:here")}if(n===4){this.renderBar();return this.action("export")}this.renderBar();this.renderSide()}
+ showHint(){const H=$("#hint");const m=this.mode;let k=null,t="";
+  if(m==="place:here"){k="here";t="اضغط على كل موقع ستُركّب فيه لوحة إخلاء. يُقترح اسم تلقائي ويمكنك تغييره من القائمة."}
+  else if(m.startsWith("place:")){k="place";t=`اضغط على المخطط لوضع «${SYM[m.slice(6)].n}». يمكنك الضغط عدة مرات، ثم اسحب أي علامة لتحريكها. Esc للخروج.`}
+  else if(m==="route"){k="route";t="اضغط نقطة تلو الأخرى عبر الممرات حتى المخرج، ثم اضغط مرتين على آخر نقطة أو زر «إنهاء المسار». حدّد المسار بنفسك وفق المخارج المعتمدة."}
+  if(m==="route"){H.classList.remove("hidden");H.innerHTML=`${tipSeen("route")?"ارسم المسار عبر الممرات حتى المخرج المعتمد.":t} <button id="rDone">إنهاء المسار</button><button id="rCancel">إلغاء</button>`;$("#rDone").onclick=()=>this.setMode("select");$("#rCancel").onclick=()=>{if(!this.extending&&this.route){this.data.routes=this.data.routes.filter(r=>r!==this.route)}this.route=null;this.mode="select";this.renderAll();H.classList.add("hidden")};tipDone("route");return}
+  if(!k||tipSeen(k)){H.classList.add("hidden");return}H.classList.remove("hidden");H.innerHTML=`${t}<button id="hOk">فهمت</button>`;$("#hOk").onclick=()=>{tipDone(k);H.classList.add("hidden")}}
+ finishRoute(){const r=this.route;this.route=null;this.mouse=null;if(!r)return;if(r.pts.length<2){this.data.routes=this.data.routes.filter(x=>x!==r);toast("المسار يحتاج نقطتين على الأقل")}else{this.sel=new Set([r.id]);this.tab="routes"}this.extending=false;this.changed();this.renderAll();$("#hint").classList.add("hidden")}
+ /* ---------- التكبير والتحريك ---------- */
+ applyView(){const v=this.view;this.vp.setAttribute("transform",`translate(${v.x},${v.y}) scale(${v.k})`)}
+ fit(){const r=this.cv.getBoundingClientRect();const k=Math.min((r.width-40)/this.W,(r.height-40)/this.H);this.view={k,x:(r.width-this.W*k)/2,y:(r.height-this.H*k)/2};this.minK=k*.5;this.applyView()}
+ zoomAt(f,cx,cy){const v=this.view;const k=Math.max(this.minK||.01,Math.min(v.k*f,(this.minK||.01)*60));const px=(cx-v.x)/v.k,py=(cy-v.y)/v.k;v.k=k;v.x=cx-px*k;v.y=cy-py*k;this.applyView()}
+ zoomBtn(z){const r=this.cv.getBoundingClientRect();if(z==="fit")return this.fit();this.zoomAt(z==="in"?1.35:1/1.35,r.width/2,r.height/2)}
+ centerOn(id){const o=this.find(id);if(!o)return;const it=o.item;let x,y;if(o.kind==="r"){x=it.pts[0][0];y=it.pts[0][1]}else{x=it.x;y=it.y}const r=this.cv.getBoundingClientRect();const v=this.view;const sx=x*v.k+v.x,sy=y*v.k+v.y;if(sx<40||sy<40||sx>r.width-40||sy>r.height-40){v.x=r.width/2-x*v.k;v.y=r.height/2-y*v.k;this.applyView()}}
+ toPlan(e){const r=this.cv.getBoundingClientRect();const v=this.view;return[(e.clientX-r.left-v.x)/v.k,(e.clientY-r.top-v.y)/v.k]}
+ inPlan([x,y]){return x>=0&&y>=0&&x<=this.W&&y<=this.H}
+ bindCanvas(){const cv=this.cv;const ptrs=new Map();let drag=null;
+  cv.addEventListener("wheel",e=>{e.preventDefault();const r=cv.getBoundingClientRect();this.zoomAt(Math.exp(-e.deltaY*(e.ctrlKey?.01:.0018)),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+  cv.addEventListener("pointerdown",e=>{if(e.target.closest(".zoom,.layers,.hint,.banner,.pop"))return;cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+   if(ptrs.size===2){const[a,b]=[...ptrs.values()];drag={t:"pinch",d:Math.hypot(a[0]-b[0],a[1]-b[1]),c:[(a[0]+b[0])/2,(a[1]+b[1])/2]};return}
+   const P=this.toPlan(e);const tm=e.target.closest("[data-m],[data-p]"),tv=e.target.closest("[data-v]"),tr=e.target.closest("[data-r]");
+   drag={t:"pan",sx:e.clientX,sy:e.clientY,vx:this.view.x,vy:this.view.y,moved:false,P,target:tm||tv||tr,shift:e.shiftKey||e.ctrlKey||e.metaKey};
+   if(this.mode==="select"&&!this.ro){
+    if(tv){const[rid,i]=tv.dataset.v.split(":");this.vsel=tv.dataset.v;drag={t:"vertex",rid,i:+i,start:P,moved:false};this.renderRoutes();this.renderProps();return}
+    if(tm){const id=tm.dataset.m||tm.dataset.p;if(!this.sel.has(id)||drag.shift){this.select(id,drag.shift)}drag={t:"move",start:P,moved:false,orig:[...this.sel].map(id=>{const o=this.find(id);return[o,o.kind==="r"?clone(o.item.pts):[o.item.x,o.item.y]]})};return}
+    if(tr){const id=tr.dataset.r;if(!this.sel.has(id)||drag.shift)this.select(id,drag.shift);drag={t:"move",start:P,moved:false,orig:[...this.sel].map(id=>{const o=this.find(id);return[o,o.kind==="r"?clone(o.item.pts):[o.item.x,o.item.y]]})};return}}
+   else if(this.mode==="select"&&(tm||tr)){const id=tm?(tm.dataset.m||tm.dataset.p):tr.dataset.r;this.select(id,drag.shift);drag.t="none";return}});
+  cv.addEventListener("pointermove",e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,[e.clientX,e.clientY]);
+   if(this.mode==="route"&&this.route){this.mouse=this.toPlan(e);this.renderRoutes()}
+   if(!drag)return;
+   if(drag.t==="pinch"&&ptrs.size===2){const[a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);const r=cv.getBoundingClientRect();const c=[(a[0]+b[0])/2,(a[1]+b[1])/2];this.view.x+=c[0]-drag.c[0];this.view.y+=c[1]-drag.c[1];this.zoomAt(d/drag.d,c[0]-r.left,c[1]-r.top);drag.d=d;drag.c=c;return}
+   if(drag.t==="pan"){const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;if(Math.abs(dx)+Math.abs(dy)>4){drag.moved=true;cv.classList.add("panning")}if(drag.moved){this.view.x=drag.vx+dx;this.view.y=drag.vy+dy;this.applyView()}return}
+   const P=this.toPlan(e);
+   if(drag.t==="move"){const dx=P[0]-drag.start[0],dy=P[1]-drag.start[1];if(!drag.moved&&Math.hypot(dx,dy)*this.view.k<3)return;if(!drag.moved){this.pushUndo();drag.moved=true}
+    for(const[o,orig]of drag.orig){if(o.kind==="r")o.item.pts=orig.map(p=>[p[0]+dx,p[1]+dy]);else{o.item.x=Math.max(0,Math.min(this.W,orig[0]+dx));o.item.y=Math.max(0,Math.min(this.H,orig[1]+dy))}}
+    this.renderRoutes();this.renderMarkers();this.renderPoints()}
+   if(drag.t==="vertex"){if(!drag.moved){this.pushUndo();drag.moved=true}const r=this.find(drag.rid).item;r.pts[drag.i]=[Math.max(0,Math.min(this.W,P[0])),Math.max(0,Math.min(this.H,P[1]))];this.renderRoutes()}});
+  const end=e=>{ptrs.delete(e.pointerId);cv.classList.remove("panning");if(!drag)return;const d=drag;drag=ptrs.size?drag:null;if(d.t==="pinch"){drag=null;return}
+   if((d.t==="move"||d.t==="vertex")&&d.moved){this.changed();this.renderSide();return}
+   if(d.t==="pan"&&!d.moved){this.click(d.P,d.shift,e)}};
+  cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);drag=null});
+  cv.addEventListener("dblclick",e=>{if(this.mode==="route"&&this.route){e.preventDefault();this.setMode("select")}});
+  window.addEventListener("resize",this._rs=()=>{})}
+ click(P,shift,e){const m=this.mode;
+  if(m==="select"){if(!shift){this.sel=new Set();this.vsel=null;this.renderRoutes();this.renderMarkers();this.renderPoints();this.renderSide()}return}
+  if(this.ro)return;if(!this.inPlan(P)){toast("اضغط داخل حدود المخطط");return}
+  if(m.startsWith("place:")){const t=m.slice(6);this.pushUndo();
+   if(t==="here"){const p={id:uid(),x:P[0],y:P[1],no:this.nextNo(),name:this.nextName()};this.data.points.push(p);this.sel=new Set([p.id]);this.tab="points"}
+   else{const mk={id:uid(),t,x:P[0],y:P[1],s:1};this.data.markers.push(mk);this.sel=new Set([mk.id]);this.tab="items"}
+   this.changed();this.renderAll();return}
+  if(m==="route"){if(!this.route){this.pushUndo();this.route={id:uid(),type:"main",name:"مسار "+(this.data.routes.length+1),pts:[],links:[]};
+    const sp=[...this.sel].map(id=>this.data.points.find(p=>p.id===id)).filter(Boolean);if(sp.length)this.route.links=sp.map(p=>p.id);this.data.routes.push(this.route)}
+   else if(this.extending&&!this.route._ext){this.pushUndo();this.route._ext=1}
+   const last=this.route.pts[this.route.pts.length-1];if(last&&Math.hypot(last[0]-P[0],last[1]-P[1])<this.routeW())return;
+   if(this.route.rev&&this.extending)this.route.pts.unshift(P);else this.route.pts.push(P);this.renderRoutes()}}
+ onKey(e){if(e.target.closest("input,textarea,select")||$(".ov"))return;const c=e.ctrlKey||e.metaKey;
+  if(e.key==="Escape"){if(this.mode!=="select")this.setMode("select");else this.select(null)}
+  else if((e.key==="Delete"||e.key==="Backspace")&&!this.ro){e.preventDefault();if(this.vsel)this.prop("delv");else this.deleteSel()}
+  else if(c&&e.key.toLowerCase()==="z"&&!e.shiftKey){e.preventDefault();this.doUndo()}
+  else if(c&&(e.key.toLowerCase()==="y"||(e.key.toLowerCase()==="z"&&e.shiftKey))){e.preventDefault();this.doRedo()}
+  else if(c&&e.key.toLowerCase()==="d"){e.preventDefault();this.duplicate()}
+  else if(e.key==="Enter"&&this.mode==="route"){this.setMode("select")}
+  else if(e.key.startsWith("Arrow")&&this.sel.size&&!this.ro){e.preventDefault();const st=(e.shiftKey?10:2)/this.view.k;const d={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key];this.pushUndo();for(const id of this.sel){const o=this.find(id);if(o.kind==="r")o.item.pts=o.item.pts.map(p=>[p[0]+d[0],p[1]+d[1]]);else{o.item.x+=d[0];o.item.y+=d[1]}}this.changed();this.renderRoutes();this.renderMarkers();this.renderPoints()}}
+ layersPop(ev){const old=$(".pop");if(old){old.remove();return}const p=document.createElement("div");p.className="pop";p.style.top="52px";p.style.left="12px";
+  const rows=[["here","مواقع «أنت هنا»"],["route:main","المسارات الرئيسية"],["route:alt","المسارات البديلة"],["safe",CATN.safe],["fire",CATN.fire],["warn",CATN.warn]];
+  p.innerHTML=`<b class="small">إظهار على المخطط</b>`+rows.map(([k,t])=>`<label class="chk"><input type="checkbox" data-ly="${k}" ${this.hidden.has(k)?"":"checked"}>${t}</label>`).join("")+`<div class="muted small" style="margin-top:6px">الإخفاء هنا للعرض فقط ولا يؤثر على الخرائط المصدرة.</div>`;
+  this.cv.appendChild(p);p.querySelectorAll("[data-ly]").forEach(c=>c.onchange=()=>{if(c.checked)this.hidden.delete(c.dataset.ly);else this.hidden.add(c.dataset.ly);this.renderRoutes();this.renderMarkers();this.renderPoints()});
+  setTimeout(()=>document.addEventListener("pointerdown",function h(e){if(!p.contains(e.target)&&e.target.id!=="lyB"){p.remove();document.removeEventListener("pointerdown",h)}}),0)}
+ symLib(){const d=dialog({title:"مكتبة رموز السلامة",body:Object.entries(CATN).map(([c,n])=>`<div><b>${n}</b><div class="symgrid" style="margin-top:8px">${Object.entries(SYM).filter(([k,s])=>s.c===c).map(([k,s])=>`<button data-k="${k}">${symSvg(k)}<span>${s.n}</span></button>`).join("")}</div></div>`).join(""),foot:false});
+  d.body.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{d.close();this.extraSym=b.dataset.k;this.goStepSilent(2);this.setMode("place:"+b.dataset.k)})}
+ /* ---------- سير العمل ---------- */
+ async workflow(a){await this.flush();let note=null;
+  if(a==="submit"){const w=checkProject(this.data);if(w.length&&!await confirmBox("ملاحظات قبل الإرسال",`<div class="warn">يوجد ما يحتاج انتباهك:<ul>${w.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div><p>هل تريد الإرسال للمراجعة رغم ذلك؟</p>`,"إرسال للمراجعة"))return}
+  if(a==="return"){note=await promptBox("إرجاع للتعديل","سبب الإرجاع والملاحظات المطلوبة");if(!note)return}
+  if(a==="approve"&&!await confirmBox("اعتماد الخرائط",`سيتم اعتماد خرائط «${esc(this.floor.name)}» (الإصدار ${this.project.version}) وقفلها من التعديل المباشر. متابعة؟`,"اعتماد"))return;
+  if(a==="new_version"&&!await confirmBox("نسخة جديدة للتعديل",`تبقى النسخة المعتمدة الحالية (الإصدار ${this.project.version}) محفوظة في السجل، وتُنشأ مسودة بالإصدار ${this.project.version+1} للتعديل ثم المراجعة. متابعة؟`,"إنشاء نسخة جديدة"))return;
+  try{const np=await DB.transition(this.project.id,a,note);Object.assign(this.project,np);const i=S.projects.findIndex(p=>p.id===np.id);if(i>=0)S.projects[i]=this.project;this.sel=new Set();if(this.ro)this.mode="select";this.renderAll();toast(ACT[a]+" — تم")}catch(e){toast(e.message,4000)}}
+ async action(a){
+  if(a==="back"){await this.flush();S.sel.floor=null;return go("tree")}
+  if(a==="replace"){if(this.ro)return;await this.flush();if(!await confirmBox("استبدال المخطط","يُحفظ المخطط الحالي وعلاماته في السجل. إذا كانت أبعاد المخطط الجديد مطابقة تُنقل العلامات إليه، وإلا تبدأ بمخطط نظيف ولا تُنقل العلامات تلقائيًا.","متابعة"))return;this.destroy();ED=null;$("#main").className="";return viewUpload(this.fid,true)}
+  if(a==="export"){await this.flush();return exportDialog(this.ctx())}
+  if(a==="hist"){await this.flush();return historyDialog(this)}}
+ ctx(){return{fid:this.fid,project:this.project,data:this.data,plan:this.plan,img:this.img,floor:this.floor,building:this.building,branch:this.branch}}
+}
+function arrows(pts,w,col){let h="";if(pts.length<2)return h;const gap=w*14;let acc=gap*.5;
+ for(let i=1;i<pts.length;i++){const[a,b]=[pts[i-1],pts[i]];const L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!L)continue;const ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;
+  while(acc<L){const t=acc/L;const x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t;h+=`<path d="M${-w*1.3},${-w*1.5} L${w*1.1},0 L${-w*1.3},${w*1.5}" transform="translate(${x},${y}) rotate(${ang})" fill="none" stroke="#fff" stroke-width="${w*.75}" stroke-linecap="round" stroke-linejoin="round"/>`;acc+=gap}acc-=L}
+ const[a,b]=[pts[pts.length-2],pts[pts.length-1]];const ang=Math.atan2(b[1]-a[1],b[0]-a[0])*180/Math.PI;h+=`<path d="M${-w*3.2},${-w*2.6} L${w*.9},0 L${-w*3.2},${w*2.6} Z" transform="translate(${b[0]},${b[1]}) rotate(${ang})" fill="${col}" stroke="#fff" stroke-width="${w*.4}" stroke-linejoin="round"/>`;return h}
+function checkProject(d,ids){const w=[];const pts=ids?d.points.filter(p=>ids.includes(p.id)):d.points;
+ if(!d.points.length)w.push("لا توجد مواقع «أنت هنا» — لن تُنشأ أي خريطة.");
+ if(!d.markers.some(m=>m.t==="exit"))w.push("لم يُحدَّد أي «مخرج طوارئ» على المخطط.");
+ if(!d.routes.length)w.push("لا توجد مسارات إخلاء مرسومة.");
+ for(const p of pts){if(!p.name||!p.name.trim())w.push("موقع بلا اسم.");const rs=d.routes.filter(r=>!(r.links||[]).length||(r.links||[]).includes(p.id));if(d.routes.length&&!rs.length)w.push(`«${p.name}» بلا مسار إخلاء مرتبط.`)}
+ const nm={};for(const p of pts){nm[p.name]=(nm[p.name]||0)+1}for(const[k,v]of Object.entries(nm))if(v>1)w.push(`الاسم «${k}» مكرر ${v} مرات.`);
+ return w}
+
+/* ======================= السجل والإصدارات ======================= */
+async function historyDialog(ed){const p=ed.project;const d=dialog({title:"السجل والإصدارات — "+ed.floor.name,body:`<div class="empty">جاري التحميل…</div>`,wide:true});
+ const draw=async()=>{const [vers,log]=await Promise.all([DB.list("sm_versions",{project_id:p.id}),DB.list("sm_log",{project_id:p.id})]);
+  vers.sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));log.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  const canRev=S.can(p.branch_id,"review"),canEd=S.can(p.branch_id,"edit")&&p.status==="draft";
+  d.body.innerHTML=`<div class="row"><div><b>الحالة الحالية:</b> ${statusChip(p)} · الإصدار ${p.version} · أعدّها ${esc(p.prepared_by||"—")} · آخر تعديل ${fmtDT(p.updated_at)} بواسطة ${esc(p.updated_by||"—")}</div><span class="sp"></span>${canEd?`<button class="btn sm pri" id="saveV">حفظ نسخة الآن</button>`:""}</div>
+  <h4 style="margin:6px 0 0;color:var(--n)">الإصدارات المحفوظة</h4>${vers.length?`<table class="tb"><tr><th>الإصدار</th><th>الحالة</th><th>التاريخ</th><th>بواسطة</th><th>ملاحظة</th><th>المحتوى</th><th></th></tr>${vers.map(v=>`<tr style="${v.cancelled?"opacity:.55":""}"><td>${v.version}</td><td>${v.cancelled?'<span class="chip st-none">ملغى</span>':`<span class="chip st-${v.status}">${STATUS[v.status]}</span>`}</td><td>${fmtDT(v.created_at)}</td><td class="small">${esc(v.approved_by||v.created_by||"")}</td><td class="small">${esc(v.note||"")}</td><td class="small muted">${(v.data.points||[]).length} لوحة · ${(v.data.markers||[]).length} علامة · ${(v.data.routes||[]).length} مسار</td><td><div class="row">${canEd?`<button class="btn sm" data-rs="${v.id}">استعادة</button>`:""}${canRev?`<button class="btn sm" data-cv="${v.id}" data-c="${v.cancelled?0:1}">${v.cancelled?"إعادة تفعيل":"إلغاء الإصدار"}</button>`:""}</div></td></tr>`).join("")}</table>`:`<div class="muted small">لا توجد إصدارات محفوظة بعد. تُحفظ تلقائيًا عند الإرسال للمراجعة والاعتماد واستبدال المخطط.</div>`}
+  <h4 style="margin:10px 0 0;color:var(--n)">سجل الإجراءات</h4>${log.length?`<table class="tb"><tr><th>الإجراء</th><th>التاريخ</th><th>بواسطة</th><th>ملاحظة</th></tr>${log.map(l=>`<tr><td>${esc(ACT[l.action]||l.action)}</td><td>${fmtDT(l.at)}</td><td class="small">${esc(l.by_email||"")}</td><td class="small">${esc(l.note||"")}</td></tr>`).join("")}</table>`:`<div class="muted small">لا توجد إجراءات بعد.</div>`}`;
+  const sv=d.body.querySelector("#saveV");if(sv)sv.onclick=async()=>{const n=await promptBox("حفظ نسخة","ملاحظة للنسخة","نسخة يدوية");if(!n)return;try{await DB.saveVersion(p.id,n);toast("حُفظت النسخة");draw()}catch(e){toast(e.message)}};
+  d.body.querySelectorAll("[data-rs]").forEach(b=>b.onclick=async()=>{const v=vers.find(x=>x.id===b.dataset.rs);if(!await confirmBox("استعادة نسخة",`ستحل بيانات الإصدار ${v.version} (${fmtDT(v.created_at)}) محل المسودة الحالية. تُحفظ المسودة الحالية أولًا في السجل. متابعة؟`,"استعادة"))return;
+   try{await DB.saveVersion(p.id,"قبل الاستعادة");if(v.plan_id&&v.plan_id!==p.plan_id){toast("هذه النسخة مرتبطة بمخطط سابق؛ استُعيدت العلامات على المخطط الحالي — راجعها",5000)}ed.pushUndo();ed.data=clone(v.data);ed.changed();await ed.flush();await DB.note(p.id,"restore","استعادة الإصدار "+v.version);ed.renderAll();toast("تمت الاستعادة");draw()}catch(e){toast(e.message)}});
+  d.body.querySelectorAll("[data-cv]").forEach(b=>b.onclick=async()=>{try{await DB.cancelVersion(b.dataset.cv,b.dataset.c==="1");if(DB.kind==="local")await DB.note(p.id,b.dataset.c==="1"?"cancel_version":"uncancel_version","");draw()}catch(e){toast(e.message)}})};
+ draw()}
+
+/* ======================= رسم الخريطة للطباعة ======================= */
+const symImgCache={};function symImage(k){if(symImgCache[k])return symImgCache[k];symImgCache[k]=new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="400" height="400">${k==="here"?HERE_SVG:SYM[k].svg}</svg>`)});return symImgCache[k]}
+let logoImg=null;async function getLogo(white){const key=white?"w":"n";logoImg=logoImg||{};if(logoImg[key])return logoImg[key];
+ let src=white?"logo-w.png":"logo-n.png";if(S.settings.logo_path&&!white){try{src=URL.createObjectURL(await DB.getFile(S.settings.logo_path))}catch(e){}}if(S.settings.logo_w_path&&white){try{src=URL.createObjectURL(await DB.getFile(S.settings.logo_w_path))}catch(e){}}
+ logoImg[key]=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});return logoImg[key]}
+async function renderSheet(ctx,pointId,paper="A3",dpi=200){await document.fonts.ready;try{await document.fonts.load("700 20px Mada");await document.fonts.load("400 20px Mada")}catch(e){}
+ const d=ctx.data,pt=d.points.find(p=>p.id===pointId);const[mmW,mmH]=PAPER[paper];const land=ctx.plan.width>=ctx.plan.height*0.9;const Wmm=land?mmW:mmH,Hmm=land?mmH:mmW;
+ const px=mm=>mm/25.4*dpi;const cw=Math.round(px(Wmm)),ch=Math.round(px(Hmm));const c=document.createElement("canvas");c.width=cw;c.height=ch;const x=c.getContext("2d");
+ const U=Math.min(cw,ch)/210;// وحدة نسبية ≈ 1مم على A4
+ const N="#212178",GOLD="#BC9C42",INK="#1d2033",MUT="#5d6178";x.fillStyle="#fff";x.fillRect(0,0,cw,ch);x.direction="rtl";x.textBaseline="middle";
+ const F=(w,s)=>`${w} ${s}px Mada, "Segoe UI", Tahoma, sans-serif`;
+ const M=8*U;// هامش
+ // الترويسة
+ const hh=26*U;x.fillStyle=N;x.fillRect(0,0,cw,hh);x.fillStyle=GOLD;x.fillRect(0,hh,cw,1.4*U);
+ const lw=await getLogo(true);if(lw){const lh=hh*.62,lww=lw.width*lh/lw.height;x.drawImage(lw,cw-M-lww,(hh-lh)/2,lww,lh)}
+ x.fillStyle="#fff";x.textAlign="center";x.font=F(800,10.5*U);x.fillText(S.settings.title||"خريطة مسار الإخلاء",cw/2,hh*.40);
+ x.font=F(500,4.6*U);x.fillStyle="#d9daf2";x.fillText(`${ctx.branch.name}  •  ${ctx.building.name}  •  ${ctx.floor.name}`,cw/2,hh*.74);
+ // رقم اللوحة يسار الترويسة
+ x.textAlign="left";x.fillStyle="#fff";x.font=F(500,3.6*U);x.fillText("رقم اللوحة",M,hh*.34);x.font=F(800,7*U);x.fillText(boardNo(ctx.fid,pt),M,hh*.66);
+ // التذييل
+ const fh=15*U;const fy=ch-fh;x.fillStyle="#f4f5fa";x.fillRect(0,fy,cw,fh);x.fillStyle=N;x.fillRect(0,fy,cw,.8*U);
+ const p=ctx.project;const stT=p.status==="approved"?`معتمدة — ${fmtDate(p.approved_at)}`:p.status==="review"?"قيد المراجعة — غير معتمدة":"مسودة — غير معتمدة";
+ const cells=[["تاريخ الإعداد / التحديث",fmtDate(p.updated_at||new Date())],["الإصدار",String(p.version)],["حالة الاعتماد",stT],["المعتمد",p.approved_by?(memberName(p.approved_by)):"—"],["الرقم التعريفي",(p.id||"").slice(0,8).toUpperCase()+"-"+pad(pt.no||0)]];
+ const cwid=(cw-2*M)/cells.length;cells.forEach(([k,v],i)=>{const cx=cw-M-cwid*i-cwid/2;x.textAlign="center";x.fillStyle=MUT;x.font=F(500,3.1*U);x.fillText(k,cx,fy+fh*.36);x.fillStyle=k==="حالة الاعتماد"&&p.status!=="approved"?"#B71C1C":INK;x.font=F(700,3.8*U);x.fillText(v,cx,fy+fh*.7)});
+ if(S.settings.footer){x.fillStyle=MUT;x.font=F(500,2.8*U);x.textAlign="center";x.fillText(S.settings.footer,cw/2,fy-3*U)}
+ // مفتاح الرموز
+ const used=[...new Set(d.markers.map(m=>m.t))].filter(k=>SYM[k]);const rs=d.routes.filter(r=>!(r.links||[]).length||(r.links||[]).includes(pt.id));
+ const leg=[["here","أنت هنا"],...used.map(k=>[k,SYM[k].n])];if(rs.some(r=>r.type!=="alt"))leg.push(["route:main","مسار الإخلاء الرئيسي"]);if(rs.some(r=>r.type==="alt"))leg.push(["route:alt","مسار الإخلاء البديل"]);
+ const top=hh+M,bot=fy-M-(S.settings.footer?4*U:0);let area;
+ const drawLegItem=async(item,lx,ly,sz,tw)=>{const[k,t]=item;if(k.startsWith("route:")){const alt=k==="route:alt";x.save();x.strokeStyle=alt?"#E07B00":"#1E8E3E";x.lineWidth=sz*.22;x.lineCap="round";if(alt)x.setLineDash([sz*.35,sz*.22]);x.beginPath();x.moveTo(lx-sz,ly);x.lineTo(lx,ly);x.stroke();x.restore();}else{const im=await symImage(k);x.drawImage(im,lx-sz,ly-sz/2,sz,sz)}x.fillStyle=INK;x.font=F(600,3.9*U);x.textAlign="right";x.fillText(t,lx-sz-2.5*U,ly,tw)};
+ if(land){const lwid=52*U;const lx0=cw-M;x.fillStyle="#f7f7fb";x.strokeStyle="#e1e2ec";x.lineWidth=.4*U;roundRect(x,lx0-lwid,top,lwid,bot-top,3*U);x.fill();x.stroke();
+  x.fillStyle=N;x.font=F(800,5*U);x.textAlign="right";x.fillText("مفتاح الرموز",lx0-4*U,top+7*U);let ly=top+16*U;const sz=8.5*U;
+  for(const it of leg){if(ly>bot-30*U)break;await drawLegItem(it,lx0-4*U,ly,sz,lwid-sz-10*U);ly+=sz+3.2*U}
+  drawEmergency(x,lx0-lwid+3*U,bot-27*U,lwid-6*U,24*U,U,F);
+  area=[M,top,cw-2*M-lwid-5*U,bot-top]}
+ else{const lh=Math.ceil(leg.length/3)*11*U+12*U;const ly0=bot-lh;x.fillStyle="#f7f7fb";x.strokeStyle="#e1e2ec";x.lineWidth=.4*U;roundRect(x,M,ly0,cw-2*M,lh,3*U);x.fill();x.stroke();
+  x.fillStyle=N;x.font=F(800,5*U);x.textAlign="right";x.fillText("مفتاح الرموز",cw-M-4*U,ly0+6*U);const colW=(cw-2*M-60*U)/3;const sz=8*U;
+  for(let i=0;i<leg.length;i++){const col=i%3,row=Math.floor(i/3);await drawLegItem(leg[i],cw-M-4*U-col*colW,ly0+15*U+row*11*U,sz,colW-sz-6*U)}
+  drawEmergency(x,M+3*U,ly0+4*U,54*U,lh-8*U,U,F);
+  area=[M,top,cw-2*M,ly0-top-4*U]}
+ // المخطط
+ const[ax,ay,aw,ah]=area;const pw=ctx.plan.width,ph=ctx.plan.height;const k=Math.min(aw/pw,ah/ph);const ox=ax+(aw-pw*k)/2,oy=ay+(ah-ph*k)/2;
+ x.save();x.strokeStyle="#cfd1df";x.lineWidth=.5*U;x.strokeRect(ox-.5,oy-.5,pw*k+1,ph*k+1);x.imageSmoothingQuality="high";x.drawImage(ctx.img,ox,oy,pw*k,ph*k);x.restore();
+ const T=(v)=>[ox+v[0]*k,oy+v[1]*k];const base=Math.max(pw,ph)*0.022*k;const rw=Math.max(pw,ph)*0.0045*k;
+ for(const r of rs){const pts=(r.rev?[...r.pts].reverse():r.pts).map(T);if(pts.length<2)continue;const col=r.type==="alt"?"#E07B00":"#1E8E3E";
+  x.save();x.lineCap="round";x.lineJoin="round";x.strokeStyle="rgba(255,255,255,.85)";x.lineWidth=rw*1.9;path(x,pts);x.stroke();x.strokeStyle=col;x.lineWidth=rw;if(r.type==="alt")x.setLineDash([rw*2.6,rw*1.6]);path(x,pts);x.stroke();x.setLineDash([]);
+  // أسهم
+  const gap=rw*14;let acc=gap*.5;for(let i=1;i<pts.length;i++){const[a,b]=[pts[i-1],pts[i]];const L=Math.hypot(b[0]-a[0],b[1]-a[1]);if(!L)continue;const an=Math.atan2(b[1]-a[1],b[0]-a[0]);while(acc<L){const t=acc/L;x.save();x.translate(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t);x.rotate(an);x.strokeStyle="#fff";x.lineWidth=rw*.75;x.beginPath();x.moveTo(-rw*1.3,-rw*1.5);x.lineTo(rw*1.1,0);x.lineTo(-rw*1.3,rw*1.5);x.stroke();x.restore();acc+=gap}acc-=L}
+  const[a,b]=[pts[pts.length-2],pts[pts.length-1]];x.translate(b[0],b[1]);x.rotate(Math.atan2(b[1]-a[1],b[0]-a[0]));x.fillStyle=col;x.strokeStyle="#fff";x.lineWidth=rw*.4;x.beginPath();x.moveTo(-rw*3.2,-rw*2.6);x.lineTo(rw*.9,0);x.lineTo(-rw*3.2,rw*2.6);x.closePath();x.fill();x.stroke();x.restore()}
+ for(const m of d.markers){if(!SYM[m.t])continue;const im=await symImage(m.t);const s=Math.max(base*1.35,7*U)*(m.s||1);const[px_,py_]=T([m.x,m.y]);x.drawImage(im,px_-s/2,py_-s/2,s,s)}
+ // أنت هنا (هذا الموقع فقط)
+ {const[hx,hy]=T([pt.x,pt.y]);const s=Math.max(base*1.6*(pt.s||1),11*U);x.save();x.fillStyle="rgba(211,47,47,.16)";x.beginPath();x.arc(hx,hy,s*1.05,0,7);x.fill();x.restore();const im=await symImage("here");x.drawImage(im,hx-s/2,hy-s/2,s,s);
+  const label="أنت هنا";x.font=F(800,5.2*U);const tw=x.measureText(label).width+6*U;let bx=hx,by=hy-s/2-6*U;if(by<oy+5*U)by=hy+s/2+6*U;x.fillStyle="#D32F2F";roundRect(x,bx-tw/2,by-4.2*U,tw,8.4*U,2*U);x.fill();x.fillStyle="#fff";x.textAlign="center";x.fillText(label,bx,by+.3*U)}
+ // اسم الموقع أسفل يمين منطقة المخطط
+ x.textAlign="right";x.fillStyle=N;x.font=F(700,4.4*U);x.fillText("موقع اللوحة: "+pt.name,ax+aw-1*U,ay+ah+3.6*U>bot?ay+3*U:ay+ah+3.4*U);
+ return c}
+function memberName(e){const m=(S.members||[]).find(x=>x.email===e);return m&&m.name?m.name:e}
+function path(x,pts){x.beginPath();x.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)x.lineTo(pts[i][0],pts[i][1])}
+function roundRect(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
+function drawEmergency(x,a,b,w,h,U,F){const nums=S.settings.emergency||"الدفاع المدني 998 • الإسعاف 997 • الشرطة 999";const parts=nums.split("•").map(s=>s.trim()).filter(Boolean);
+ x.save();x.fillStyle="#fdecea";x.strokeStyle="#f3b9b4";x.lineWidth=.4*U;roundRect(x,a,b,w,h,2.5*U);x.fill();x.stroke();x.fillStyle="#B71C1C";x.font=F(800,4*U);x.textAlign="center";x.fillText("أرقام الطوارئ",a+w/2,b+4.5*U);
+ x.font=F(700,3.5*U);x.fillStyle="#1d2033";const lh=(h-9*U)/Math.max(1,parts.length);parts.forEach((t,i)=>x.fillText(t,a+w/2,b+9*U+lh*(i+.5),w-4*U));x.restore()}
+async function previewPoint(ctx,pid){const pt=ctx.data.points.find(p=>p.id===pid);const d=dialog({title:"معاينة: "+pt.name,body:`<div class="prev-wrap"><div class="muted">جاري تجهيز المعاينة…</div></div>`,wide:true});
+ try{const c=await renderSheet(ctx,pid,"A3",90);const w=d.body.querySelector(".prev-wrap");w.innerHTML="";w.appendChild(c);
+  d.foot.innerHTML=`<button class="btn gold">${ICO.print}إصدار هذه الخريطة</button><button class="btn">إغلاق</button>`;d.foot.children[0].onclick=()=>{d.close();exportDialog(ctx,[pid])};d.foot.children[1].onclick=d.close}catch(e){console.error(e);d.body.innerHTML=`<div class="err">${esc(e.message)}</div>`}}
+
+/* ======================= إصدار الخرائط ======================= */
+function fileName(ctx,pt,ext){const s=v=>String(v||"").replace(/[\\/:*?"<>|]+/g,"-").trim();return `${s(ctx.branch.name)}_${s(ctx.building.name)}_${s(ctx.floor.name)}_${s(boardNo(ctx.fid,pt))}_${s(pt.name)}.${ext}`}
+async function exportDialog(ctx,preselect){const d=ctx.data;if(!d.points.length){toast("أضف مواقع «أنت هنا» أولًا — كل موقع تُنشأ له خريطة مستقلة",4000);return}
+ const def=S.settings.paper||"A3";const pre=new Set(preselect||d.points.map(p=>p.id));
+ const dl=dialog({title:"إصدار خرائط الإخلاء — "+ctx.floor.name,wide:false,body:`<div id="xw"></div>
+  <div><div class="row"><b>المواقع</b><span class="sp"></span><button class="btn sm" id="xa">تحديد الكل</button><button class="btn sm" id="xn">إلغاء التحديد</button></div>
+  <div style="max-height:240px;overflow:auto;margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:6px 10px">${d.points.map(p=>`<label class="chk"><input type="checkbox" data-x="${p.id}" ${pre.has(p.id)?"checked":""}><span style="flex:1">${esc(p.name)}</span><span class="muted small">لوحة ${esc(boardNo(ctx.fid,p))}</span></label>`).join("")}</div></div>
+  <div class="grid" style="grid-template-columns:1fr 1fr 1fr"><label class="f">المقاس<select class="in" id="xp">${Object.keys(PAPER).map(k=>`<option ${k===def?"selected":""}>${k}</option>`).join("")}</select></label>
+  <label class="f">الصيغة<select class="in" id="xf"><option value="pdf">PDF عالي الجودة</option><option value="png">PNG عالي الجودة</option></select></label>
+  <label class="f">طريقة التنزيل<select class="in" id="xm"><option value="one">ملف PDF واحد لكل المواقع</option><option value="zip">ملف ZIP بملف لكل موقع</option></select></label></div>
+  ${ctx.project.status!=="approved"?`<div class="info">الخرائط غير معتمدة بعد — ستظهر حالتها «${STATUS[ctx.project.status]}» على كل خريطة.</div>`:""}<div id="xprog"></div>`});
+ const warnBox=()=>{const ids=[...dl.body.querySelectorAll("[data-x]:checked")].map(i=>i.dataset.x);const w=checkProject(d,ids);dl.body.querySelector("#xw").innerHTML=w.length?`<div class="warn"><b>تنبيه قبل الإصدار:</b><ul>${w.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:"";return ids};
+ const xf=dl.body.querySelector("#xf"),xm=dl.body.querySelector("#xm");const sync=()=>{if(xf.value==="png"){xm.value="zip";xm.options[0].disabled=true}else xm.options[0].disabled=false};xf.onchange=sync;
+ dl.body.querySelectorAll("[data-x]").forEach(i=>i.onchange=warnBox);dl.body.querySelector("#xa").onclick=()=>{dl.body.querySelectorAll("[data-x]").forEach(i=>i.checked=true);warnBox()};dl.body.querySelector("#xn").onclick=()=>{dl.body.querySelectorAll("[data-x]").forEach(i=>i.checked=false);warnBox()};warnBox();
+ dl.foot.innerHTML=`<button class="btn gold">${ICO.print}إصدار وتنزيل</button><button class="btn">إغلاق</button>`;dl.foot.children[1].onclick=dl.close;
+ dl.foot.children[0].onclick=async()=>{const ids=warnBox();if(!ids.length){toast("اختر موقعًا واحدًا على الأقل");return}const btn=dl.foot.children[0];btn.disabled=true;
+  const pr=dl.body.querySelector("#xprog");pr.innerHTML=`<div class="prog"><i></i></div><div class="small muted" id="xt" style="margin-top:6px"></div>`;const bar=pr.querySelector("i"),tx=pr.querySelector("#xt");
+  try{const paper=dl.body.querySelector("#xp").value,fmt=xf.value,mode=xm.value;const dpi=paper==="A2"?150:200;const pts=d.points.filter(p=>ids.includes(p.id));const outs=[];
+   for(let i=0;i<pts.length;i++){tx.textContent=`جاري تجهيز ${i+1} من ${pts.length}: ${pts[i].name}`;bar.style.width=(i/pts.length*90)+"%";const c=await renderSheet(ctx,pts[i].id,paper,dpi);
+    if(fmt==="png")outs.push({name:fileName(ctx,pts[i],"png"),blob:await canvasBlob(c,"image/png")});else outs.push({name:fileName(ctx,pts[i],"pdf"),jpg:await canvasBlob(c,"image/jpeg",.95),w:c.width,h:c.height,dpi});await new Promise(r=>setTimeout(r,0))}
+   tx.textContent="جاري إنشاء الملف…";const base=`${ctx.branch.name}_${ctx.building.name}_${ctx.floor.name}_خرائط الإخلاء`.replace(/[\\/:*?"<>|]+/g,"-");
+   if(fmt==="pdf"&&mode==="one"){const blob=await makePdf(outs);download(blob,base+".pdf")}
+   else{await loadScript(LIB.jszip);const z=new JSZip();for(const o of outs)z.file(o.name,o.blob||await makePdf([o]));download(await z.generateAsync({type:"blob"}),base+".zip")}
+   bar.style.width="100%";tx.textContent=`تم إصدار ${outs.length} خريطة.`;toast("تم إصدار الخرائط")}catch(e){console.error(e);pr.innerHTML=`<div class="err">تعذر الإصدار: ${esc(e.message)}</div>`}btn.disabled=false};sync()}
+function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+// منشئ PDF بسيط: صفحة لكل صورة JPEG بمقاسها الحقيقي
+async function makePdf(pages){const enc=new TextEncoder();const parts=[];let len=0;const offs=[];const push=x=>{const b=typeof x==="string"?enc.encode(x):x;parts.push(b);len+=b.length};
+ const n=pages.length;const objs=[];// 1 catalog, 2 pages, then per page: page, contents, image
+ push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+ const kids=pages.map((_,i)=>`${3+i*3} 0 R`).join(" ");
+ const obj=(id,body)=>{offs[id]=len;push(`${id} 0 obj\n`);if(Array.isArray(body))body.forEach(push);else push(body);push("\nendobj\n")};
+ obj(1,"<< /Type /Catalog /Pages 2 0 R >>");obj(2,`<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+ for(let i=0;i<n;i++){const p=pages[i];const wpt=p.w/p.dpi*72,hpt=p.h/p.dpi*72;const id=3+i*3;const jpg=new Uint8Array(await p.jpg.arrayBuffer());
+  obj(id,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${wpt.toFixed(2)} ${hpt.toFixed(2)}] /Resources << /XObject << /Im${i} ${id+2} 0 R >> >> /Contents ${id+1} 0 R >>`);
+  const cs=`q ${wpt.toFixed(2)} 0 0 ${hpt.toFixed(2)} 0 0 cm /Im${i} Do Q`;obj(id+1,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+  obj(id+2,[`<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`,jpg,"\nendstream"])}
+ const total=3+n*3;const xref=len;let x=`xref\n0 ${total}\n0000000000 65535 f \n`;for(let i=1;i<total;i++)x+=String(offs[i]).padStart(10,"0")+" 00000 n \n";push(x);push(`trailer\n<< /Size ${total} /Root 1 0 R /Info << /Producer (Andalus Safety Maps) >> >>\nstartxref\n${xref}\n%%EOF`);
+ return new Blob(parts,{type:"application/pdf"})}
+
+/* ======================= 3) الخرائط الجاهزة ======================= */
+function reviewDue(p){if(p.status!=="approved"||!p.approved_at)return null;const d=new Date(p.approved_at);d.setMonth(d.getMonth()+(+S.settings.review_months||12));return d}
+async function viewReady(){await loadAll();const m=$("#main");const inst=await DB.list("sm_installs");const rows=[];const now=new Date();
+ for(const p of S.projects){const {floor,building,branch}=flInfo(p.floor_id);if(!floor.id)continue;const due=reviewDue(p);
+  for(const pt of (p.data.points||[])){const ins=inst.find(i=>i.project_id===p.id&&i.point_id===pt.id);rows.push({p,pt,floor,building,branch,no:boardNo(p.floor_id,pt),ins,due,overdue:due&&due<now,outdated:ins&&ins.version&&ins.version<p.version})}}
+ const k={all:rows.length,ap:rows.filter(r=>r.p.status==="approved").length,rv:rows.filter(r=>r.p.status==="review").length,dr:rows.filter(r=>r.p.status==="draft").length,ins:rows.filter(r=>r.ins&&r.ins.installed_on).length,od:rows.filter(r=>r.overdue).length,old:rows.filter(r=>r.outdated).length};
+ const st=S.readyF||{q:"",s:""};const kp=(v,l,c)=>`<div class="card" style="padding:14px 16px"><div style="font-size:26px;font-weight:800;color:${c||"var(--n)"}">${v}</div><div class="small muted">${l}</div></div>`;
+ m.innerHTML=`<div class="row"><div><h1 class="pg">الخرائط الجاهزة</h1><p class="pgs">كل موقع «أنت هنا» له خريطة مستقلة. ابحث واستعرض واطبع، وسجّل تركيب اللوحات.</p></div><span class="sp"></span><button class="btn" id="rep">${ICO.maps}تقرير حالة الخرائط</button></div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:16px">${kp(k.all,"إجمالي الخرائط")}${kp(k.ap,"معتمدة","var(--ok)")}${kp(k.rv,"قيد المراجعة","var(--warn)")}${kp(k.dr,"مسودة","#4a4f6b")}${kp(k.ins+" / "+k.all,"لوحات مركّبة","var(--b)")}${kp(k.od,"مراجعة دورية مستحقة",k.od?"var(--bad)":"var(--mut)")}${k.old?kp(k.old,"لوحات مركّبة بإصدار قديم","var(--bad)"):""}</div>
+ <div class="card"><div class="row"><input class="in" id="q" placeholder="ابحث بالفرع أو المبنى أو الدور أو اسم الموقع أو رقم اللوحة" style="flex:1;min-width:220px" value="${esc(st.q)}"><select class="in" id="fs" style="width:auto"><option value="">كل الحالات</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${st.s===k?"selected":""}>${v}</option>`).join("")}<option value="noins" ${st.s==="noins"?"selected":""}>لم تُركّب</option><option value="due" ${st.s==="due"?"selected":""}>مراجعة مستحقة</option></select></div>
+ <div id="rt" style="margin-top:12px;overflow:auto"></div></div>`;
+ const filt=()=>{const q=$("#q").value.trim(),s=$("#fs").value;S.readyF={q,s};return rows.filter(r=>(!s||(s==="noins"?!(r.ins&&r.ins.installed_on):s==="due"?r.overdue:r.p.status===s))&&(!q||[r.branch.name,r.building.name,r.floor.name,r.pt.name,r.no].join(" ").includes(q)))};
+ const draw=()=>{const f=filt();
+  $("#rt").innerHTML=f.length?`<table class="tb"><tr><th>رقم اللوحة</th><th>الموقع</th><th>الفرع / المبنى / الدور</th><th>الحالة</th><th>التركيب</th><th>المراجعة الدورية</th><th></th></tr>${f.map((r,i)=>`<tr><td><b>${esc(r.no)}</b></td><td>${esc(r.pt.name)}</td><td class="small">${esc(r.branch.name)} ← ${esc(r.building.name)} ← ${esc(r.floor.name)}</td><td>${statusChip(r.p)}</td>
+   <td class="small">${r.ins&&r.ins.installed_on?`<span style="color:${r.outdated?"var(--bad)":"var(--ok)"};font-weight:700">${r.outdated?"⚠ إصدار قديم (إ"+r.ins.version+")":"✓ مركّبة"}</span><br><span class="muted">${fmtDate(r.ins.installed_on)}</span>`:`<span class="muted">لم تُركّب</span>`}</td>
+   <td class="small">${r.due?`<span style="color:${r.overdue?"var(--bad)":"inherit"};font-weight:${r.overdue?700:400}">${r.overdue?"مستحقة منذ ":"حتى "}${fmtDate(r.due)}</span>`:`<span class="muted">بعد الاعتماد</span>`}</td>
+   <td><div class="row" style="flex-wrap:nowrap"><button class="btn sm" data-pv="${i}">معاينة</button><button class="btn sm gold" data-ex="${i}">${ICO.print}طباعة</button>${S.can(r.p.branch_id,"edit")||S.can(r.p.branch_id,"review")?`<button class="btn sm" data-in="${i}">التركيب</button>`:""}<button class="btn sm" data-op="${i}">فتح</button></div></td></tr>`).join("")}</table><div class="muted small" style="margin-top:8px">${f.length} خريطة</div>`:`<div class="empty"><b>لا توجد خرائط مطابقة</b>${rows.length?"غيّر البحث أو الحالة.":"ابدأ من «إعداد الخرائط» بإضافة مواقع «أنت هنا» على مخطط الدور."}</div>`;
+  const ctxOf=async p=>{const plan=planOf(p);const {floor,building,branch}=flInfo(p.floor_id);const img=await blobImage(await DB.getFile(plan.image_path));return{fid:p.floor_id,project:p,data:p.data,plan,img,floor,building,branch}};
+  $$("#rt [data-pv]").forEach(b=>b.onclick=async()=>{const r=f[+b.dataset.pv];try{previewPoint(await ctxOf(r.p),r.pt.id)}catch(e){toast(e.message)}});
+  $$("#rt [data-ex]").forEach(b=>b.onclick=async()=>{const r=f[+b.dataset.ex];try{exportDialog(await ctxOf(r.p),[r.pt.id])}catch(e){toast(e.message)}});
+  $$("#rt [data-op]").forEach(b=>b.onclick=()=>{const r=f[+b.dataset.op];S.sel={branch:r.floor.branch_id,building:r.floor.building_id,floor:r.floor.id};go("setup")});
+  $$("#rt [data-in]").forEach(b=>b.onclick=()=>{const r=f[+b.dataset.in];const d=dialog({title:"تركيب اللوحة "+r.no,body:`<div class="small muted">${esc(r.pt.name)} — ${esc(r.branch.name)} ← ${esc(r.building.name)} ← ${esc(r.floor.name)}</div>
+   <label class="f">تاريخ التركيب<input type="date" class="in" id="iD" value="${r.ins&&r.ins.installed_on?r.ins.installed_on:new Date().toISOString().slice(0,10)}"></label><label class="f">ملاحظة (اختياري)<input class="in" id="iN" value="${esc(r.ins&&r.ins.note||"")}" placeholder="مثال: مثبتة بجوار باب الفصل"></label>
+   <div class="info small">يُسجَّل أن اللوحة المركّبة هي الإصدار ${r.p.version}${r.p.status!=="approved"?" (غير معتمد بعد)":""}. عند اعتماد إصدار أحدث تظهر اللوحة كـ«إصدار قديم» لتذكيرك بتبديلها.</div>`});
+   d.foot.innerHTML=`<button class="btn pri">حفظ</button>${r.ins?'<button class="btn danger" data-rm>إلغاء التسجيل</button>':""}<button class="btn" data-c>إغلاق</button>`;d.foot.querySelector("[data-c]").onclick=d.close;
+   const rm=d.foot.querySelector("[data-rm]");if(rm)rm.onclick=async()=>{try{await DB.delInstall(r.p.id,r.pt.id);d.close();viewReady()}catch(e){toast(e.message)}};
+   d.foot.children[0].onclick=async()=>{try{await DB.upsertInstall({project_id:r.p.id,branch_id:r.p.branch_id,point_id:r.pt.id,installed_on:d.body.querySelector("#iD").value||null,note:d.body.querySelector("#iN").value.trim(),version:r.p.version});d.close();toast("تم تسجيل التركيب");viewReady()}catch(e){toast(e.message)}}})};
+ $("#q").oninput=draw;$("#fs").onchange=draw;draw();
+ $("#rep").onclick=()=>statusReport(rows,k)}
+function statusReport(rows,k){const w=window.open("","_blank");if(!w){toast("اسمح بالنوافذ المنبثقة لعرض التقرير");return}
+ const by={};rows.forEach(r=>{const key=r.branch.name;(by[key]=by[key]||[]).push(r)});
+ const csv="﻿"+["رقم اللوحة,الموقع,الفرع,المبنى,الدور,الحالة,الإصدار,تاريخ الاعتماد,التركيب,تاريخ التركيب,المراجعة الدورية"].concat(rows.map(r=>[r.no,r.pt.name,r.branch.name,r.building.name,r.floor.name,STATUS[r.p.status],r.p.version,r.p.approved_at?r.p.approved_at.slice(0,10):"",r.ins&&r.ins.installed_on?(r.outdated?"إصدار قديم":"مركّبة"):"لم تُركّب",r.ins&&r.ins.installed_on||"",r.due?r.due.toISOString().slice(0,10):""].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(","))).join("\n");
+ w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير حالة خرائط الإخلاء</title><link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;700;800&display=swap" rel="stylesheet"><style>body{font-family:Mada,Tahoma,sans-serif;color:#1d2033;margin:24px}h1{color:#212178;margin:0}.k{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}.k div{border:1px solid #ddd;border-radius:10px;padding:8px 14px}.k b{display:block;font-size:22px;color:#212178}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px}th{background:#212178;color:#fff;padding:6px;text-align:right}td{border-bottom:1px solid #e5e5ee;padding:6px}h2{color:#212178;font-size:17px;margin:18px 0 6px}.bad{color:#C62828;font-weight:700}.ok{color:#1E8E3E;font-weight:700}@media print{.np{display:none}}</style></head><body>
+  <div class="np" style="margin-bottom:12px"><button onclick="print()">طباعة / حفظ PDF</button> <a id="csv" download="تقرير حالة خرائط الإخلاء.csv">تنزيل Excel (CSV)</a></div>
+  <img src="${location.href.replace(/[^/]*$/,"")}logo-n.png" style="height:54px;float:left"><h1>تقرير حالة خرائط الإخلاء والسلامة</h1><div style="color:#666">${fmtDT(new Date())}</div>
+  <div class="k"><div><b>${k.all}</b>إجمالي الخرائط</div><div><b>${k.ap}</b>معتمدة</div><div><b>${k.rv}</b>قيد المراجعة</div><div><b>${k.dr}</b>مسودة</div><div><b>${k.ins}</b>لوحات مركّبة</div><div><b>${k.od}</b>مراجعة مستحقة</div><div><b>${k.old}</b>مركّبة بإصدار قديم</div></div>
+  ${Object.entries(by).map(([b,rs])=>`<h2>${esc(b)}</h2><table><tr><th>رقم اللوحة</th><th>الموقع</th><th>المبنى</th><th>الدور</th><th>الحالة</th><th>الإصدار</th><th>التركيب</th><th>المراجعة الدورية</th></tr>${rs.map(r=>`<tr><td><b>${esc(r.no)}</b></td><td>${esc(r.pt.name)}</td><td>${esc(r.building.name)}</td><td>${esc(r.floor.name)}</td><td>${STATUS[r.p.status]}</td><td>${r.p.version}</td><td class="${r.ins&&r.ins.installed_on?(r.outdated?"bad":"ok"):""}">${r.ins&&r.ins.installed_on?(r.outdated?"إصدار قديم":"مركّبة")+" — "+fmtDate(r.ins.installed_on):"لم تُركّب"}</td><td class="${r.overdue?"bad":""}">${r.due?fmtDate(r.due):"—"}</td></tr>`).join("")}</table>`).join("")}</body></html>`);
+ w.document.close();const a=w.document.getElementById("csv");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}))}
+
+/* ======================= 4) الإدارة ======================= */
+async function viewAdmin(){if(!S.admin)return go("tree");await loadAll();const m=$("#main");const tab=S.adminTab||"users";
+ m.innerHTML=`<h1 class="pg">الإدارة</h1><p class="pgs">المستخدمون والصلاحيات، قالب الطباعة، والنسخ الاحتياطي.</p><div class="row" style="margin-bottom:14px">${[["users","المستخدمون والصلاحيات"],["tpl","قالب الطباعة والإعدادات"],["backup","النسخ الاحتياطي"],["log","سجل النظام"]].map(([k,t])=>`<button class="btn ${tab===k?"pri":""}" data-at="${k}">${t}</button>`).join("")}</div><div id="ad"></div>`;
+ m.querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{S.adminTab=b.dataset.at;viewAdmin()});const A=$("#ad");
+ if(tab==="users"){const mem=await DB.list("sm_members");S.members=mem;
+  A.innerHTML=`<div class="card"><div class="row"><b>المستخدمون (${mem.length})</b><span class="sp"></span><button class="btn pri" id="addU">+ مستخدم</button></div>
+  <div class="info small" style="margin-top:10px">يدخل المستخدم بنفس بريد وكلمة مرور حسابه في منصة المنار. يرى كل مستخدم الفروع المسموح له بها فقط، والصلاحيات مفروضة من الخادم.</div>
+  <div style="overflow:auto;margin-top:10px"><table class="tb"><tr><th>الاسم</th><th>البريد</th><th>الدور</th><th>الفروع</th><th>الحالة</th><th></th></tr>${mem.map(u=>`<tr><td><b>${esc(u.name)}</b></td><td class="small">${esc(u.email)}</td><td>${ROLE[u.role]}</td><td class="small">${u.branch_ids&&u.branch_ids.length?u.branch_ids.map(id=>esc(nameOf(S.branches,id))).join("، "):"جميع الفروع"}</td><td>${u.active?'<span class="chip st-approved">فعّال</span>':'<span class="chip st-none">موقوف</span>'}</td><td><button class="btn sm" data-eu="${esc(u.email)}">تعديل</button></td></tr>`).join("")}</table></div></div>`;
+  const ed=u=>{const isNew=!u;u=u||{email:"",name:"",role:"editor",branch_ids:null,active:true};const d=dialog({title:isNew?"مستخدم جديد":"تعديل المستخدم",body:`<label class="f">البريد الإلكتروني (حساب الدخول)<input class="in" id="ue" value="${esc(u.email)}" ${isNew?"":"disabled"} dir="ltr"></label><label class="f">الاسم<input class="in" id="un" value="${esc(u.name)}"></label>
+   <label class="f">الدور<select class="in" id="ur">${Object.entries(ROLE).map(([k,v])=>`<option value="${k}" ${u.role===k?"selected":""}>${v}</option>`).join("")}</select></label>
+   <div class="small muted">مدير النظام: كل الصلاحيات. مسؤول السلامة: يرفع المخططات ويعد الخرائط. المراجع والمعتمد: يراجع ويعتمد أو يعيد للتعديل.</div>
+   <div><b class="small">الفروع المسموح بها</b><label class="chk"><input type="checkbox" id="uall" ${!u.branch_ids?"checked":""}>جميع الفروع (الحالية والمستقبلية)</label><div id="ubr" style="padding-inline-start:10px">${S.branches.map(b=>`<label class="chk"><input type="checkbox" data-ub="${b.id}" ${u.branch_ids&&u.branch_ids.includes(b.id)?"checked":""}>${esc(b.name)}</label>`).join("")}</div></div>
+   <label class="chk"><input type="checkbox" id="ua" ${u.active?"checked":""}>الحساب فعّال</label>`});
+   const all=d.body.querySelector("#uall"),ubr=d.body.querySelector("#ubr");const sy=()=>ubr.style.opacity=all.checked?.4:1;all.onchange=sy;sy();
+   d.foot.innerHTML=`<button class="btn pri">حفظ</button>${isNew?"":'<button class="btn danger" data-del>حذف المستخدم</button>'}<button class="btn" data-c>إلغاء</button>`;d.foot.querySelector("[data-c]").onclick=d.close;
+   const dl=d.foot.querySelector("[data-del]");if(dl)dl.onclick=async()=>{if(u.email===S.me.email){toast("لا يمكنك حذف حسابك");return}if(!await confirmBox("حذف المستخدم",`حذف ${esc(u.email)}؟`,"حذف",true))return;try{await DB.remove("sm_members",u.email,"email");d.close();viewAdmin()}catch(e){toast(e.message)}};
+   d.foot.children[0].onclick=async()=>{const email=d.body.querySelector("#ue").value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email)){toast("أدخل بريدًا صحيحًا");return}const ids=[...d.body.querySelectorAll("[data-ub]:checked")].map(i=>i.dataset.ub);
+    const row={email,name:d.body.querySelector("#un").value.trim(),role:d.body.querySelector("#ur").value,branch_ids:all.checked?null:ids,active:d.body.querySelector("#ua").checked,updated_at:new Date().toISOString()};
+    if(!all.checked&&!ids.length&&row.role!=="admin"){toast("اختر فرعًا واحدًا على الأقل أو «جميع الفروع»");return}
+    if(email===S.me.email&&row.role!=="admin"){toast("لا يمكنك إزالة صلاحية الإدارة عن حسابك");return}
+    try{await DB.upsertMember(row);d.close();toast("تم الحفظ");viewAdmin()}catch(e){toast(e.message)}}};
+  $("#addU").onclick=()=>ed(null);A.querySelectorAll("[data-eu]").forEach(b=>b.onclick=()=>ed(mem.find(x=>x.email===b.dataset.eu)))}
+ if(tab==="tpl"){const s=S.settings;A.innerHTML=`<div class="card grid" style="max-width:760px">
+  <label class="f">عنوان الخريطة<input class="in" id="tT" value="${esc(s.title||"خريطة مسار الإخلاء")}"></label>
+  <label class="f">أرقام الطوارئ (افصل بينها بـ •)<input class="in" id="tE" value="${esc(s.emergency||"الدفاع المدني 998 • الإسعاف 997 • الشرطة 999")}"></label>
+  <label class="f">سطر إرشادي أسفل الخريطة (اختياري)<input class="in" id="tF" value="${esc(s.footer||"")}" placeholder="مثال: عند سماع الإنذار اتبع المسار الأخضر إلى نقطة التجمع ولا تستخدم المصعد"></label>
+  <label class="f">مدة المراجعة الدورية للخرائط المعتمدة (بالأشهر)<input type="number" min="1" max="60" class="in" id="tR" value="${esc(s.review_months||12)}" style="max-width:200px"></label>
+  <label class="f">المقاس الافتراضي للطباعة<select class="in" id="tP" style="max-width:200px">${Object.keys(PAPER).map(k=>`<option ${k===(s.paper||"A3")?"selected":""}>${k}</option>`).join("")}</select></label>
+  <div class="grid" style="grid-template-columns:1fr 1fr"><label class="f">الشعار الأبيض (يظهر في ترويسة الخريطة)<input type="file" class="in" id="tLW" accept="image/png"></label><label class="f">الشعار الملوّن<input type="file" class="in" id="tLN" accept="image/png"></label></div>
+  <div class="row"><button class="btn pri" id="tS">حفظ</button><span class="sp"></span><span class="muted small">يُطبَّق على كل الخرائط المصدرة.</span></div></div>`;
+  $("#tS").onclick=async()=>{const n=Object.assign({},s,{title:$("#tT").value.trim(),emergency:$("#tE").value.trim(),footer:$("#tF").value.trim(),paper:$("#tP").value,review_months:+$("#tR").value||12});
+   try{for(const[id,key]of[["tLW","logo_w_path"],["tLN","logo_path"]]){const f=$("#"+id).files[0];if(f){const p=`settings/${key}-${Date.now()}.png`;await DB.putFile(p,f);n[key]=p}}await DB.saveSettings(n);S.settings=n;logoImg=null;toast("تم حفظ القالب")}catch(e){toast(e.message)}}}
+ if(tab==="backup"){A.innerHTML=`<div class="card grid" style="max-width:760px"><div><b>تصدير نسخة احتياطية كاملة</b><div class="muted small">ملف واحد يضم الفروع والمباني والأدوار والمخططات (بصورها) والخرائط والإصدارات والسجل، ويمكن استيراده لاحقًا أو نقله لخادم آخر.</div></div><div class="row"><button class="btn pri" id="bE">تصدير النسخة الاحتياطية</button><span id="bEs" class="muted small"></span></div>
+  <hr style="border:0;border-top:1px solid var(--line);width:100%"><div><b>استيراد نسخة احتياطية</b><div class="muted small">يضيف البيانات أو يحدّثها حسب معرّفاتها، ولا يحذف شيئًا موجودًا.</div></div><input type="file" class="in" id="bI" accept=".json,application/json"><div id="bIs"></div></div>`;
+  $("#bE").onclick=async()=>{const st=$("#bEs");try{st.textContent="جاري التجهيز…";const out={app:"andalus-safety-maps",v:1,at:new Date().toISOString(),tables:{},files:{}};
+   for(const t of TABLES)out.tables[t]=await DB.list(t);
+   for(const pl of out.tables.sm_plans){for(const k of["image_path","original_path"]){if(!pl[k])continue;try{const b=await DB.getFile(pl[k]);out.files[pl[k]]={type:b.type,data:await blobB64(b)}}catch(e){}}st.textContent="جاري حفظ المخططات…"}
+   download(new Blob([JSON.stringify(out)],{type:"application/json"}),`نسخة احتياطية - خرائط الإخلاء - ${new Date().toISOString().slice(0,10)}.json`);st.textContent="تم التصدير."}catch(e){st.textContent=e.message}};
+  $("#bI").onchange=async()=>{const f=$("#bI").files[0];if(!f)return;const st=$("#bIs");try{const j=JSON.parse(await f.text());if(j.app!=="andalus-safety-maps")throw new Error("الملف ليس نسخة احتياطية لهذا التطبيق");
+   if(!await confirmBox("استيراد",`سيتم استيراد ${Object.values(j.tables).reduce((a,b)=>a+b.length,0)} سجلًا و${Object.keys(j.files).length} ملفًا. متابعة؟`,"استيراد"))return;st.innerHTML=`<div class="info">جاري الاستيراد…</div>`;
+   for(const[p,v]of Object.entries(j.files)){const b=await (await fetch(`data:${v.type};base64,${v.data}`)).blob();await DB.putFile(p,b)}
+   await importTables(j.tables);st.innerHTML=`<div class="info">تم الاستيراد.</div>`;await loadAll()}catch(e){st.innerHTML=`<div class="err">${esc(e.message)}</div>`}}}
+ if(tab==="log"){const log=(await DB.list("sm_log")).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,300);const pf=id=>{const p=S.projects.find(x=>x.id===id);if(!p)return"—";const i=flInfo(p.floor_id);return `${i.branch.name||""} ← ${i.building.name||""} ← ${i.floor.name||""}`};
+  A.innerHTML=`<div class="card" style="overflow:auto">${log.length?`<table class="tb"><tr><th>التاريخ</th><th>الإجراء</th><th>الدور</th><th>بواسطة</th><th>ملاحظة</th></tr>${log.map(l=>`<tr><td class="small">${fmtDT(l.at)}</td><td>${esc(ACT[l.action]||l.action)}</td><td class="small">${esc(pf(l.project_id))}</td><td class="small">${esc(l.by_email||"")}</td><td class="small">${esc(l.note||"")}</td></tr>`).join("")}</table>`:`<div class="empty">لا توجد إجراءات بعد.</div>`}</div>`}}
+const blobB64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(String(f.result).split(",")[1]);f.readAsDataURL(b)});
+async function importTables(T){const order=["sm_branches","sm_buildings","sm_floors","sm_plans","sm_projects","sm_versions","sm_settings","sm_members","sm_installs"];
+ if(DB.kind==="local"){for(const t of order){if(!T[t])continue;const cur=await DB.rows(t);const key=t==="sm_members"?"email":"id";const map=new Map(cur.map(x=>[x[key],x]));for(const r of T[t])map.set(r[key],r);await DB.save(t,[...map.values()])}return}
+ for(const t of order){if(!T[t]||!T[t].length)continue;if(t==="sm_versions"||t==="sm_log")continue;
+  if(t==="sm_projects"){for(const r of T[t]){const ex=S.projects.find(p=>p.id===r.id);const row={id:r.id,floor_id:r.floor_id,branch_id:r.branch_id,plan_id:r.plan_id,data:r.data};if(!ex){await DB.insert(t,row)}else if(ex.status==="draft")await DB.update(t,r.id,{plan_id:r.plan_id,data:r.data})}continue}
+  if(t==="sm_settings"){await DB.saveSettings(T[t][0].data);continue}
+  const r=await RemoteDB.sb.from(t).upsert(T[t],{onConflict:t==="sm_members"?"email":t==="sm_installs"?"project_id,point_id":"id"});RemoteDB.chk(r)}}
+
+/* ======================= الدخول والتشغيل ======================= */
+function viewLogin(msg){$("#nav").innerHTML="";$("#who").innerHTML="";const m=$("#main");m.className="";
+ m.innerHTML=`<div class="card login"><img src="logo-n.png" alt="شعار مدارس الأندلس"><h1 class="pg" style="text-align:center">خرائط الإخلاء والسلامة</h1><p class="pgs" style="text-align:center">ادخل بحساب منصة المنار (البريد وكلمة المرور).</p>${msg?`<div class="err" style="margin-bottom:12px">${msg}</div>`:""}
+ <form id="lf" class="grid"><label class="f">البريد الإلكتروني<input class="in" id="le" type="email" dir="ltr" autocomplete="username" required></label><label class="f">كلمة المرور<input class="in" id="lp" type="password" dir="ltr" autocomplete="current-password" required></label><button class="btn pri" style="width:100%">دخول</button></form>
+ <div class="muted small" style="text-align:center;margin-top:14px">للتجربة دون حساب: <a href="?local=1">الوضع التجريبي المحلي</a></div></div>`;
+ $("#lf").onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector("button");b.disabled=true;const {error}=await RemoteDB.sb.auth.signInWithPassword({email:$("#le").value.trim(),password:$("#lp").value});if(error){b.disabled=false;viewLogin("تعذر الدخول: تحقق من البريد وكلمة المرور.");return}boot()}}
+async function boot(){
+ if(LOCAL||!window.supabase){DB=LocalDB;S.me=LocalDB.me;if(!(await LocalDB.rows("sm_members")).length)await LocalDB.save("sm_members",[LocalDB.me]);S.members=await LocalDB.rows("sm_members");if(!LOCAL)toast("تعذر الاتصال بالخادم — يعمل التطبيق في الوضع المحلي",5000);renderNav();return go(S.view)}
+ DB=RemoteDB;if(!RemoteDB.sb)RemoteDB.sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+ const {data:{session}}=await RemoteDB.sb.auth.getSession();if(!session)return viewLogin();
+ try{const r=await RemoteDB.sb.rpc("sm_me");const me=r.data&&(Array.isArray(r.data)?r.data[0]:r.data);if(r.error)throw r.error;
+  if(!me||!me.email){$("#main").innerHTML=`<div class="card login"><img src="logo-n.png" alt=""><h1 class="pg" style="text-align:center">لا تملك صلاحية بعد</h1><p class="pgs" style="text-align:center">حسابك (${esc(session.user.email)}) غير مضاف إلى نظام خرائط الإخلاء. تواصل مع مدير النظام لإضافتك وتحديد فروعك.</p><button class="btn" id="lo2" style="width:100%">تسجيل الخروج</button></div>`;$("#lo2").onclick=async()=>{await RemoteDB.sb.auth.signOut();location.reload()};return}
+  S.me=me;RemoteDB.me=me}catch(e){$("#main").innerHTML=`<div class="err" style="margin:20px">تعذر التحقق من الصلاحيات: ${esc(e.message||e)}<br>إذا كان هذا أول تشغيل، شغّل ملف الإعداد safety-setup.sql في Supabase.</div>`;return}
+ try{S.members=S.admin?await DB.list("sm_members"):[S.me]}catch(e){S.members=[S.me]}
+ renderNav();go(S.view)}
+window.addEventListener("online",()=>{if(ED&&ED.dirty)ED.flush()});
+if("serviceWorker"in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+boot();
+</script>
+</body>
+</html>
