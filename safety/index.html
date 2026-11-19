@@ -16,15 +16,31 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 .hidden{display:none!important}
 /* top bar */
-.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;height:64px;padding:0 18px;background:var(--n);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)}
-.top .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;white-space:nowrap}
-.top .brand img{height:34px}
-.top nav{display:flex;gap:4px;margin-inline-start:12px;flex:1;overflow:auto}
-.top nav button{background:none;border:0;color:#d7d8f3;padding:10px 14px;border-radius:10px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:7px}
-.top nav button.on{background:rgba(255,255,255,.14);color:#fff}
-.top nav button svg{width:19px;height:19px}
-.top .who{display:flex;align-items:center;gap:8px;font-size:13px;color:#d7d8f3;white-space:nowrap}
-.top .who b{color:#fff}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;min-height:100dvh}
+.sb{background:var(--n);color:#e4e4f2;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;height:100dvh}
+.sb .brand{padding:20px 18px 16px;border-bottom:2px solid var(--g);display:flex;align-items:center;gap:12px}
+.sb .brand img{height:40px}
+.sb .brand b{display:block;font-size:15.5px;color:#fff;font-weight:800}
+.sb .brand span{display:block;font-size:12.5px;color:#c9c9e6;margin-top:2px}
+.sb nav{padding:12px 10px;display:flex;flex-direction:column;gap:3px;overflow:auto;flex:1}
+.sb nav button{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:6px;border:0;border-inline-start:3px solid transparent;background:none;color:#d6d6ec;font-weight:600;text-align:start;white-space:nowrap}
+.sb nav button:hover{background:rgba(255,255,255,.06)}
+.sb nav button.on{background:rgba(255,255,255,.11);border-inline-start-color:var(--g);color:#fff;font-weight:800}
+.sb nav button svg{width:19px;height:19px;flex:none}
+.sb .mode{margin:8px 12px 10px;padding:9px 11px;border-radius:6px;font-size:12px;line-height:1.7}
+.sb .mode.cloud{background:rgba(30,142,62,.2);color:#c4ecd2}.sb .mode.local{background:rgba(188,156,66,.25);color:#ffe9b0}
+.sb .who{padding:12px 16px 16px;border-top:1px solid rgba(255,255,255,.1);font-size:12.5px;display:flex;align-items:center;gap:8px}
+.sb .who b{display:block;color:#fff;font-size:13.5px}.sb .who small{color:#b9b9dc}
+.sb .who .sp{flex:1}.sb .who button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:5px 10px;font-size:12px}
+.mnav{display:none}
+.app:has(main.full){grid-template-columns:1fr}.app:has(main.full) .sb,.app:has(main.full) .mnav{display:none}
+body.nolog .sb,body.nolog .mnav{display:none}body.nolog .app{grid-template-columns:1fr}
+.ph{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.kpis>div{padding:13px 15px;border-inline-start:1px solid var(--line)}.kpis>div:first-child{border-inline-start:0}
+.kpis b{display:block;font-size:25px;font-weight:800;color:var(--n);font-variant-numeric:tabular-nums}.kpis small{color:var(--mut);font-size:12.5px}
+.feed{list-style:none;margin:0;padding:0}.feed li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #eef0f6;font-size:13.5px;line-height:1.6}.feed li:last-child{border:0}.feed time{color:var(--mut);font-size:12px;white-space:nowrap;margin-inline-start:auto}
+.help ol,.help ul{line-height:2.1;padding-inline-start:22px;margin:6px 0}.help h3{color:var(--n);margin:4px 0 6px;font-size:16px}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:30px;font-size:12.5px;font-weight:700;white-space:nowrap}
 .st-draft{background:#eef0f7;color:#4a4f6b}.st-review{background:#fff3d6;color:#8a5a00}.st-approved{background:#e2f3e8;color:var(--ok)}.st-none{background:#f1f1f4;color:#9a9caf}
 main{max-width:1280px;margin:0 auto;padding:22px 18px 60px}
@@ -67,13 +83,14 @@ input.in:focus,select.in:focus,textarea.in:focus{outline:2px solid #bfe6f8;borde
 .step.on{background:var(--n);color:#fff}.step.on i{color:var(--n)}
 .step.done i{background:var(--ok);color:#fff}
 /* editor */
-.ed{display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:auto auto minmax(0,1fr);height:calc(100vh - 64px);height:calc(100dvh - 64px)}
+.ed{display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:auto auto minmax(0,1fr);height:100vh;height:100dvh}
 .ed-bar{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .ed-bar .loc{font-weight:800;color:var(--n);font-size:16px}
 .save{font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:6px}
 .save i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .save.busy i{background:var(--warn)}.save.off i{background:var(--bad)}
 .tools{grid-column:1/2;display:flex;gap:6px;padding:8px 10px;background:#fbfbfe;border-bottom:1px solid var(--line);overflow-x:auto;align-items:stretch}
+@media (min-width:701px){.tools{flex-wrap:wrap;overflow:visible}}
 .tool{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:78px;min-height:66px;border:1px solid transparent;background:none;border-radius:12px;font-size:11.5px;font-weight:600;line-height:1.2;text-align:center;padding:5px 3px;color:var(--ink)}
 .tool:hover{background:#fff;border-color:var(--line)}
 .tool.on{background:#e6f5fc;border-color:var(--b);color:#00618d}
@@ -148,17 +165,19 @@ table.tb{width:100%;border-collapse:collapse;font-size:14px}
 .symgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
 .symgrid button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;font-weight:600}
 .symgrid button svg{width:40px;height:40px}
-@media (max-width:980px){.ed{grid-template-columns:minmax(0,1fr) 270px}.top .brand span{display:none}}
-@media (max-width:700px){.ed{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) 38%}.side{grid-column:1;grid-row:4}.top nav button span{display:none}}
+@media (max-width:980px){.ed{grid-template-columns:minmax(0,1fr) 270px}}
+@media (max-width:700px){.ed{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) 38%}.side{grid-column:1;grid-row:4}}
+@media (max-width:860px){.app{grid-template-columns:1fr}.sb{display:none}.mnav{display:flex;gap:4px;overflow:auto;background:var(--n);padding:7px;position:sticky;top:0;z-index:30}.mnav button{background:none;border:0;color:#dfe0f5;padding:8px 11px;border-radius:7px;white-space:nowrap;font-size:13.5px;font-weight:600}.mnav button.on{background:#fff;color:var(--n)}}
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="brand"><img src="logo-w.png" alt=""><span>خرائط الإخلاء والسلامة</span></div>
+<div class="app"><aside class="sb">
+  <div class="brand"><img src="logo-w.png" alt=""><div><b>شركة الأندلس التعليمية</b><span>منصة خرائط الإخلاء والسلامة</span></div></div>
   <nav id="nav"></nav>
+  <div id="mode"></div>
   <div class="who" id="who"></div>
-</header>
-<main id="main"><div class="empty"><b>جاري التحميل…</b></div></main>
+</aside><div style="min-width:0"><nav class="mnav" id="mnav"></nav>
+<main id="main"><div class="empty"><b>جاري التحميل…</b></div></main></div></div>
 <div id="layer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
@@ -225,6 +244,10 @@ const TXT_ICO=`<svg viewBox="0 0 100 100"><rect x="3" y="3" width="94" height="9
 const HERE_SVG=`<circle cx="50" cy="50" r="46" fill="#D32F2F"/><circle cx="50" cy="50" r="46" fill="none" stroke="#fff" stroke-width="6"/><circle cx="50" cy="38" r="11" fill="#fff"/><path d="M30 78 C30 60 38 54 50 54 C62 54 70 60 70 78 Z" fill="#fff"/>`;
 const symSvg=(k,attrs="")=>k==="txt"?TXT_ICO.replace("<svg ",`<svg ${attrs} `):`<svg viewBox="0 0 100 100" ${attrs}>${k==="here"?HERE_SVG:SYM[k]?SYM[k].svg:""}</svg>`;
 const ICO={
+ dash:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>`,
+ tpl:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/></svg>`,
+ users:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.6c1.8.8 3 2.6 3.5 5.4"/></svg>`,
+ help:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/></svg>`,
  tree:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4"/></svg>`,
  edit:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>`,
  maps:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`,
@@ -313,7 +336,7 @@ const RemoteDB={kind:"remote",sb:null,me:null,
 let DB=null;
 
 /* ======================= الحالة العامة ======================= */
-const S={view:"tree",me:null,branches:[],buildings:[],floors:[],projects:[],plans:[],settings:{},sel:{branch:null,building:null,floor:null},
+const S={view:"dash",me:null,branches:[],buildings:[],floors:[],projects:[],plans:[],settings:{},sel:{branch:null,building:null,floor:null},
  can(b,need){const m=S.me;if(!m)return false;if(m.role==="admin")return true;if(m.branch_ids&&b&&!m.branch_ids.includes(b))return false;if(need==="read")return true;if(need==="edit")return m.role==="editor";if(need==="review")return m.role==="reviewer";return false},
  get admin(){return S.me&&S.me.role==="admin"}};
 async function loadAll(){const [br,bl,fl,pr,pl]=await Promise.all(["sm_branches","sm_buildings","sm_floors","sm_projects","sm_plans"].map(t=>DB.list(t)));
@@ -326,13 +349,43 @@ const flInfo=fid=>{const f=S.floors.find(x=>x.id===fid)||{};const b=S.buildings.
 const boardNo=(fid,pt)=>{const {floor,building,branch}=flInfo(fid);return [branch.code,building.code,floor.code].filter(Boolean).concat(pad(pt.no||0)).join("-")};
 
 /* ======================= التنقل ======================= */
-const VIEWS=[["tree","الفروع والمباني","tree"],["setup","إعداد الخرائط","edit"],["ready","الخرائط الجاهزة","maps"],["admin","الإدارة","admin"]];
-function renderNav(){$("#nav").innerHTML=VIEWS.filter(v=>v[0]!=="admin"||S.admin).map(([k,t,i])=>`<button data-v="${k}" class="${S.view===k?"on":""}">${ICO[i]}<span>${t}</span></button>`).join("");
- $$("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
- $("#who").innerHTML=S.me?`<span>${esc(S.me.name||S.me.email)}</span><span class="chip" style="background:rgba(255,255,255,.14);color:#fff">${ROLE[S.me.role]}</span>${DB.kind==="local"?'<span class="chip" style="background:#BC9C42;color:#fff">وضع تجريبي محلي</span>':'<button class="btn sm" id="logout" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)">خروج</button>'}`:"";
+const VIEWS=[["dash","لوحة التحكم","dash"],["tree","الفروع والمباني","tree"],["ready","الخرائط والاعتماد","edit"],["tpl","القالب والإعدادات","tpl",1],["users","المستخدمون والصلاحيات","users",1],["help","دليل الاستخدام","help"]];
+function renderNav(){document.body.classList.remove("nolog");const act=S.view==="setup"?"ready":S.view;const vs=VIEWS.filter(v=>!v[3]||S.admin);
+ $("#nav").innerHTML=vs.map(([k,t,i])=>`<button data-v="${k}" class="${act===k?"on":""}">${ICO[i]}<span>${t}</span></button>`).join("");
+ $("#mnav").innerHTML=vs.map(([k,t])=>`<button data-v="${k}" class="${act===k?"on":""}">${t}</button>`).join("");
+ $$("#nav button,#mnav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
+ $("#mode").innerHTML=DB&&DB.kind==="local"?'<div class="mode local">وضع تجريبي محلي: البيانات محفوظة في هذا المتصفح فقط.</div>':'<div class="mode cloud">متصل بالقاعدة المركزية. الحفظ تلقائي ومشترك بين المستخدمين.</div>';
+ $("#who").innerHTML=S.me?`<div><b>${esc(S.me.name||S.me.email)}</b><small>${ROLE[S.me.role]}</small></div><span class="sp"></span>${DB.kind==="local"?"":'<button id="logout">خروج</button>'}`:"";
  const lo=$("#logout");if(lo)lo.onclick=async()=>{if(ED&&ED.dirty)await ED.flush();await RemoteDB.sb.auth.signOut();location.reload()}}
-async function go(v,opts={}){if(ED&&v!=="setup"){await ED.flush();ED.destroy();ED=null}S.view=v;renderNav();const m=$("#main");m.className="";
- if(v==="tree")return viewTree();if(v==="setup")return viewSetup(opts);if(v==="ready")return viewReady();if(v==="admin")return viewAdmin()}
+async function go(v,opts={}){if(ED&&v!=="setup"){await ED.flush();ED.destroy();ED=null}if((v==="tpl"||v==="users")&&!S.admin)v="dash";S.view=v;renderNav();const m=$("#main");m.className="";window.scrollTo(0,0);
+ if(v==="dash")return viewDash();if(v==="tree")return viewTree();if(v==="setup")return viewSetup(opts);if(v==="ready")return viewReady();if(v==="help")return viewHelp();
+ if(v==="tpl"){if(!["tpl","backup"].includes(S.adminTab))S.adminTab="tpl";return viewAdmin()}if(v==="users"){if(!["users","log"].includes(S.adminTab))S.adminTab="users";return viewAdmin()}return viewDash()}
+
+/* ======================= لوحة التحكم ======================= */
+async function viewDash(){await loadAll();const m=$("#main");let log=[];try{log=(await DB.list("sm_log")).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,12)}catch(e){}
+ let inst=[];try{inst=await DB.list("sm_installs")}catch(e){}const now=new Date();
+ const pts=S.projects.reduce((a,p)=>a+((p.data&&p.data.points)||[]).length,0);const ptsOf=st=>S.projects.filter(p=>p.status===st).reduce((a,p)=>a+((p.data&&p.data.points)||[]).length,0);
+ const noPlan=S.floors.filter(f=>!projOf(f.id));const rev=S.projects.filter(p=>p.status==="review");const due=S.projects.filter(p=>{const d=reviewDue(p);return d&&d<now});
+ const kp=[["الفروع",S.branches.length],["المباني",S.buildings.length],["الأدوار",S.floors.length],["المخططات المرفوعة",S.projects.filter(p=>planOf(p)).length],["مواقع «أنت هنا»",pts],["خرائط معتمدة",ptsOf("approved"),"var(--ok)"],["قيد الإعداد",ptsOf("draft"),"var(--warn)"],["تحتاج مراجعة",ptsOf("review"),"var(--b)"],["لوحات مركّبة",inst.filter(i=>i.installed_on).length]];
+ const fl=p=>{const {floor,building,branch}=flInfo(p.floor_id);return `${esc(branch.name||"")} ← ${esc(building.name||"")} ← ${esc(floor.name||"")}`};
+ const todo=[...rev.map(p=>({t:`بانتظار المراجعة والاعتماد`,s:fl(p),p})),...due.map(p=>({t:`مراجعة دورية مستحقة`,s:fl(p),p})),...noPlan.slice(0,6).map(f=>({t:"لم يُرفع مخطط الدور",s:`${esc(nameOf(S.branches,f.branch_id))} ← ${esc(nameOf(S.buildings,f.building_id))} ← ${esc(f.name)}`,f}))];
+ m.innerHTML=`<div class="ph"><div><h1 class="pg">لوحة التحكم</h1><p class="pgs" style="margin:0">حالة خرائط الإخلاء في جميع الفروع</p></div><span class="sp"></span><button class="btn" id="dT">${ICO.tree}الفروع والمباني</button>${S.branches.length?`<button class="btn pri" id="dS">${ICO.edit}إعداد خريطة</button>`:""}</div>
+ ${S.floors.length?"":`<div class="info" style="margin-bottom:14px">ابدأ من «الفروع والمباني»: أضف الفرع ثم المبنى ثم الدور، وارفع مخطط الدور، ثم أضف مواقع «أنت هنا» ورموز السلامة.</div>`}
+ <div class="kpis">${kp.map(([n,v,c])=>`<div><b style="${c?"color:"+c:""}">${v}</b><small>${n}</small></div>`).join("")}</div>
+ <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-top:16px">
+ <div class="card"><h2 style="margin:0 0 10px;font-size:16px;color:var(--n)">يحتاج إجراء (${todo.length})</h2>${todo.length?`<ul class="feed">${todo.slice(0,10).map((x,i)=>`<li><div><b>${x.t}</b><div class="small muted">${x.s}</div></div><button class="btn sm" data-td="${i}" style="margin-inline-start:auto">فتح</button></li>`).join("")}</ul>`:`<div class="empty" style="padding:24px"><b>لا شيء معلّق</b>كل الخرائط محدثة.</div>`}</div>
+ <div class="card"><h2 style="margin:0 0 10px;font-size:16px;color:var(--n)">آخر النشاطات</h2>${log.length?`<ul class="feed">${log.map(l=>`<li><div><b>${esc(memberName(l.by_email||""))}</b> ${esc(ACT[l.action]||l.action)}${l.note?` <span class="muted">— ${esc(l.note)}</span>`:""}</div><time>${fmtDate(l.at)}</time></li>`).join("")}</ul>`:`<div class="empty" style="padding:24px">لا توجد نشاطات بعد.</div>`}</div></div>`;
+ $("#dT").onclick=()=>go("tree");const ds=$("#dS");if(ds)ds.onclick=()=>go("setup");
+ $$("[data-td]").forEach(b=>b.onclick=()=>{const x=todo[+b.dataset.td];const f=x.f||flInfo(x.p.floor_id).floor;S.sel={branch:f.branch_id,building:f.building_id,floor:f.id};if(x.f)return viewUpload(f.id);go("setup")})}
+
+/* ======================= دليل الاستخدام ======================= */
+function viewHelp(){$("#main").innerHTML=`<div class="ph"><div><h1 class="pg">دليل الاستخدام</h1><p class="pgs" style="margin:0">خطوات إعداد خرائط الإخلاء واعتمادها وطباعتها</p></div></div>
+ <div class="grid help" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+ <div class="card"><h3>خطوات إعداد الخريطة</h3><ol><li>من «الفروع والمباني» أضف الفرع ثم المبنى ثم الدور (لكل منها رمز قصير يدخل في رقم اللوحة).</li><li>ارفع مخطط الدور PDF أو صورة، ودوّره أو قصّه إن لزم قبل الحفظ.</li><li>في المحرر ضع رموز السلامة: المخارج، الطفايات، الإسعافات، نقاط التجمع، والتحذيرات. وأضف نصوصًا توضيحية بأداة «نص».</li><li>أضف مواقع «أنت هنا» — كل موقع تُطبع له لوحة مستقلة برقم خاص.</li><li>ارسم مسارات الإخلاء الرئيسية والبديلة من كل موقع إلى أقرب مخرج.</li><li>عاين الخريطة، ثم «إرسال للمراجعة».</li></ol></div>
+ <div class="card"><h3>المراجعة والاعتماد</h3><ul><li><b>مسؤول السلامة</b>: يرفع المخططات ويعدّ الخرائط ويرسلها للمراجعة.</li><li><b>المراجع والمعتمد</b>: يعتمد الخريطة أو يعيدها بملاحظات للتعديل.</li><li>الخريطة المعتمدة مقفلة؛ أي تعديل يتم بإنشاء «نسخة جديدة» برقم إصدار أعلى.</li><li>يظهر في «الخرائط والاعتماد» موعد المراجعة الدورية لكل خريطة معتمدة.</li></ul>
+ <h3 style="margin-top:14px">الطباعة والتركيب</h3><ul><li>من «الخرائط والاعتماد» اختر «طباعة» لإصدار PDF بمقاس A4 أو A3 أو A2.</li><li>بعد تعليق اللوحة سجّل «التركيب» وتاريخه؛ وعند اعتماد إصدار أحدث تظهر اللوحة كإصدار قديم لتبديلها.</li></ul></div>
+ <div class="card"><h3>نصائح</h3><ul><li>تحقق ميدانيًا من المخارج والمعدات والمسارات قبل الاعتماد.</li><li>لا تمر المسارات عبر المصاعد أو الأبواب المقفلة.</li><li>عدّل تعليمات الإخلاء وأرقام الطوارئ من «القالب والإعدادات».</li><li>الاعتماد داخل التطبيق إجراء إداري داخلي، ولا يغني عن اشتراطات الدفاع المدني.</li></ul>
+ <h3 style="margin-top:14px">اختصارات المحرر</h3><ul><li><b>Ctrl+Z</b> تراجع، <b>Ctrl+Y</b> إعادة، <b>Delete</b> حذف المحدد.</li><li>عجلة الفأرة للتكبير، والسحب بزر المسافة أو بإصبعين للتحريك.</li></ul></div></div>`}
 
 /* ======================= 1) الفروع والمباني ======================= */
 function statusChip(p){return p?`<span class="chip st-${p.status}">${STATUS[p.status]}${p.version>1?" — الإصدار "+p.version:""}</span>`:`<span class="chip st-none">لم يُبدأ</span>`}
@@ -491,11 +544,12 @@ class Editor{
  renderTools(){const ro=this.ro;const t=(id,label,icon,on,dis)=>`<button class="tool ${on?"on":""}" data-t="${id}" ${dis?"disabled":""} title="${esc(label)}">${icon}<span>${label}</span></button>`;
   let h=t("select","تحديد وتحريك",ICO.sel,this.mode==="select")+`<span class="tsep"></span>`;
   h+=t("place:here","أنت هنا",symSvg("here"),this.mode==="place:here",ro);
-  h+=t("route","مسار الإخلاء",ICO.route,this.mode==="route",ro)+`<span class="tsep"></span>`;
+  h+=t("route","مسار الإخلاء",ICO.route,this.mode==="route",ro);
+  h+=t("place:txt","نص",TXT_ICO,this.mode==="place:txt",ro);
+  h+=t("lib","رموز أخرى",ICO.more,false,ro)+`<span class="tsep"></span>`;
   for(const k of QUICK)h+=t("place:"+k,SYM[k].n,symSvg(k),this.mode==="place:"+k,ro);
   const extra=this.extraSym;if(extra&&!QUICK.includes(extra))h+=t("place:"+extra,SYM[extra].n,symSvg(extra),this.mode==="place:"+extra,ro);
-  h+=t("place:txt","نص",TXT_ICO,this.mode==="place:txt",ro);
-  h+=t("lib","رموز أخرى",ICO.more,false,ro)+`<span class="tsep"></span>`+t("undo","تراجع",ICO.undo,false,ro||!this.undo.length)+t("redo","إعادة",ICO.redo,false,ro||!this.redo.length);
+  h+=`<span class="tsep"></span>`+t("undo","تراجع",ICO.undo,false,ro||!this.undo.length)+t("redo","إعادة",ICO.redo,false,ro||!this.redo.length);
   $("#tools").innerHTML=h;$("#tools").querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>this.tool(b.dataset.t));
   this.cv.classList.toggle("mode-place",this.mode.startsWith("place"));this.cv.classList.toggle("mode-route",this.mode==="route")}
  sz(m){return this.base*(m.s||1)}
@@ -810,11 +864,11 @@ async function viewReady(){await loadAll();const m=$("#main");const inst=await D
   for(const pt of (p.data.points||[])){const ins=inst.find(i=>i.project_id===p.id&&i.point_id===pt.id);rows.push({p,pt,floor,building,branch,no:boardNo(p.floor_id,pt),ins,due,overdue:due&&due<now,outdated:ins&&ins.version&&ins.version<p.version})}}
  const k={all:rows.length,ap:rows.filter(r=>r.p.status==="approved").length,rv:rows.filter(r=>r.p.status==="review").length,dr:rows.filter(r=>r.p.status==="draft").length,ins:rows.filter(r=>r.ins&&r.ins.installed_on).length,od:rows.filter(r=>r.overdue).length,old:rows.filter(r=>r.outdated).length};
  const st=S.readyF||{q:"",s:""};const kp=(v,l,c)=>`<div class="card" style="padding:14px 16px"><div style="font-size:26px;font-weight:800;color:${c||"var(--n)"}">${v}</div><div class="small muted">${l}</div></div>`;
- m.innerHTML=`<div class="row"><div><h1 class="pg">الخرائط الجاهزة</h1><p class="pgs">كل موقع «أنت هنا» له خريطة مستقلة. ابحث واستعرض واطبع، وسجّل تركيب اللوحات.</p></div><span class="sp"></span><button class="btn" id="rep">${ICO.maps}تقرير حالة الخرائط</button></div>
+ m.innerHTML=`<div class="ph"><div><h1 class="pg">الخرائط والاعتماد</h1><p class="pgs" style="margin:0">مراحل الخريطة: مسودة ← قيد المراجعة ← معتمدة. كل موقع «أنت هنا» له خريطة مستقلة؛ ابحث واطبع وسجّل تركيب اللوحات.</p></div><span class="sp"></span><button class="btn" id="rep">${ICO.maps}تقرير حالة الخرائط</button>${S.branches.length?`<button class="btn pri" id="nS">${ICO.edit}إعداد خريطة</button>`:""}</div>
  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:16px">${kp(k.all,"إجمالي الخرائط")}${kp(k.ap,"معتمدة","var(--ok)")}${kp(k.rv,"قيد المراجعة","var(--warn)")}${kp(k.dr,"مسودة","#4a4f6b")}${kp(k.ins+" / "+k.all,"لوحات مركّبة","var(--b)")}${kp(k.od,"مراجعة دورية مستحقة",k.od?"var(--bad)":"var(--mut)")}${k.old?kp(k.old,"لوحات مركّبة بإصدار قديم","var(--bad)"):""}</div>
- <div class="card"><div class="row"><input class="in" id="q" placeholder="ابحث بالفرع أو المبنى أو الدور أو اسم الموقع أو رقم اللوحة" style="flex:1;min-width:220px" value="${esc(st.q)}"><select class="in" id="fs" style="width:auto"><option value="">كل الحالات</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${st.s===k?"selected":""}>${v}</option>`).join("")}<option value="noins" ${st.s==="noins"?"selected":""}>لم تُركّب</option><option value="due" ${st.s==="due"?"selected":""}>مراجعة مستحقة</option></select></div>
+ <div class="card"><div class="row"><input class="in" id="q" placeholder="ابحث باسم الموقع أو رقم اللوحة" style="flex:1;min-width:220px" value="${esc(st.q)}"><select class="in" id="fb" style="width:auto"><option value="">كل الفروع</option>${S.branches.map(b=>`<option value="${b.id}" ${st.b===b.id?"selected":""}>${esc(b.name)}</option>`).join("")}</select><select class="in" id="fs" style="width:auto"><option value="">كل الحالات</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${st.s===k?"selected":""}>${v}</option>`).join("")}<option value="noins" ${st.s==="noins"?"selected":""}>لم تُركّب</option><option value="due" ${st.s==="due"?"selected":""}>مراجعة مستحقة</option></select></div>
  <div id="rt" style="margin-top:12px;overflow:auto"></div></div>`;
- const filt=()=>{const q=$("#q").value.trim(),s=$("#fs").value;S.readyF={q,s};return rows.filter(r=>(!s||(s==="noins"?!(r.ins&&r.ins.installed_on):s==="due"?r.overdue:r.p.status===s))&&(!q||[r.branch.name,r.building.name,r.floor.name,r.pt.name,r.no].join(" ").includes(q)))};
+ const filt=()=>{const q=$("#q").value.trim(),s=$("#fs").value,fb=$("#fb").value;S.readyF={q,s,b:fb};return rows.filter(r=>(!fb||r.floor.branch_id===fb)&&(!s||(s==="noins"?!(r.ins&&r.ins.installed_on):s==="due"?r.overdue:r.p.status===s))&&(!q||[r.branch.name,r.building.name,r.floor.name,r.pt.name,r.no].join(" ").includes(q)))};
  const draw=()=>{const f=filt();
   $("#rt").innerHTML=f.length?`<table class="tb"><tr><th>رقم اللوحة</th><th>الموقع</th><th>الفرع / المبنى / الدور</th><th>الحالة</th><th>التركيب</th><th>المراجعة الدورية</th><th></th></tr>${f.map((r,i)=>`<tr><td><b>${esc(r.no)}</b></td><td>${esc(r.pt.name)}</td><td class="small">${esc(r.branch.name)} ← ${esc(r.building.name)} ← ${esc(r.floor.name)}</td><td>${statusChip(r.p)}</td>
    <td class="small">${r.ins&&r.ins.installed_on?`<span style="color:${r.outdated?"var(--bad)":"var(--ok)"};font-weight:700">${r.outdated?"⚠ إصدار قديم (إ"+r.ins.version+")":"✓ مركّبة"}</span><br><span class="muted">${fmtDate(r.ins.installed_on)}</span>`:`<span class="muted">لم تُركّب</span>`}</td>
@@ -830,7 +884,7 @@ async function viewReady(){await loadAll();const m=$("#main");const inst=await D
    d.foot.innerHTML=`<button class="btn pri">حفظ</button>${r.ins?'<button class="btn danger" data-rm>إلغاء التسجيل</button>':""}<button class="btn" data-c>إغلاق</button>`;d.foot.querySelector("[data-c]").onclick=d.close;
    const rm=d.foot.querySelector("[data-rm]");if(rm)rm.onclick=async()=>{try{await DB.delInstall(r.p.id,r.pt.id);d.close();viewReady()}catch(e){toast(e.message)}};
    d.foot.children[0].onclick=async()=>{try{await DB.upsertInstall({project_id:r.p.id,branch_id:r.p.branch_id,point_id:r.pt.id,installed_on:d.body.querySelector("#iD").value||null,note:d.body.querySelector("#iN").value.trim(),version:r.p.version});d.close();toast("تم تسجيل التركيب");viewReady()}catch(e){toast(e.message)}}})};
- $("#q").oninput=draw;$("#fs").onchange=draw;draw();
+ $("#q").oninput=draw;$("#fs").onchange=draw;$("#fb").onchange=draw;draw();const nS=$("#nS");if(nS)nS.onclick=()=>go("setup");
  $("#rep").onclick=()=>statusReport(rows,k)}
 function statusReport(rows,k){const w=window.open("","_blank");if(!w){toast("اسمح بالنوافذ المنبثقة لعرض التقرير");return}
  const by={};rows.forEach(r=>{const key=r.branch.name;(by[key]=by[key]||[]).push(r)});
@@ -843,8 +897,8 @@ function statusReport(rows,k){const w=window.open("","_blank");if(!w){toast("ا�
  w.document.close();const a=w.document.getElementById("csv");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}))}
 
 /* ======================= 4) الإدارة ======================= */
-async function viewAdmin(){if(!S.admin)return go("tree");await loadAll();const m=$("#main");const tab=S.adminTab||"users";
- m.innerHTML=`<h1 class="pg">الإدارة</h1><p class="pgs">المستخدمون والصلاحيات، قالب الطباعة، والنسخ الاحتياطي.</p><div class="row" style="margin-bottom:14px">${[["users","المستخدمون والصلاحيات"],["tpl","قالب الطباعة والإعدادات"],["backup","النسخ الاحتياطي"],["log","سجل النظام"]].map(([k,t])=>`<button class="btn ${tab===k?"pri":""}" data-at="${k}">${t}</button>`).join("")}</div><div id="ad"></div>`;
+async function viewAdmin(){if(!S.admin)return go("dash");await loadAll();const m=$("#main");const tab=S.adminTab||"users";
+ const isU=S.view==="users";m.innerHTML=`<div class="ph"><div><h1 class="pg">${isU?"المستخدمون والصلاحيات":"القالب والإعدادات"}</h1><p class="pgs" style="margin:0">${isU?"من يدخل التطبيق، وصلاحياته وفروعه، وسجل العمليات.":"قالب الخريطة المطبوعة، والشعارات، والنسخ الاحتياطي."}</p></div></div><div class="row" style="margin-bottom:14px">${(isU?[["users","المستخدمون والصلاحيات"],["log","سجل النظام"]]:[["tpl","قالب الطباعة"],["backup","النسخ الاحتياطي"]]).map(([k,t])=>`<button class="btn ${tab===k?"pri":""}" data-at="${k}">${t}</button>`).join("")}</div><div id="ad"></div>`;
  m.querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{S.adminTab=b.dataset.at;viewAdmin()});const A=$("#ad");
  if(tab==="users"){const mem=await DB.list("sm_members");S.members=mem;
   A.innerHTML=`<div class="card"><div class="row"><b>المستخدمون (${mem.length})</b><span class="sp"></span><button class="btn pri" id="addU">+ مستخدم</button></div>
@@ -896,7 +950,7 @@ async function importTables(T){const order=["sm_branches","sm_buildings","sm_flo
   const r=await RemoteDB.sb.from(t).upsert(T[t],{onConflict:t==="sm_members"?"email":t==="sm_installs"?"project_id,point_id":"id"});RemoteDB.chk(r)}}
 
 /* ======================= الدخول والتشغيل ======================= */
-function viewLogin(msg){$("#nav").innerHTML="";$("#who").innerHTML="";const m=$("#main");m.className="";
+function viewLogin(msg){document.body.classList.add("nolog");$("#nav").innerHTML="";$("#who").innerHTML="";const m=$("#main");m.className="";
  m.innerHTML=`<div class="card login"><img src="logo-n.png" alt="شعار مدارس الأندلس"><h1 class="pg" style="text-align:center">خرائط الإخلاء والسلامة</h1><p class="pgs" style="text-align:center">ادخل بحساب منصة المنار (البريد وكلمة المرور).</p>${msg?`<div class="err" style="margin-bottom:12px">${msg}</div>`:""}
  <form id="lf" class="grid"><label class="f">البريد الإلكتروني<input class="in" id="le" type="email" dir="ltr" autocomplete="username" required></label><label class="f">كلمة المرور<input class="in" id="lp" type="password" dir="ltr" autocomplete="current-password" required></label><button class="btn pri" style="width:100%">دخول</button></form>
  <div class="muted small" style="text-align:center;margin-top:14px">للتجربة دون حساب: <a href="?local=1">الوضع التجريبي المحلي</a></div></div>`;
@@ -906,7 +960,7 @@ async function boot(){
  DB=RemoteDB;if(!RemoteDB.sb)RemoteDB.sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
  const {data:{session}}=await RemoteDB.sb.auth.getSession();if(!session)return viewLogin();
  try{const r=await RemoteDB.sb.rpc("sm_me");const me=r.data&&(Array.isArray(r.data)?r.data[0]:r.data);if(r.error)throw r.error;
-  if(!me||!me.email){$("#main").innerHTML=`<div class="card login"><img src="logo-n.png" alt=""><h1 class="pg" style="text-align:center">لا تملك صلاحية بعد</h1><p class="pgs" style="text-align:center">حسابك (${esc(session.user.email)}) غير مضاف إلى نظام خرائط الإخلاء. تواصل مع مدير النظام لإضافتك وتحديد فروعك.</p><button class="btn" id="lo2" style="width:100%">تسجيل الخروج</button></div>`;$("#lo2").onclick=async()=>{await RemoteDB.sb.auth.signOut();location.reload()};return}
+  if(!me||!me.email){document.body.classList.add("nolog");$("#main").innerHTML=`<div class="card login"><img src="logo-n.png" alt=""><h1 class="pg" style="text-align:center">لا تملك صلاحية بعد</h1><p class="pgs" style="text-align:center">حسابك (${esc(session.user.email)}) غير مضاف إلى نظام خرائط الإخلاء. تواصل مع مدير النظام لإضافتك وتحديد فروعك.</p><button class="btn" id="lo2" style="width:100%">تسجيل الخروج</button></div>`;$("#lo2").onclick=async()=>{await RemoteDB.sb.auth.signOut();location.reload()};return}
   S.me=me;RemoteDB.me=me}catch(e){$("#main").innerHTML=`<div class="err" style="margin:20px">تعذر التحقق من الصلاحيات: ${esc(e.message||e)}<br>إذا كان هذا أول تشغيل، شغّل ملف الإعداد safety-setup.sql في Supabase.</div>`;return}
  try{S.members=S.admin?await DB.list("sm_members"):[S.me]}catch(e){S.members=[S.me]}
  renderNav();go(S.view)}
