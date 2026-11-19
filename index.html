@@ -1615,6 +1615,10 @@ function liveTripView(B){
 }
 /* سجلات الطلاب */
 const RD_F=[["name","اسم الطالب"],["motherName","اسم الأم"],["fatherPhone","جوال الأب"],["motherPhone","جوال الأم"],["location","رابط موقع البيت"],["grade","الصف"],["district","الحي"]];
+function rdRows(list){const v=vehicleOf(state.rVeh);if(!v||vCat(v)!=="faisal")return list.map((r,i)=>({r,i,n:r.stop||i+1}));
+  const N=Math.max(20,+v.capacity||0,list.reduce((m,r)=>Math.max(m,r.stop||0),0));const used=new Set();const out=[];
+  for(let n=1;n<=N;n++){const r=list.find(x=>x.stop===n&&!used.has(x.id));if(r)used.add(r.id);out.push({r:r||null,i:n-1,n})}
+  list.filter(r=>!used.has(r.id)).forEach(r=>out.push({r,i:out.length,n:r.stop||out.length+1}));return out}
 function riderForm(r){r=r||{};const id=r.id||"new";return `<form class="fgrid rdf" data-rf="${esc(id)}" style="margin-top:8px">
   ${RD_F.map(([k,l])=>`<label class="${k==="location"?"wide":""}">${l}<input data-k="${k}" value="${esc(k==="fatherPhone"?rdPhone(r):(r[k]||""))}" ${k==="name"?"required":""} ${/Phone/.test(k)?'inputmode="tel" class="ltr" placeholder="05xxxxxxxx"':""} ${k==="location"?'class="ltr" placeholder="رابط قوقل ماب أو الإحداثيات"':""}></label>`).join("")}
   <label>الترتيب في خط السير<input data-k="stop" type="number" min="1" value="${esc(r.stop||"")}"></label>
@@ -1629,10 +1633,11 @@ function ridersView2(B){
      <form id="rform" class="fgrid" style="margin-top:12px"><label class="full">أو الصق عدة طلاب، كل طالب في سطر بالترتيب حسب خط السير: الاسم، اسم الأم، جوال الأب، جوال الأم، رابط الموقع، الصف، الحي<textarea id="r-bulk" placeholder="محمد أحمد، نورة صالح، 0551234567، 0559876543، https://maps.app.goo.gl/...، الخامس، النعيم"></textarea></label>
      <div class="full"><button class="btn ghost sm" type="submit">إضافة الكل</button></div></form></details>`:""}
    <div class="ptab"><table><thead><tr><th>#</th><th>الطالب</th><th>اسم الأم</th><th>جوال الأب</th><th>جوال الأم</th><th>الموقع</th><th>الصف / الحي</th><th>الذهاب</th><th>العودة</th><th>حضور / غياب</th>${can?"<th></th>":""}</tr></thead><tbody>
-   ${list.map((r,i)=>{if(state.editRider===r.id)return `<tr><td colspan="11">${riderForm(r)}</td></tr>`;const s=st[r.id]||{};const loc=mapLink(r.location);
+   ${rdRows(list).map(({r,i,n})=>{if(!r)return state.editRider==="new:"+n?`<tr><td colspan="11">${riderForm({stop:n})}</td></tr>`:`<tr class="rd-empty"><td>${num(n)}</td><td colspan="9" class="hint">—</td>${can?`<td><button class="linkbtn" type="button" data-addat="${n}">إضافة</button></td>`:""}</tr>`;if(state.editRider===r.id)return `<tr><td colspan="11">${riderForm(r)}</td></tr>`;const s=st[r.id]||{};const loc=mapLink(r.location);
      return `<tr data-rid="${esc(r.id)}"><td>${num(r.stop||i+1)}</td><td>${esc(r.name)}</td><td>${esc(r.motherName||"")}</td><td>${telA(rdPhone(r))}</td><td>${telA(r.motherPhone)}</td><td>${loc?`<a class="linkbtn" target="_blank" rel="noopener" href="${esc(loc)}">فتح الخريطة</a>`:'<span class="hint">—</span>'}</td><td>${esc([r.grade,r.district].filter(Boolean).join(" / "))}</td><td class="${s.am>60?"lt":""}">${minTxt(s.am)}</td><td class="${s.pm>60?"lt":""}">${minTxt(s.pm)}</td><td>${num(s.n||0)} / ${num(s.abs||0)}</td>${can?`<td class="nowrap"><button class="linkbtn" type="button" data-er>تعديل</button> ${state.confirm==="rd:"+r.id?`<button class="btn danger sm" type="button" data-dy>حذف</button> <button class="linkbtn mute" type="button" data-dn>إلغاء</button>`:`<button class="linkbtn mute" type="button" data-del>حذف</button>`}</td>`:""}</tr>`}).join("")||`<tr><td colspan="11" class="hint">لا يوجد طلاب مسجّلون على هذه المركبة.</td></tr>`}</tbody></table></div>
    <div class="hint">الذهاب: من ركوب الطالب (أو انطلاق الباص) حتى الوصول للمدرسة. العودة: من خروج الباص من المدرسة حتى نزول الطالب. يظهر بالأحمر ما يزيد عن ساعة. بيانات الطلاب تظهر فقط لك ولمسؤول النقل ولمشرف الباص.</div>`;
   B.querySelectorAll("[data-rv]").forEach(b=>b.onclick=()=>{state.rVeh=b.dataset.rv;state.editRider=null;render()});
+  B.querySelectorAll("[data-addat]").forEach(b=>b.onclick=()=>{state.editRider="new:"+b.dataset.addat;state.confirm=null;render()});
   const det=B.querySelector(".newreq");if(det)det.ontoggle=()=>{state.newRiderOpen=det.open};
   B.querySelectorAll("form.rdf").forEach(f=>{const id=f.dataset.rf;
     f.onsubmit=async e=>{e.preventDefault();const d={};f.querySelectorAll("[data-k]").forEach(i=>d[i.dataset.k]=i.value.trim());if(!d.name){toast("اكتب اسم الطالب");return}
@@ -3042,11 +3047,12 @@ function vehForm(v){v=v||{owner:"alandalus",status:"active",kind:VKIND[0]};const
     <label>جوال السائق<input data-k="driverPhone" type="tel" dir="ltr" placeholder="05xxxxxxxx" value="${esc(v.driverPhone||"")}"></label>
     <label>حساب السائق في المنصة<select data-drv="0">${peopleOpts(dr[0],"— بدون حساب —")}</select></label>
     <label>سائق آخر (حساب)<select data-drv="1">${peopleOpts(dr[1],"— بدون —")}</select></label>
-    <h4 class="full vsec">المشرف أو المشرفة</h4>
+    <div class="full fgrid" data-supsec style="margin:0;padding:0;${["school","pickup"].includes(vCat(v))?"display:none":""}"><h4 class="full vsec">المشرف أو المشرفة</h4>
+    <label>مشرف أم مشرفة<select data-k="supGender"><option value="m" ${v.supGender!=="f"?"selected":""}>مشرف</option><option value="f" ${v.supGender==="f"?"selected":""}>مشرفة</option></select></label>
     <label>اسم المشرف/المشرفة<input data-k="supName" value="${esc(v.supName||"")}" placeholder="إن لم يكن له حساب"></label>
     <label>جوال المشرف/المشرفة<input data-k="supPhone" type="tel" dir="ltr" placeholder="05xxxxxxxx" value="${esc(v.supPhone||"")}"></label>
     <label>حساب المشرف/المشرفة 1<select data-sup="0">${peopleOpts(s[0],"— بدون —")}</select></label>
-    <label>حساب المشرف/المشرفة 2<select data-sup="1">${peopleOpts(s[1],"— بدون —")}</select></label>
+    <label>حساب المشرف/المشرفة 2<select data-sup="1">${peopleOpts(s[1],"— بدون —")}</select></label></div>
     <h4 class="full vsec">المستخدمون المصرح لهم باستخدام المركبة</h4>
     ${[0,1,2,3].map(i=>`<label>مستخدم ${num(i+1)}<select data-usr="${i}">${peopleOpts(us[i],"— بدون —")}</select></label>`).join("")}
     <label class="wide">المسار أو الأحياء التي تخدمها<input data-k="route" value="${esc(v.route||"")}"></label>
@@ -3080,7 +3086,8 @@ function vehiclesView(B){
       if(d.owner==="operator"&&!d.operatorName){toast("اكتب اسم الشركة المشغلة");return}if(!d.driverName&&d.driverIds[0])d.driverName=(person(d.driverIds[0])||{}).name||"";if(!d.driverPhone&&d.driverIds[0])d.driverPhone=(person(d.driverIds[0])||{}).phone||"";d.updatedAt=Date.now();
       try{if(id==="new"){d.createdAt=Date.now();d.order=state.vehicles.length+1;await db.collection("vehicles").doc().set(d);state.newVehOpen=false;toast("أُضيفت المركبة")}
         else{await db.doc("vehicles/"+id).update(d);state.editVeh=null;toast("حُفظت بيانات المركبة")}render()}catch(err){toast("تعذر الحفظ")}};
-    const c=f.querySelector("[data-vcancel]");if(c)c.onclick=()=>{state.editVeh=null;render()}});
+    const c=f.querySelector("[data-vcancel]");if(c)c.onclick=()=>{state.editVeh=null;render()};
+    const cs=f.querySelector('[data-k="cat"]'),ss=f.querySelector("[data-supsec]");if(cs&&ss)cs.onchange=()=>{ss.style.display=["school","pickup"].includes(cs.value)?"none":"";const ow=f.querySelector('[data-k="owner"]');if(ow&&cs.value==="faisal"){ow.value="operator";const on=f.querySelector('[data-k="operatorName"]');if(on&&!on.value)on.value="شركة الفيصل"}}});
   B.querySelectorAll("article[data-vid]").forEach(el=>{const id=el.dataset.vid;
     const e=el.querySelector("[data-ev]");if(e)e.onclick=()=>{state.editVeh=id;render()};
     const vd=el.querySelector("[data-vdet]");if(vd)vd.onclick=()=>{state.vehOpen=state.vehOpen===id?null:id;render()};
